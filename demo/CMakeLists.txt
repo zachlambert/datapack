@@ -1,0 +1,10 @@
+function(create_demo name)
+    add_executable(demo_${name} ${name}.cpp)
+    target_link_libraries(demo_${name} datapack datapack_examples)
+endfunction()
+
+create_demo(debug)
+create_demo(binary_benchmark)
+create_demo(json_dump)
+create_demo(json_load)
+create_demo(object)

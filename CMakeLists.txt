@@ -1,20 +1,26 @@
 cmake_minimum_required(VERSION 3.14)
 project(parrot)
 
+# Setup
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 
-# Don't build additional targets if this repository is included via FetchContent
 set(BUILD_ADDITIONAL_TARGETS OFF)
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)
 endif()
 
+# Library
+
 add_library(parrot SHARED
   src/json.cpp
 )
 target_include_directories(parrot PUBLIC include)
+
+
+# Additional targets
 
 if(BUILD_ADDITIONAL_TARGETS)
     FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip DOWNLOAD_EXTRACT_TIMESTAMP false)

@@ -16,7 +16,7 @@ void expect_json_equal(const parrot::Json& json, const std::string& expected)
     expect_json_string_equal(ss.str(), expected);
 }
 
-TEST (Json, Main)
+TEST(Json, Main)
 {
     parrot::Json json;
     auto writer = json.get();

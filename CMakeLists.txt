@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(parrot)
+project(dataflow)
 
 # Setup
 
@@ -14,16 +14,16 @@ endif()
 
 # Library
 
-add_library(parrot SHARED
+add_library(dataflow SHARED
   src/json.cpp
 )
-target_include_directories(parrot PUBLIC include)
+target_include_directories(dataflow PUBLIC include)
 
 
 # Additional targets
 
 if(BUILD_ADDITIONAL_TARGETS)
-    FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip DOWNLOAD_EXTRACT_TIMESTAMP false)
+    FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
     include(GoogleTest)
     set(INSTALL_GTEST OFF)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -32,6 +32,6 @@ if(BUILD_ADDITIONAL_TARGETS)
     enable_testing()
 
     add_executable(test_json test/json.cpp)
-    target_link_libraries(test_json parrot GTest::gtest_main)
+    target_link_libraries(test_json dataflow GTest::gtest_main)
     gtest_discover_tests(test_json)
 endif()

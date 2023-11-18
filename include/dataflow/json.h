@@ -23,7 +23,7 @@
 #include <array>
 
 
-namespace parrot {
+namespace dataflow {
 
 class Json {
     static constexpr size_t invalid_index = std::numeric_limits<size_t>::max();
@@ -876,7 +876,7 @@ struct json_functions<std::string> {
 
 template <>
 struct json_functions<bool> {
-    static bool from_json(parrot::JsonConstNode node, bool& value) {
+    static bool from_json(dataflow::JsonConstNode node, bool& value) {
         if (auto pointer = node.boolean_if()) {
             value = *pointer;
             return true;
@@ -893,7 +893,7 @@ concept is_proper_integer = std::is_integral_v<T> && !std::is_same_v<bool, T>;
 
 template <is_proper_integer T>
 struct json_functions<T> {
-    static bool from_json(parrot::JsonConstNode node, T& value) {
+    static bool from_json(dataflow::JsonConstNode node, T& value) {
         if (auto pointer = node.number_if()) {
             value = *pointer;
             return true;
@@ -907,7 +907,7 @@ struct json_functions<T> {
 
 template <std::floating_point T>
 struct json_functions<T> {
-    static bool from_json(parrot::JsonConstNode node, T& value) {
+    static bool from_json(dataflow::JsonConstNode node, T& value) {
         if (auto pointer = node.number_if()) {
             value = *pointer;
             return true;
@@ -972,7 +972,7 @@ struct json_functions<std::vector<T>> {
         }
         return true;
     }
-    static void to_json(const std::vector<T>& vector, parrot::JsonNode node) {
+    static void to_json(const std::vector<T>& vector, dataflow::JsonNode node) {
         static_assert(writable_json<T>);
         node.set_array();
         for (size_t i = 0; i < vector.size(); ++i) {
@@ -1004,7 +1004,7 @@ struct json_functions<std::array<T, N>> {
 
 template <typename T>
 struct json_functions<std::unordered_map<std::string, T>> {
-    static bool from_json(parrot::JsonConstNode node, std::unordered_map<std::string, T>& map) {
+    static bool from_json(dataflow::JsonConstNode node, std::unordered_map<std::string, T>& map) {
         if (!node.is_object()) return false;
         bool valid = true;
         for (auto iter = node.begin(); iter != node.end(); iter++) {
@@ -1012,7 +1012,7 @@ struct json_functions<std::unordered_map<std::string, T>> {
         }
         return valid;
     }
-    static bool to_json(const std::unordered_map<std::string, T>& map, parrot::JsonNode node) {
+    static bool to_json(const std::unordered_map<std::string, T>& map, dataflow::JsonNode node) {
         node.set_object();
         for (const auto& pair: map) {
             node[pair.first] = pair.second;
@@ -1023,7 +1023,7 @@ struct json_functions<std::unordered_map<std::string, T>> {
 
 template <typename T>
 struct json_functions<std::map<std::string, T>> {
-    bool from_json(parrot::JsonConstNode node, std::map<std::string, T>& map) {
+    bool from_json(dataflow::JsonConstNode node, std::map<std::string, T>& map) {
         if (!node.is_object()) return false;
         bool valid = true;
         for (auto iter = node.begin(); iter != node.end(); iter++) {
@@ -1031,7 +1031,7 @@ struct json_functions<std::map<std::string, T>> {
         }
         return valid;
     }
-    bool to_json(const std::map<std::string, T>& map, parrot::JsonNode node) {
+    bool to_json(const std::map<std::string, T>& map, dataflow::JsonNode node) {
         node.set_object();
         for (const auto& pair: map) {
             node[pair.first] = pair.second;

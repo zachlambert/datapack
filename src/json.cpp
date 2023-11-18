@@ -1,8 +1,8 @@
-#include "parrot/json.h"
+#include "dataflow/json.h"
 #include <sstream>
 
 
-namespace parrot {
+namespace dataflow {
 
 std::ostream& operator<<(std::ostream& os, JsonConstNode root)
 {
@@ -362,4 +362,4 @@ void apply(JsonConstNode diff, JsonNode to)
     }
 }
 
-} // namespace parrot
+} // namespace dataflow

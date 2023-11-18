@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(dataflow)
+project(datapack)
 
 # Setup
 
@@ -14,10 +14,10 @@ endif()
 
 # Library
 
-add_library(dataflow SHARED
+add_library(datapack SHARED
   src/json.cpp
 )
-target_include_directories(dataflow PUBLIC include)
+target_include_directories(datapack PUBLIC include)
 
 
 # Additional targets
@@ -32,6 +32,6 @@ if(BUILD_ADDITIONAL_TARGETS)
     enable_testing()
 
     add_executable(test_json test/json.cpp)
-    target_link_libraries(test_json dataflow GTest::gtest_main)
+    target_link_libraries(test_json datapack GTest::gtest_main)
     gtest_discover_tests(test_json)
 endif()

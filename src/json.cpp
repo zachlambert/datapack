@@ -1,8 +1,8 @@
-#include "dataflow/json.h"
+#include "datapack/json.h"
 #include <sstream>
 
 
-namespace dataflow {
+namespace datapack {
 
 std::ostream& operator<<(std::ostream& os, JsonConstNode root)
 {
@@ -362,4 +362,4 @@ void apply(JsonConstNode diff, JsonNode to)
     }
 }
 
-} // namespace dataflow
+} // namespace datapack

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <dataflow/json.h>
+#include <datapack/json.h>
 #include <sstream>
 
 void expect_json_string_equal(std::string actual, std::string expected)
@@ -9,7 +9,7 @@ void expect_json_string_equal(std::string actual, std::string expected)
     EXPECT_EQ(actual, expected);
 }
 
-void expect_json_equal(const dataflow::Json& json, const std::string& expected)
+void expect_json_equal(const datapack::Json& json, const std::string& expected)
 {
     std::stringstream ss;
     ss << json;
@@ -18,7 +18,7 @@ void expect_json_equal(const dataflow::Json& json, const std::string& expected)
 
 TEST(Json, Main)
 {
-    dataflow::Json json;
+    datapack::Json json;
     auto writer = json.get();
     writer["color"] = std::string_view("red");
     writer["size"] = 10;
@@ -43,7 +43,7 @@ TEST(Json, Main)
     }
     )");
 
-    dataflow::Json json2, json3;
+    datapack::Json json2, json3;
     const std::string json2_string = R"({
         "abcd": 1,
         "list": [ "red", "yellow", "orange" ],

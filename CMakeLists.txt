@@ -17,7 +17,10 @@ endif()
 add_library(datapack SHARED
   src/json.cpp
 )
-target_include_directories(datapack PUBLIC include)
+target_include_directories(datapack PUBLIC
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 
 
 # Additional targets
@@ -35,3 +38,36 @@ if(BUILD_ADDITIONAL_TARGETS)
     target_link_libraries(test_json datapack GTest::gtest_main)
     gtest_discover_tests(test_json)
 endif()
+
+
+# Create install target
+# https://stackoverflow.com/questions/47718485/install-and-export-interface-only-library-cmake
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/datapackConfigVersion.cmake"
+    VERSION 0.1
+    COMPATIBILITY AnyNewerVersion
+)
+
+install(TARGETS datapack
+    EXPORT datapackTargets
+    LIBRARY DESTINATION lib COMPONENT Runtime
+    ARCHIVE DESTINATION lib COMPONENT Development
+    RUNTIME DESTINATION bin COMPONENT Runtime
+    PUBLIC_HEADER DESTINATION include COMPONENT Development
+    BUNDLE DESTINATION bin COMPONENT Runtime
+)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    "${PROJECT_SOURCE_DIR}/cmake/datapackConfig.cmake.in"
+    "${PROJECT_BINARY_DIR}/datapackConfig.cmake"
+    INSTALL_DESTINATION lib/cmake/datapack
+)
+
+install(EXPORT datapackTargets DESTINATION lib/cmake/datapack)
+install(FILES "${PROJECT_BINARY_DIR}/datapackConfigVersion.cmake"
+              "${PROJECT_BINARY_DIR}/datapackConfig.cmake"
+        DESTINATION lib/cmake/datapack)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include)

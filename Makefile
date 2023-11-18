@@ -7,3 +7,7 @@ build:
 .PHONY: test
 test:
 	cd build && ctest --output-on-failure
+
+.PHONY: install
+install:
+	cmake --build build --target install

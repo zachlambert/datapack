@@ -4,7 +4,6 @@
 #include <variant>
 #include <optional>
 #include <vector>
-#include <tsl/ordered_map.h>
 
 #include "datapack/writer.h"
 #include "datapack/reader.h"
@@ -29,7 +28,7 @@ using ValueType = std::variant<
     Object
 >;
 
-struct Value {
+struct Value: public Writeable {
 public:
     template <typename... Args>
     Value(Args&& ...args):
@@ -55,6 +54,8 @@ public:
     T* as() {
         return std::get_if<T>(&value);
     }
+
+    void write(Writer& writer) const;
 
 private:
     ValueType value;

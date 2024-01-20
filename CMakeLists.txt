@@ -21,6 +21,7 @@ add_subdirectory(lib/ordered-map)
 add_library(datapack SHARED
     src/binary.cpp
     src/json.cpp
+    src/object.cpp
     src/yaml.cpp
 )
 target_include_directories(datapack PUBLIC

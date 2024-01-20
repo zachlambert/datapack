@@ -10,22 +10,29 @@ class YamlWriter: public Writer {
 public:
     YamlWriter();
 
-    void key(const std::string& key) override;
-    void next() override;
+    YamlWriter& key(const std::string& key) override;
+    YamlWriter& next() override;
 
-    void i32(int value) override;
-    void i64(long value) override;
-    void f32(float value) override;
-    void f64(double value) override;
-    void string(const std::string& value) override;
-    void boolean(bool value) override;
-    void binary(const binary_t& value) override;
+    YamlWriter& i32(int value) override;
+    YamlWriter& i64(long value) override;
+    YamlWriter& f32(float value) override;
+    YamlWriter& f64(double value) override;
+    YamlWriter& string(const std::string& value) override;
+    YamlWriter& boolean(bool value) override;
+    YamlWriter& null() override;
+    YamlWriter& binary(const binary_t& value) override;
 
-    void start_array() override;
-    void end_array() override;
+    template <writeable T>
+    YamlWriter& value(const T& value) {
+        write(*this, value);
+        return *this;
+    }
 
-    void start_object() override;
-    void end_object() override;
+    YamlWriter& start_array() override;
+    YamlWriter& end_array() override;
+
+    YamlWriter& start_object() override;
+    YamlWriter& end_object() override;
 
     std::string finish();
 

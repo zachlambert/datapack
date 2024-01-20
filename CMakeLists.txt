@@ -12,32 +12,51 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)
 endif()
 
+# Dependencies
+
+add_subdirectory(lib/ordered-map)
+
 # Library
 
 add_library(datapack SHARED
-  src/json.cpp
+    src/binary.cpp
+    src/json.cpp
+    src/yaml.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
+target_link_libraries(datapack PUBLIC ordered_map)
 
 
 # Additional targets
 
-if(BUILD_ADDITIONAL_TARGETS)
-    FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
-    include(GoogleTest)
-    set(INSTALL_GTEST OFF)
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-
-    enable_testing()
-
-    add_executable(test_json test/json.cpp)
-    target_link_libraries(test_json datapack GTest::gtest_main)
-    gtest_discover_tests(test_json)
+if (NOT BUILD_ADDITIONAL_TARGETS)
+    return()
 endif()
+
+# Examples
+
+add_executable(example_yaml example/yaml.cpp)
+target_link_libraries(example_yaml datapack)
+
+add_executable(example_object example/object.cpp)
+target_link_libraries(example_object datapack)
+
+# Tests
+
+FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
+include(GoogleTest)
+set(INSTALL_GTEST OFF)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+add_executable(test_json test/json.cpp)
+target_link_libraries(test_json datapack GTest::gtest_main)
+gtest_discover_tests(test_json)
 
 
 # Create install target

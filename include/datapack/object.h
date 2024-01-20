@@ -10,6 +10,9 @@
 
 namespace datapack {
 
+// OLD: Keep for reference
+
+#if 0
 class Value;
 using null_t = std::nullopt_t;
 using binary_t = std::vector<std::uint8_t>;
@@ -60,5 +63,7 @@ public:
 private:
     ValueType value;
 };
+#endif
+
 
 } // namespace datapack

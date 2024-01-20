@@ -9,10 +9,8 @@ int main()
     value.emplace("b", datapack::Value(123));
 
     std::cout << datapack::YamlWriter()
-        .start_object()
-        .key("a").value(1.2)
-        .end_object()
-        .finish();
+        .value(value)
+        .result();
 
     return 0;
 }

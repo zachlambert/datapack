@@ -34,7 +34,7 @@ public:
     YamlWriter& start_object() override;
     YamlWriter& end_object() override;
 
-    std::string finish();
+    std::string result();
 
 private:
     void assert_is_array(bool expected);

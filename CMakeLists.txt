@@ -22,6 +22,7 @@ add_library(datapack SHARED
     src/binary.cpp
     src/json.cpp
     src/object.cpp
+    src/writer.cpp
     src/yaml.cpp
 )
 target_include_directories(datapack PUBLIC

@@ -8,6 +8,8 @@
 #include <optional>
 #include "datapack/binary.h"
 
+#include <iostream> // TEMP
+
 
 namespace datapack {
 
@@ -33,6 +35,8 @@ concept writeable = requires(const T& value, Writer& writer)
     { write(writer, value) };
 };
 
+// Note: Child class T can return T& instead of Writer& on the overriden
+// functions
 class Writer {
 public:
     virtual Writer& key(const std::string& key) = 0; // When in object
@@ -48,10 +52,7 @@ public:
     virtual Writer& binary(const binary_t& value) = 0;
 
     template <writeable T>
-    Writer& value(const T& value) {
-        write(*this, value);
-        return *this;
-    }
+    Writer& value(const T& value);
 
     virtual Writer& start_array() = 0;
     virtual Writer& end_array() = 0;
@@ -60,43 +61,10 @@ public:
     virtual Writer& end_object() = 0;
 };
 
-// TODO: Put in source
-
-static void write(Writer& writer, const int& value) {
-    writer.i32(value);
-}
-
-static void write(Writer& writer, const long& value) {
-    writer.i64(value);
-}
-
-static void write(Writer& writer, const float& value) {
-    writer.f32(value);
-}
-
-static void write(Writer& writer, const double& value) {
-    writer.f64(value);
-}
-
-static void write(Writer& writer, const std::string& value) {
-    writer.string(value);
-}
-
-static void write(Writer& writer, const bool& value) {
-    writer.boolean(value);
-}
-
-static void write(Writer& writer, const std::nullopt_t& value) {
-    writer.null();
-}
-
-static void write(Writer& writer, const binary_t& value) {
-    writer.binary(value);
-}
-
-template <typename T>
-static void write(Writer& writer, const T& value) {
-    static_assert("Not implemented");
+template <writeable T>
+Writer& Writer::value(const T& value) {
+    write(*this, value);
+    return *this;
 }
 
 class Writeable {
@@ -104,12 +72,18 @@ public:
     virtual void write(Writer& writer) const = 0;
 };
 
-static void write(Writer& writer, const Writeable& value) {
-    value.write(writer);
-}
+void write(Writer& writer, const int& value);
+void write(Writer& writer, const long& value);
+void write(Writer& writer, const float& value);
+void write(Writer& writer, const double& value);
+void write(Writer& writer, const std::string& value);
+void write(Writer& writer, const bool& value);
+void write(Writer& writer, const std::nullopt_t& value);
+void write(Writer& writer, const binary_t& value);
+void write(Writer& writer, const Writeable& value);
 
 template <writeable T>
-void write(Writer& writer, std::vector<T>& value) {
+void write(Writer& writer, const std::vector<T>& value) {
     writer.start_array();
     for (const auto& element: value) {
         writer.next();
@@ -119,7 +93,7 @@ void write(Writer& writer, std::vector<T>& value) {
 }
 
 template <writeable T>
-void write(Writer& writer, tsl::ordered_map<std::string, T>& value) {
+void write(Writer& writer, const tsl::ordered_map<std::string, T>& value) {
     writer.start_object();
     for (const auto& pair: value) {
         writer.key(pair.first);

@@ -36,6 +36,6 @@ int main() {
     }
     writer.end_object();
 
-    std::cout << writer.finish();
+    std::cout << writer.result();
     return 0;
 }

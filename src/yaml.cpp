@@ -131,8 +131,7 @@ YamlWriter& YamlWriter::end_object() {
     return *this;
 }
 
-std::string YamlWriter::finish() {
-    // end_object();
+std::string YamlWriter::result() {
     if (!is_array.empty()) {
         throw WriteException("A container hasn't ended");
     }

@@ -20,7 +20,6 @@ add_subdirectory(lib/ordered-map)
 
 add_library(datapack SHARED
     src/binary.cpp
-    src/json.cpp
     src/object.cpp
     src/writer.cpp
     src/yaml.cpp
@@ -58,10 +57,6 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
-
-add_executable(test_json test/json.cpp)
-target_link_libraries(test_json datapack GTest::gtest_main)
-gtest_discover_tests(test_json)
 
 
 # Create install target

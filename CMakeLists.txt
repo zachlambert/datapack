@@ -43,6 +43,9 @@ endif()
 add_executable(example_yaml example/yaml.cpp)
 target_link_libraries(example_yaml datapack)
 
+add_executable(example_writeable example/writeable.cpp)
+target_link_libraries(example_writeable datapack)
+
 add_executable(example_object example/object.cpp)
 target_link_libraries(example_object datapack)
 

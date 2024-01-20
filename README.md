@@ -1,97 +1,91 @@
-# Idea
+# Concept
 
-Provide a way to provide a serialization/deserialization method for struct-like objects, that can be re-used for a range of formats.
+For a given type you want to serialize, write a serialize and deserialize function, either as a normal function or a class method.
 
-Each format must be structured as an object of key-value pairs, where each value is an object, array or primitive.
-Primitives are:
-- Number types: f32, f64, i32, i64
-- String
-- Boolean
-- Null
-- Binary data
+Then it will be serializable to/from any implemented serialization protocol.
 
-This includes:
-- JSON
-- Binary JSON (BSON)
-- YAML
-- MsgPack
+This is limited to "json-like" serialization protcols where:
+- An object stores a set of key-value pairs (in a specific order)
+- Values can be other objects, arrays or primitives
+- A primitive can be a number, string, boolean, null or binary data.
 
-Important notes:
-- Not all features of each format will be useable.
-- If a format doesn't support a given primitive natively, it can do it's own handling. For example, JSON has a single number format and is text-based so cannot represent binary data as-is, and instead needs to use base64 encoding or similar.
+For more generality, protocols may implement specialised methods for specific number types, or may encode all numbers the same way.
 
-# Implementing a format
+For text-based formats, text encoding (eg: base64) is required to encode binary data.
 
-A format may implement one or both of:
-- A writer: Converts a writeable object to the protocol's format
-- A reader: Parses the protcol's format into a readable object
+This focuses on being generic, so not all specialised features are supported. eg: References within YAML.
 
-The protocol's format may be bytes or some other data structure.
-For example:
-- A JSON writer can write to a in-memory JSON object
-- Another JSON writer can write to bytes directly
-- The JSON object itself can be writeable, so can be converted to JSON as bytes
+# Usage
 
-Objects can be readable/writeable either by inheritance or template pattern matching, which can be more formally represented by C++20 concepts.
+## Implementing read and write methods
 
-This allows for making pre-existing objects readable/writeable as well as allowing read/write methods where this is more convenient.
-
-An example read and write method would be:
 ```c++
-struct Foo {
-    double a;
-    double b;
-    std::optional<Bar> bar;
+#include <datapack/yaml.h>
+
+struct Foo: public datapack::Readable, datapack::Writeable {
+    int x;
+    int y;
+    std::optional<int> z;
+
+    void read(datapack::Reader& reader) override {
+        reader.start_object();
+        reader.key("x").value(x);
+        reader.key("y").value(y);
+        reader.key("z").value(z);
+        reader.end_object();
+    }
+    void write(datapack::Writer& writer) const override {
+        writer.start_object();
+        writer.key("x").value(x);
+        writer.key("y").value(y);
+        reader.key("z").value(z);
+        writer.end_object();
+    }
 };
 
-// Already provided in the library: Support for common types, including
-// templated types like std::optional<T>
+int main() {
+    Foo in;
+    // set value...
 
-template <datapack::readable T>
-void datapack::read(datapack::Reader& reader, std::optional<T>& value) {
-    if (reader.peek_null()) {
-        value = std::nullopt;
-        return;
-    }
-    value = reader.read<T>();
-}
+    std::string encoded = datapack::encode<datapack::Yaml>(in);
+    Foo out = datapack::decode<datapack::Yaml, Foo>(encoded);
 
-template <datapack::writeable T>
-void datapack::write(datapack::Writer& writer, const std::optional<T>& value) {
-    if (value.has_value()) {
-        reader.write(value.value());
-        return;
-    }
-    reader.write_null();
-}
+    // OR, Foo will now work with any supported template objects
 
-template <>
-void datapack::read(datapack::Reader& reader, Foo& value) {
-    reader.start_object();
-    reader.read_f64("a", value.a);
-    reader.read_f64("b", value.b);
-    reader.read("bar", value.bar);
-    reader.end_object();
-}
+    std::unordered_map<std::string, std::optional<Foo>> in2;
+    // set value...
 
-template <>
-void datapack::write(datapack::Writer& writer, const Foo& value) {
-    writer.start_object();
-    writer.write_f64("a", value.a);
-    writer.write_f64("b", value.b);
-    writer.write("bar", value.bar);
-    writer.end_object();
-}
+    std::string encoded2 = datapack::encode<datapack::Yaml>(in2);
+    auto out2 = datapack::decode_like<datapack::Yaml>(encoded, in2);
+
+    return 0;
+};
+
+
 ```
 
-May also allow macros for convenience, eg:
-```c++
-template <>
-void datapack::write(datapack::Writer& writer, const Foo& value) {
-    writer.start_object();
-    writer.write_f64("a", value.a);
-    writer.write_f64("b", value.b);
-    writer.write("bar", value.bar);
-    writer.end_object();
-}
+# Embedded targets
+
+Reader and writer objects can be written or modified to be suitable for embedded applications, useful if exceptions and/or dynamic memory allocation cannot be used.
+
+It still requires the target to support C++20.
+
+# Installation
+
+Install to system
+```shell
+git clone git@github.com:zachlambert/datapack.git
+make
+sudo make install
+```
+
+Include in cmake
+```cmake
+find_package(datapack REQUIRED)
+target_link_library(my-target PUBLIC datapack)
+```
+
+Include via `FetchContent()`
+```cmake
+TODO
 ```

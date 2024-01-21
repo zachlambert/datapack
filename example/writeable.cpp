@@ -1,5 +1,7 @@
 #include <datapack/writer.h>
 #include <datapack/yaml.h>
+#include <iostream>
+
 
 struct Foo: public datapack::Writeable {
     int a;

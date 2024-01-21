@@ -8,8 +8,6 @@
 #include <optional>
 #include "datapack/binary.h"
 
-#include <iostream> // TEMP
-
 
 namespace datapack {
 

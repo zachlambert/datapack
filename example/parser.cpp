@@ -5,7 +5,12 @@
 #include <sstream>
 #include <charconv>
 #include <iostream>
+#include <memory>
 
+#include "datapack/writer.h"
+#include "datapack/yaml.h"
+
+namespace datapack {
 
 class ParseException: public std::exception {
 public:
@@ -30,6 +35,7 @@ struct ObjectKey {
     std::string key;
     ObjectKey(const std::string& key): key(key) {}
 };
+struct ArrayNext {};
 struct End{};
 
 using Token = std::variant<
@@ -40,6 +46,7 @@ using Token = std::variant<
     ObjectStart, ObjectEnd,
     ArrayStart, ArrayEnd,
     ObjectKey,
+    ArrayNext,
     End
 >;
 
@@ -48,7 +55,7 @@ public:
     virtual Token next() = 0;
 };
 
-class JsonParser {
+class JsonParser: public Parser {
     enum class Container {
         Object,
         Array,
@@ -67,7 +74,7 @@ public:
         expected(Expected::Value)
     {}
 
-    Token next() {
+    Token next() override {
         while (true) {
             char c = advance();
             if (c == '\0') {
@@ -111,6 +118,10 @@ public:
                     expected = Expected::Key;
                 } else {
                     expected = Expected::Value;
+                    if (c != ',') {
+                        pos--;
+                    }
+                    return ArrayNext();
                 }
             }
 
@@ -225,8 +236,62 @@ private:
     Expected expected;
 };
 
+class ParserWriteable: public Writeable {
+public:
+    template <typename Impl>
+    ParserWriteable(const Impl& impl):
+        parser(std::make_unique<Impl>(impl))
+    {}
+    void write(Writer& writer) const override {
+        while (true) {
+            auto token = parser->next();
+            if (std::get_if<End>(&token)) {
+                return;
+            }
+            else if (std::get_if<ObjectStart>(&token)) {
+                writer.start_object();
+            }
+            else if (std::get_if<ObjectEnd>(&token)) {
+                writer.end_object();
+            }
+            else if (std::get_if<ArrayStart>(&token)) {
+                writer.start_array();
+            }
+            else if (std::get_if<ArrayEnd>(&token)) {
+                writer.end_array();
+            }
+            else if (auto key = std::get_if<ObjectKey>(&token)) {
+                writer.key(key->key);
+            }
+            else if (std::get_if<ArrayNext>(&token)) {
+                writer.next();
+            }
+            else if (auto value = std::get_if<std::string>(&token)) {
+                writer.string(*value);
+            }
+            else if (auto value = std::get_if<double>(&token)) {
+                writer.f64(*value);
+            }
+            else if (std::get_if<std::nullopt_t>(&token)) {
+                writer.null();
+            }
+            else if (auto value = std::get_if<bool>(&token)) {
+                writer.boolean(*value);
+            }
+            else {
+                throw std::logic_error("Should not reach here");
+            }
+        }
+    }
+private:
+    std::unique_ptr<Parser> parser;
+};
+
+} // namespace datapack
 
 int main() {
+    using namespace datapack;
+
     std::string json = R"(
 {
     "a": {
@@ -239,44 +304,10 @@ int main() {
 }
 )";
 
-    JsonParser parser(json);
-    while (true) {
-        auto token = parser.next();
-        if (std::get_if<End>(&token)) {
-            std::cout << "End" << std::endl;
-            break;
-        }
-        else if (std::get_if<ObjectStart>(&token)) {
-            std::cout << "Object start" << std::endl;
-        }
-        else if (std::get_if<ObjectEnd>(&token)) {
-            std::cout << "Object end" << std::endl;
-        }
-        else if (std::get_if<ArrayStart>(&token)) {
-            std::cout << "Object start" << std::endl;
-        }
-        else if (std::get_if<ArrayEnd>(&token)) {
-            std::cout << "Object start" << std::endl;
-        }
-        else if (auto key = std::get_if<ObjectKey>(&token)) {
-            std::cout << "Key: " << key->key << std::endl;
-        }
-        else if (auto value = std::get_if<std::string>(&token)) {
-            std::cout << "Value: \"" << *value << "\"" << std::endl;
-        }
-        else if (auto value = std::get_if<double>(&token)) {
-            std::cout << "Value: " << *value << std::endl;
-        }
-        else if (std::get_if<std::nullopt_t>(&token)) {
-            std::cout << "Value: null" << std::endl;
-        }
-        else if (auto value = std::get_if<bool>(&token)) {
-            std::cout << "Value: " << *value << std::endl;
-        }
-        else {
-            throw std::logic_error("Should not reach here");
-        }
-    }
-
+    std::cout
+        << YamlWriter()
+            .value(ParserWriteable(JsonParser(json)))
+            .result()
+        << std::endl;
     return 0;
 }

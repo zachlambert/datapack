@@ -47,110 +47,153 @@ using TokenRef = std::variant<
     ArrayStart, ArrayElement, ArrayEnd
 >;
 
-class TokenInput {
-public:
-    virtual void read(const TokenRef& like) = 0;
-
-    TokenInput& value(int& value) { read(PrimitiveRef(&value)); return *this; }
-    TokenInput& value(long& value) { read(PrimitiveRef(&value)); return * this; }
-    TokenInput& value(float& value) { read(PrimitiveRef(&value)); return *this; }
-    TokenInput& value(double& value) { read(PrimitiveRef(&value)); return *this; }
-    TokenInput& value(std::string& value) { read(PrimitiveRef(&value)); return *this; }
-    TokenInput& value(bool& value) { read(PrimitiveRef(&value)); return *this; }
-
-    TokenInput& key(const std::string& key) { read(ObjectElement(key)); return *this; }
-    TokenInput& start_object() { read(ObjectStart()); return *this; }
-    TokenInput& end_object() { read(ObjectEnd()); return *this; }
-
-    TokenInput& next() { read(ArrayElement()); return *this; }
-    TokenInput& start_array() { read(ArrayStart()); return *this; }
-    TokenInput& end_array() { read(ArrayEnd()); return *this; }
-};
-
-class TokenOutput {
-public:
-    virtual void write(const Token& token) = 0;
-
-    TokenOutput& value(int value) { write(Primitive(value)); return *this; }
-    TokenOutput& value(long value) { write(Primitive(value)); return * this; }
-    TokenOutput& value(float value) { write(Primitive(value)); return *this; }
-    TokenOutput& value(double value) { write(Primitive(value)); return *this; }
-    TokenOutput& value(std::string value) { write(Primitive(value)); return *this; }
-    TokenOutput& value(bool value) { write(Primitive(value)); return *this; }
-
-    TokenOutput& key(const std::string& key) { write(ObjectElement(key)); return *this; }
-    TokenOutput& start_object() { write(ObjectStart()); return *this; }
-    TokenOutput& end_object() { write(ObjectEnd()); return *this; }
-
-    TokenOutput& next() { write(ArrayElement()); return *this; }
-    TokenOutput& start_array() { write(ArrayStart()); return *this; }
-    TokenOutput& end_array() { write(ArrayEnd()); return *this; }
-};
-
-class TokenParser {
-public:
-    virtual std::optional<Token> next() = 0;
-};
-
-class TokenWriter {
-public:
-    virtual void write(TokenOutput& output) const = 0;
-};
-
 class TokenReader {
 public:
-    virtual void read(TokenInput& input) = 0;
+    virtual std::optional<Token> read() = 0;
 };
-
-class ParserWriter: public TokenWriter {
+class TokenWriter {
 public:
-    template <typename Impl>
-    ParserWriter(const Impl& impl):
-        parser(std::make_unique<Impl>(impl))
-    {}
-    void write(TokenOutput& output) const override {
-        while (true) {
-            auto token = parser->next();
-            if (!token.has_value()) break;
-            output.write(token.value());
-        }
-    }
-private:
-    std::unique_ptr<TokenParser> parser;
+    virtual void write(const Token& token) = 0;
 };
 
-class ParserInput: public TokenInput {
+class Input {
 public:
-    template <typename Impl>
-    ParserInput(const Impl& impl):
-        parser(std::make_unique<Impl>(impl))
-    {}
-    void read(const TokenRef& token) override {
-        auto actual = parser->next().value();
-        std::visit([&actual](const auto& token) {
-            using T = std::decay_t<decltype(token)>;
-            if constexpr(!std::is_same_v<T, PrimitiveRef>) {
-                std::get_if<T>(&actual);
-            }
-            if constexpr(std::is_same_v<T, PrimitiveRef>) {
-                auto actual_v = std::get_if<Primitive>(&actual);
-                std::visit([&token](const auto& actual) {
-                    using T_actual = std::decay_t<decltype(actual)>;
-                    *std::get<T_actual*>(token) = actual;
-                }, *actual_v);
-            }
-        }, token);
-    }
-private:
-    std::unique_ptr<TokenParser> parser;
+    virtual Input& value(int& value) = 0;
+    virtual Input& value(long& value) = 0;
+    virtual Input& value(float& value) = 0;
+    virtual Input& value(double& value) = 0;
+    virtual Input& value(std::string& value) = 0;
+    virtual Input& value(bool& value) = 0;
+
+    virtual Input& key(const std::string& key) = 0;
+    virtual Input& start_object() = 0;
+    virtual Input& end_object() = 0;
+
+    virtual Input& next() = 0;
+    virtual Input& start_array() = 0;
+    virtual Input& end_array() = 0;
 };
 
-struct Foo: public TokenReader, TokenWriter {
+class TokenInput: public Input {
+public:
+    TokenInput(TokenReader& reader):
+        reader(reader)
+    {}
+
+    TokenInput& value(int& value) {
+        value = std::get<int>(std::get<Primitive>(reader.read().value()));
+        return *this;
+    }
+    TokenInput& value(long& value) {
+        value = std::get<long>(std::get<Primitive>(reader.read().value()));
+        return *this;
+    }
+    TokenInput& value(float& value) {
+        value = std::get<float>(std::get<Primitive>(reader.read().value()));
+        return *this;
+    }
+    TokenInput& value(double& value) {
+        value = std::get<double>(std::get<Primitive>(reader.read().value()));
+        return *this;
+    }
+    TokenInput& value(std::string& value) {
+        value = std::get<std::string>(std::get<Primitive>(reader.read().value()));
+        return *this;
+    }
+    TokenInput& value(bool& value) {
+        value = std::get<bool>(std::get<Primitive>(reader.read().value()));
+        return *this;
+    }
+
+    TokenInput& key(const std::string& key) {
+        assert(std::get<ObjectElement>(reader.read().value()).key == key);
+        return *this;
+    }
+    TokenInput& start_object() {
+        std::get<ObjectStart>(reader.read().value());
+        return *this;
+    }
+    TokenInput& end_object() {
+        std::get<ObjectEnd>(reader.read().value());
+        return *this;
+    }
+
+    TokenInput& next() {
+        std::get<ArrayElement>(reader.read().value());
+        return *this;
+    }
+    TokenInput& start_array() {
+        std::get<ArrayStart>(reader.read().value());
+        return *this;
+    }
+    TokenInput& end_array() {
+        std::get<ArrayEnd>(reader.read().value());
+        return *this;
+    }
+
+private:
+    TokenReader& reader;
+};
+
+class Output {
+public:
+    virtual Output& value(int value) = 0;
+    virtual Output& value(long value) = 0;
+    virtual Output& value(float value) = 0;
+    virtual Output& value(double value) = 0;
+    virtual Output& value(std::string value) = 0;
+    virtual Output& value(bool value) = 0;
+
+    virtual Output& key(const std::string& key) = 0;
+    virtual Output& start_object() = 0;
+    virtual Output& end_object() = 0;
+
+    virtual Output& next() = 0;
+    virtual Output& start_array() = 0;
+    virtual Output& end_array() = 0;
+};
+
+class TokenOutput: public Output {
+public:
+    TokenOutput(TokenWriter& writer):
+        writer(writer)
+    {}
+
+    TokenOutput& value(int value) { writer.write(Primitive(value)); return *this; }
+    TokenOutput& value(long value) { writer.write(Primitive(value)); return * this; }
+    TokenOutput& value(float value) { writer.write(Primitive(value)); return *this; }
+    TokenOutput& value(double value) { writer.write(Primitive(value)); return *this; }
+    TokenOutput& value(std::string value) { writer.write(Primitive(value)); return *this; }
+    TokenOutput& value(bool value) { writer.write(Primitive(value)); return *this; }
+
+    TokenOutput& key(const std::string& key) { writer.write(ObjectElement(key)); return *this; }
+    TokenOutput& start_object() { writer.write(ObjectStart()); return *this; }
+    TokenOutput& end_object() { writer.write(ObjectEnd()); return *this; }
+
+    TokenOutput& next() { writer.write(ArrayElement()); return *this; }
+    TokenOutput& start_array() { writer.write(ArrayStart()); return *this; }
+    TokenOutput& end_array() { writer.write(ArrayEnd()); return *this; }
+
+private:
+    TokenWriter& writer;
+};
+
+class Writer {
+public:
+    virtual void write(Output& output) const = 0;
+};
+
+class Reader {
+public:
+    virtual void read(Input& input) = 0;
+};
+
+struct Foo: public Reader, Writer {
     double x;
     double y;
     double a;
     double b;
-    void write(TokenOutput& output) const override {
+    void write(Output& output) const override {
         output
             .start_object()
                 .key("x").value(x)
@@ -161,7 +204,7 @@ struct Foo: public TokenReader, TokenWriter {
                 .end_object()
             .end_object();
     }
-    void read(TokenInput& input) override {
+    void read(Input& input) override {
         input
             .start_object()
                 .key("x").value(x)
@@ -174,10 +217,10 @@ struct Foo: public TokenReader, TokenWriter {
     }
 };
 
-class JsonParser: public TokenParser {
+class JsonReader: public TokenReader {
 public:
-    JsonParser(const std::string& text): text(text), pos(0), at_value(true) {}
-    std::optional<Token> next() override {
+    JsonReader(const std::string& text): text(text), pos(0), at_value(true) {}
+    std::optional<Token> read() override {
         while (true) {
             if (pos == text.size()) {
                 return std::nullopt;
@@ -294,9 +337,9 @@ private:
     bool at_value;
 };
 
-class JsonOutput: public TokenOutput {
+class JsonWriter: public TokenWriter {
 public:
-    JsonOutput(): level(0) {}
+    JsonWriter(): level(0) {}
     void write(const Token& token) override {
         if (auto primitive = std::get_if<Primitive>(&token)) {
             std::visit([this](const auto& value) {
@@ -349,38 +392,58 @@ private:
     int level;
 };
 
-class RandomInput: public TokenInput {
+class RandomInput: public Input {
 public:
-    void read(const TokenRef& token) override {
-        auto primitive = std::get_if<PrimitiveRef>(&token);
-        if (!primitive) return;
+    RandomInput& value(int& value) {
+        value = rand() % 10;
+        return *this;
+    }
+    RandomInput& value(long& value) {
+        value = rand() % 100;
+        return *this;
+    }
+    RandomInput& value(float& value) {
+        value = (float)rand() / (float)RAND_MAX;
+        return *this;
+    }
+    RandomInput& value(double& value) {
+        value = (double)rand() / (double)RAND_MAX;
+        return *this;
+    }
+    RandomInput& value(std::string& value) {
+        value.resize(16);
+        for (std::size_t i = 0; i < value.size(); i++) {
+            value[i] = 'a' + rand() % 26;
+        }
+        return *this;
+    }
+    RandomInput& value(bool& value) {
+        value = rand() > RAND_MAX/2;
+        return *this;
+    }
 
-        if (auto value = std::get_if<int*>(primitive)) {
-            **value = rand() % 10;
-        }
-        else if (auto value = std::get_if<long*>(primitive)) {
-            **value = rand() % 100;
-        }
-        else if (auto value = std::get_if<float*>(primitive)) {
-            **value = (float)rand() / (float)RAND_MAX;
-        }
-        else if (auto value = std::get_if<double*>(primitive)) {
-            **value = (double)rand() / (double)RAND_MAX;
-        }
-        else if (auto value = std::get_if<std::string*>(primitive)) {
-            std::string& result = **value;
-            result.clear();
-            for (std::size_t i = 0; i < 16; i++) {
-                result.push_back('a' + rand() % 26);
-            }
-        }
-        else if (auto value = std::get_if<bool*>(primitive)) {
-            **value = rand() > RAND_MAX/2 ? true : false;
-        }
+    RandomInput& key(const std::string& key) {
+        return *this;
+    }
+    RandomInput& start_object() {
+        return *this;
+    }
+    RandomInput& end_object() {
+        return *this;
+    }
+
+    RandomInput& next() {
+        return *this;
+    }
+    RandomInput& start_array() {
+        return *this;
+    }
+    RandomInput& end_array() {
+        return *this;
     }
 };
 
-class PrintOutput: public TokenOutput {
+class PrintOutput: public TokenWriter {
 public:
     PrintOutput(std::ostream& os):
         os(os),
@@ -434,16 +497,18 @@ int main() {
     std::string json;
     {
         RandomInput input;
-        JsonOutput output;
+        JsonWriter writer;
+        TokenOutput output(writer);
         foo.read(input);
         foo.write(output);
-        json = output.result();
+        json = writer.result();
     }
     std::cout << json;
     {
-        JsonParser parser(json);
-        ParserInput input(parser);
-        PrintOutput output(std::cout);
+        JsonReader reader(json);
+        TokenInput input(reader);
+        PrintOutput print_output(std::cout);
+        TokenOutput output(print_output);
         foo.read(input);
         foo.write(output);
     }

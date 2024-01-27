@@ -5,10 +5,45 @@
 #include <optional>
 #include <vector>
 
+#include "datapack/token.h"
 #include "datapack/writer.h"
 #include "datapack/reader.h"
 
 namespace datapack {
+
+class ObjectWriter: public Writer {
+public:
+    ObjectWriter& key(const std::string& key) override;
+    ObjectWriter& next() override;
+
+    ObjectWriter& i32(int value) override;
+    ObjectWriter& i64(long value) override;
+    ObjectWriter& f32(float value) override;
+    ObjectWriter& f64(double value) override;
+    ObjectWriter& string(const std::string& value) override;
+    ObjectWriter& boolean(bool value) override;
+    ObjectWriter& null() override;
+    ObjectWriter& binary(const binary_t& value) override;
+
+    template <writeable T>
+    ObjectWriter& value(const T& value) {
+        write(*this, value);
+        return *this;
+    }
+
+    ObjectWriter& start_array() override;
+    ObjectWriter& end_array() override;
+
+    ObjectWriter& start_object() override;
+    ObjectWriter& end_object() override;
+
+    const std::vector<Token> result() {
+        return tokens;
+    }
+
+private:
+    std::vector<Token> tokens;
+};
 
 // OLD: Keep for reference
 

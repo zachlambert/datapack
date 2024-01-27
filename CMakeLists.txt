@@ -20,6 +20,7 @@ add_subdirectory(lib/ordered-map)
 
 add_library(datapack SHARED
     src/binary.cpp
+    src/json.cpp
     src/object.cpp
     src/writer.cpp
     src/yaml.cpp
@@ -42,17 +43,8 @@ endif()
 add_executable(example_yaml example/yaml.cpp)
 target_link_libraries(example_yaml datapack)
 
-add_executable(example_parser example/parser.cpp)
-target_link_libraries(example_parser datapack)
-
-add_executable(example_token example/token.cpp)
-target_link_libraries(example_token datapack)
-
 add_executable(example_writeable example/writeable.cpp)
 target_link_libraries(example_writeable datapack)
-
-add_executable(example_object example/object.cpp)
-target_link_libraries(example_object datapack)
 
 # Tests
 

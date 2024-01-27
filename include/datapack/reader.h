@@ -18,8 +18,7 @@ public:
     {}
 
 private:
-    const char* what() const noexcept override
-    {
+    const char* what() const noexcept override {
         return message.c_str();
     }
     std::string message;
@@ -28,8 +27,7 @@ private:
 class Reader;
 
 template <typename T>
-concept readable = requires(T& value, Reader& reader)
-{
+concept readable = requires(T& value, Reader& reader) {
     { read(reader, value) };
 };
 
@@ -37,43 +35,30 @@ concept readable = requires(T& value, Reader& reader)
 // functions
 class Reader {
 public:
-    virtual Reader& key(const std::string& key) = 0; // When in object
-    virtual Reader& next() = 0;                      // When in array
+    virtual void i32(int& value) = 0;
+    virtual void i64(long& value) = 0;
+    virtual void f32(float& value) = 0;
+    virtual void f64(double& value) = 0;
+    virtual void string(std::string& value) = 0;
+    virtual void boolean(bool& value) = 0;
+    virtual bool null() = 0;
+    virtual void binary(const binary_t& value) = 0;
 
-    virtual Reader& i32(int& value) = 0;
-    virtual Reader& i64(long& value) = 0;
-    virtual Reader& f32(float& value) = 0;
-    virtual Reader& f64(double& value) = 0;
-    virtual Reader& string(std::string& value) = 0;
-    virtual Reader& boolean(bool& value) = 0;
-    virtual Reader& binary(const binary_t& value) = 0;
+    virtual void object_begin() = 0;
+    virtual void object_end() = 0;
+    virtual bool object_element(const std::string& key) = 0;
+
+    virtual void array_begin() = 0;
+    virtual void array_end() = 0;
+    virtual bool array_element() = 0;
 
     template <readable T>
-    Reader& value(T& value);
-
-    virtual bool peek_null() = 0;
-    template <readable T>
-    Reader& optional(std::optional<T>& value) {
-        if (peek_null()) {
-            value = std::nullopt;
-        } else {
-            value.emplace();
-            this->value(value.value());
-        }
-        return *this;
-    }
-
-    virtual Reader& start_array() = 0;
-    virtual Reader& end_array() = 0;
-
-    virtual Reader& start_object() = 0;
-    virtual Reader& end_object() = 0;
+    void value(T& value);
 };
 
 template <readable T>
-Reader& Reader::value(T& value) {
+void Reader::value(T& value) {
     read(*this, value);
-    return *this;
 }
 
 class Readable {
@@ -81,14 +66,34 @@ public:
     virtual void read(Reader& reader) = 0;
 };
 
-void read(Reader& reader, const int& value);
-void read(Reader& reader, const long& value);
-void read(Reader& reader, const float& value);
-void read(Reader& reader, const double& value);
-void read(Reader& reader, const std::string& value);
-void read(Reader& reader, const bool& value);
-void read(Reader& reader, const std::nullopt_t& value);
-void read(Reader& reader, const binary_t& value);
-void read(Reader& reader, const Readable& value);
+void read(Reader& reader, int& value);
+void read(Reader& reader, long& value);
+void read(Reader& reader, float& value);
+void read(Reader& reader, double& value);
+void read(Reader& reader, std::string& value);
+void read(Reader& reader, bool& value);
+void read(Reader& reader, binary_t& value);
+void read(Reader& reader, Readable& value);
+
+template <readable T>
+void read(Reader& reader, std::optional<T>& value) {
+    if (reader.null()) {
+        value = std::nullopt;
+    } else {
+        value.emplace();
+        reader.value(value.value());
+    }
+}
+
+template <readable T>
+void read(Reader& reader, std::vector<T>& value) {
+    value.clear();
+    reader.array_begin();
+    while (reader.array_element()) {
+        value.emplace_back();
+        reader.value(value.back());
+    }
+    reader.array_end();
+}
 
 } // namespace datapack

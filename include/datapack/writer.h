@@ -4,7 +4,6 @@
 #include <exception>
 #include <string>
 #include <vector>
-#include <tsl/ordered_map.h>
 #include <optional>
 #include "datapack/binary.h"
 
@@ -37,32 +36,30 @@ concept writeable = requires(const T& value, Writer& writer)
 // functions
 class Writer {
 public:
-    virtual Writer& key(const std::string& key) = 0; // When in object
-    virtual Writer& next() = 0;                      // When in array
+    virtual void i32(int value) = 0;
+    virtual void i64(long value) = 0;
+    virtual void f32(float value) = 0;
+    virtual void f64(double value) = 0;
+    virtual void string(const std::string& value) = 0;
+    virtual void boolean(bool value) = 0;
+    virtual void null() = 0;
+    virtual void binary(const binary_t& value) = 0;
 
-    virtual Writer& i32(int value) = 0;
-    virtual Writer& i64(long value) = 0;
-    virtual Writer& f32(float value) = 0;
-    virtual Writer& f64(double value) = 0;
-    virtual Writer& string(const std::string& value) = 0;
-    virtual Writer& boolean(bool value) = 0;
-    virtual Writer& null() = 0;
-    virtual Writer& binary(const binary_t& value) = 0;
+    virtual void object_begin() = 0;
+    virtual void object_end() = 0;
+    virtual void object_element(const std::string& key) = 0;
+
+    virtual void array_begin() = 0;
+    virtual void array_end() = 0;
+    virtual void array_element() = 0;
 
     template <writeable T>
-    Writer& value(const T& value);
-
-    virtual Writer& start_array() = 0;
-    virtual Writer& end_array() = 0;
-
-    virtual Writer& start_object() = 0;
-    virtual Writer& end_object() = 0;
+    void value(const T& value);
 };
 
 template <writeable T>
-Writer& Writer::value(const T& value) {
+void Writer::value(const T& value) {
     write(*this, value);
-    return *this;
 }
 
 class Writeable {
@@ -81,23 +78,22 @@ void write(Writer& writer, const binary_t& value);
 void write(Writer& writer, const Writeable& value);
 
 template <writeable T>
-void write(Writer& writer, const std::vector<T>& value) {
-    writer.start_array();
-    for (const auto& element: value) {
-        writer.next();
-        writer.value(element);
+void write(Writer& writer, const std::optional<T>& value){
+    if (value.has_value()) {
+        write(writer, value.value());
+    } else {
+        writer.null();
     }
-    writer.end_array();
 }
 
 template <writeable T>
-void write(Writer& writer, const tsl::ordered_map<std::string, T>& value) {
-    writer.start_object();
-    for (const auto& pair: value) {
-        writer.key(pair.first);
-        writer.value(pair.second);
+void write(Writer& writer, const std::vector<T>& value) {
+    writer.array_begin();
+    for (const auto& element: value) {
+        writer.array_element();
+        writer.value(element);
     }
-    writer.end_object();
+    writer.array_end();
 }
 
 } // namespace datapack

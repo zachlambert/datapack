@@ -9,7 +9,7 @@ YamlWriter::YamlWriter():
     // start_object();
 }
 
-YamlWriter& YamlWriter::key(const std::string& key) {
+void YamlWriter::key(const std::string& key) {
     assert_at_value(false);
     assert_is_array(false);
     if (!first_key_in_array) {
@@ -18,68 +18,59 @@ YamlWriter& YamlWriter::key(const std::string& key) {
     first_key_in_array = false;
     ss << key << ": ";
     at_value = true;
-    return *this;
 }
 
-YamlWriter& YamlWriter::next() {
+void YamlWriter::next() {
     assert_at_value(false);
     assert_is_array(true);
     indent();
     ss << "- ";
     at_value = true;
-    return *this;
 }
 
-YamlWriter& YamlWriter::i32(int value) {
+void YamlWriter::i32(int value) {
     assert_at_value(true);
     ss << value << "\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::i64(long value) {
+void YamlWriter::i64(long value) {
     assert_at_value(true);
     ss << value << "\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::f32(float value) {
+void YamlWriter::f32(float value) {
     assert_at_value(true);
     ss << value << "\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::f64(double value) {
+void YamlWriter::f64(double value) {
     assert_at_value(true);
     ss << value << "\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::string(const std::string& value) {
+void YamlWriter::string(const std::string& value) {
     assert_at_value(true);
     ss << value << "\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::boolean(bool value) {
+void YamlWriter::boolean(bool value) {
     assert_at_value(true);
     ss << (value ? "true" : "false") << "\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::null() {
+void YamlWriter::null() {
     assert_at_value(true);
     ss << "null\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::binary(const binary_t& value) {
+void YamlWriter::binary(const binary_t& value) {
     assert_at_value(true);
     binary_t encoded;
     base64_encode(value, encoded);
@@ -88,27 +79,24 @@ YamlWriter& YamlWriter::binary(const binary_t& value) {
     }
     ss << "\n";
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::start_array() {
+void YamlWriter::start_array() {
     ss << "\n";
     assert_at_value(true);
     is_array.push(true);
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::end_array() {
+void YamlWriter::end_array() {
     assert_is_array(true);
     if (is_array.empty()) {
         throw WriteException("Unknown error");
     }
     is_array.pop();
-    return *this;
 }
 
-YamlWriter& YamlWriter::start_object() {
+void YamlWriter::start_object() {
     if (!is_array.empty()) {
         if (is_array.top()) {
             first_key_in_array = true;
@@ -119,16 +107,14 @@ YamlWriter& YamlWriter::start_object() {
     assert_at_value(true);
     is_array.push(false);
     at_value = false;
-    return *this;
 }
 
-YamlWriter& YamlWriter::end_object() {
+void YamlWriter::end_object() {
     assert_is_array(false);
     if (is_array.empty()) {
         throw WriteException("Unknown error");
     }
     is_array.pop();
-    return *this;
 }
 
 std::string YamlWriter::result() {

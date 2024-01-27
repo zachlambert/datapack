@@ -20,20 +20,21 @@ using Primitive = std::variant<
     std::nullopt_t,
     binary_t>;
 
-struct ObjectStart {};
+struct ObjectBegin {};
 struct ObjectEnd {};
 struct ObjectElement {
     const std::string key;
     ObjectElement(const std::string& key): key(key) {}
 };
 
-struct ArrayStart {};
+struct ArrayBegin {};
 struct ArrayEnd {};
 struct ArrayElement {};
 
 using Token = std::variant<
     Primitive,
-    ObjectStart, ObjectEnd, ObjectElement
+    ObjectBegin, ObjectEnd, ObjectElement,
+    ArrayBegin, ArrayEnd, ArrayElement
 >;
 
 } // namespace datapack

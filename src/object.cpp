@@ -2,6 +2,37 @@
 
 namespace datapack {
 
+void write(Writer& writer, const Object& object) {
+    for (const auto& token: object.tokens) {
+        if (std::get_if<ObjectBegin>(&token)) {
+            writer.object_begin();
+        }
+        else if (std::get_if<ObjectEnd>(&token)) {
+            writer.object_end();
+        }
+        else if (auto value = std::get_if<ObjectElement>(&token)) {
+            writer.object_element(value->key);
+        }
+        else if (std::get_if<ArrayBegin>(&token)) {
+            writer.array_begin();
+        }
+        else if (std::get_if<ArrayEnd>(&token)) {
+            writer.array_end();
+        }
+        else if (std::get_if<ArrayElement>(&token)) {
+            writer.array_element();
+        }
+        else if (auto value = std::get_if<Primitive>(&token)) {
+            std::visit([&writer](const auto& value) {
+                writer.value(value);
+            }, *value);
+        }
+        else {
+            throw WriteException("Unreachable code");
+        }
+    }
+}
+
 void ObjectWriter::i32(int value) {
     object.tokens.push_back(Primitive(value));
 }

@@ -15,6 +15,8 @@ struct Object {
     std::vector<Token> tokens;
 };
 
+void write(Writer& writer, const Object& object);
+
 class ObjectWriter: public Writer {
 public:
     void i32(int value) override;

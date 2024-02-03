@@ -22,6 +22,8 @@ add_library(datapack SHARED
     src/binary.cpp
     src/json.cpp
     src/object.cpp
+    src/parser.cpp
+    src/reader.cpp
     src/writer.cpp
     src/yaml.cpp
 )
@@ -45,6 +47,9 @@ target_link_libraries(example_yaml datapack)
 
 add_executable(example_writeable example/writeable.cpp)
 target_link_libraries(example_writeable datapack)
+
+add_executable(example_parser example/parser.cpp)
+target_link_libraries(example_parser datapack)
 
 # Tests
 

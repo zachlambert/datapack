@@ -18,5 +18,4 @@ Object parse(Parser&& parser) {
     return parse(parser);
 }
 
-
 } // namespace datapack

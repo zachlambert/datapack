@@ -14,7 +14,7 @@ std::optional<Token> JsonParser::next() {
         int& state = states.top();
 
         if (pos == source.size()) {
-            if (!(state & EXPECT_END) || (state & (IS_OBJECT | IS_ARRAY))) {
+            if (!(state & EXPECT_END) || (state & IS_OBJECT) || (state & IS_ARRAY)) {
                 throw ParseException("Not expecting the document end");
             }
             return std::nullopt;
@@ -31,7 +31,7 @@ std::optional<Token> JsonParser::next() {
                 throw ParseException("Unexpected character '{'");
             }
             pos++;
-            states.push(IS_OBJECT | EXPECT_KEY | EXPECT_END);
+            states.push(IS_OBJECT | EXPECT_ELEMENT | EXPECT_END);
             return ObjectBegin();
         }
         if (c == '[') {
@@ -39,11 +39,11 @@ std::optional<Token> JsonParser::next() {
                 throw ParseException("Unexpected character '['");
             }
             pos++;
-            states.push(IS_ARRAY | EXPECT_VALUE | EXPECT_END);
+            states.push(IS_ARRAY | EXPECT_ELEMENT | EXPECT_END);
             return ArrayBegin();
         }
         if (c == '}') {
-            if (!(state & IS_OBJECT & EXPECT_END)) {
+            if (!(state & IS_OBJECT) || !(state & EXPECT_END)) {
                 throw ParseException("Unexpected character '}'");
             }
             pos++;
@@ -51,17 +51,11 @@ std::optional<Token> JsonParser::next() {
 
             int& new_state = states.top();
             new_state &= ~EXPECT_VALUE;
-            new_state |= EXPECT_END;
-            if (new_state | IS_OBJECT) {
-                new_state |= EXPECT_KEY;
-            } else if (new_state | IS_ARRAY) {
-                new_state |= EXPECT_VALUE;
-            }
-
+            new_state |= EXPECT_NEXT | EXPECT_END;
             return ObjectEnd();
         }
         if (c == ']') {
-            if (!(state & IS_ARRAY & EXPECT_END)) {
+            if (!(state & IS_ARRAY) | !(state & EXPECT_END)) {
                 throw ParseException("Unexpected character ']'");
             }
             pos++;
@@ -69,32 +63,21 @@ std::optional<Token> JsonParser::next() {
 
             int& new_state = states.top();
             new_state &= ~EXPECT_VALUE;
-            new_state |= EXPECT_END;
-            if (new_state | IS_OBJECT) {
-                new_state |= EXPECT_KEY;
-            } else if (new_state | IS_ARRAY) {
-                new_state |= EXPECT_VALUE;
-            }
-
-            return ObjectEnd();
+            new_state |= EXPECT_NEXT | EXPECT_END;
+            return ArrayEnd();
         }
         if (c == ',') {
+            pos++;
+
             if (!(state & EXPECT_NEXT)) {
                 throw ParseException("Unexpected character ','");
             }
             state &= ~EXPECT_NEXT;
-            if (state & IS_OBJECT) {
-                state |= EXPECT_KEY;
-            } else if (state & IS_ARRAY) {
-                state |= EXPECT_VALUE;
-            } else {
-                throw ParseException("Unexpected character ','");
-            }
-            pos++;
+            state |= EXPECT_ELEMENT;
             continue;
         }
 
-        if (c == '"' && (state & EXPECT_KEY)) {
+        if (c == '"' && (state & IS_OBJECT) && (state & EXPECT_ELEMENT)) {
             pos++;
             std::size_t begin = pos;
             while (true) {
@@ -124,7 +107,15 @@ std::optional<Token> JsonParser::next() {
                 }
                 throw ParseException("Expected ':' following key");
             }
-            return ObjectElement(std::string(source.substr(begin, end)));
+            state &= ~EXPECT_ELEMENT;
+            state |= EXPECT_VALUE;
+            return ObjectElement(std::string(source.substr(begin, end-begin)));
+        }
+
+        if ((state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
+            state &= ~EXPECT_ELEMENT;
+            state |= EXPECT_VALUE;
+            return ArrayElement();
         }
 
         if (!(state & EXPECT_VALUE)) {
@@ -132,12 +123,7 @@ std::optional<Token> JsonParser::next() {
         }
 
         state &= ~EXPECT_VALUE;
-        state |= EXPECT_END;
-        if (state | IS_OBJECT) {
-            state |= EXPECT_KEY;
-        } else if (state | IS_ARRAY) {
-            state |= EXPECT_VALUE;
-        }
+        state |= EXPECT_END | EXPECT_NEXT;
 
         if (c == '"') {
             pos++;
@@ -153,7 +139,7 @@ std::optional<Token> JsonParser::next() {
             }
             std::size_t end = pos;
             pos++;
-            return Primitive(std::string(source.substr(begin, end)));
+            return Primitive(std::string(source.substr(begin, end-begin)));
         }
 
         std::size_t begin = pos;
@@ -169,7 +155,7 @@ std::optional<Token> JsonParser::next() {
         }
         std::size_t end = pos;
 
-        std::string_view value = source.substr(begin, end);
+        std::string_view value = source.substr(begin, end-begin);
         if (value == "true") {
             return Primitive(true);
         }

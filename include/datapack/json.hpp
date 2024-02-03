@@ -48,7 +48,7 @@ public:
     std::optional<Token> next() override;
 
 private:
-    static constexpr int EXPECT_KEY = 1 << 0;
+    static constexpr int EXPECT_ELEMENT = 1 << 0;
     static constexpr int EXPECT_VALUE = 1 << 1;
     static constexpr int EXPECT_END = 1 << 2;
     static constexpr int EXPECT_NEXT = 1 << 3;

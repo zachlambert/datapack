@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stack>
 #include "datapack/writer.h"
+#include "datapack/parser.h"
 
 namespace datapack {
 

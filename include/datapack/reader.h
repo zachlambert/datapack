@@ -42,11 +42,11 @@ public:
     virtual void string(std::string& value) = 0;
     virtual void boolean(bool& value) = 0;
     virtual bool null() = 0;
-    virtual void binary(const binary_t& value) = 0;
+    virtual void binary(binary_t& value) = 0;
 
     virtual void object_begin() = 0;
     virtual void object_end() = 0;
-    virtual bool object_element(const std::string& key) = 0;
+    virtual void object_element(const std::string& key) = 0;
 
     virtual void array_begin() = 0;
     virtual void array_end() = 0;

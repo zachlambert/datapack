@@ -3,59 +3,232 @@
 namespace datapack {
 
 void ObjectWriter::i32(int value) {
-    tokens.push_back(Primitive(value));
+    object.tokens.push_back(Primitive(value));
 }
 
 void ObjectWriter::i64(long value) {
-    tokens.push_back(Primitive(value));
+    object.tokens.push_back(Primitive(value));
 }
 
 void ObjectWriter::f32(float value) {
-    tokens.push_back(Primitive(value));
+    object.tokens.push_back(Primitive(value));
 }
 
 void ObjectWriter::f64(double value) {
-    tokens.push_back(Primitive(value));
+    object.tokens.push_back(Primitive(value));
 }
 
 void ObjectWriter::string(const std::string& value) {
-    tokens.push_back(Primitive(value));
+    object.tokens.push_back(Primitive(value));
 }
 
 void ObjectWriter::boolean(bool value) {
-    tokens.push_back(Primitive(value));
+    object.tokens.push_back(Primitive(value));
 }
 
 void ObjectWriter::null() {
-    tokens.push_back(Primitive(std::nullopt));
+    object.tokens.push_back(Primitive(std::nullopt));
 }
 
 void ObjectWriter::binary(const binary_t& value) {
-    tokens.push_back(Primitive(value));
+    object.tokens.push_back(Primitive(value));
 }
 
 void ObjectWriter::object_begin() {
-    tokens.push_back(ObjectBegin());
+    object.tokens.push_back(ObjectBegin());
 }
 
 void ObjectWriter::object_end() {
-    tokens.push_back(ObjectEnd());
+    object.tokens.push_back(ObjectEnd());
 }
 
 void ObjectWriter::object_element(const std::string& key) {
-    tokens.push_back(ObjectElement(key));
+    object.tokens.push_back(ObjectElement(key));
 }
 
 void ObjectWriter::array_begin() {
-    tokens.push_back(ArrayBegin());
+    object.tokens.push_back(ArrayBegin());
 }
 
 void ObjectWriter::array_end() {
-    tokens.push_back(ArrayEnd());
+    object.tokens.push_back(ArrayEnd());
 }
 
 void ObjectWriter::array_element() {
-    tokens.push_back(ArrayElement());
+    object.tokens.push_back(ArrayElement());
+}
+
+
+ObjectReader::ObjectReader(const Object& object):
+    object(object),
+    pos(0)
+{}
+
+void ObjectReader::i32(int& value) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        value = std::get<int>(std::get<Primitive>(object.tokens[pos]));
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::i64(long& value) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        value = std::get<long>(std::get<Primitive>(object.tokens[pos]));
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::f32(float& value) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        value = std::get<float>(std::get<Primitive>(object.tokens[pos]));
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::f64(double& value) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        value = std::get<double>(std::get<Primitive>(object.tokens[pos]));
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::string(std::string& value) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        value = std::get<std::string>(std::get<Primitive>(object.tokens[pos]));
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::boolean(bool& value) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        value = std::get<bool>(std::get<Primitive>(object.tokens[pos]));
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+bool ObjectReader::null() {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        if (std::get_if<std::nullopt_t>(&std::get<Primitive>(object.tokens[pos]))) {
+            pos++;
+            return true;
+        }
+        return false;
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    return false; // Unreachable
+}
+
+void ObjectReader::binary(binary_t& value) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        value = std::get<binary_t>(std::get<Primitive>(object.tokens[pos]));
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+
+void ObjectReader::object_begin() {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    if (!std::get_if<ObjectBegin>(&object.tokens[pos])) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::object_end() {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    if (!std::get_if<ObjectEnd>(&object.tokens[pos])) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::object_element(const std::string& key) {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    try {
+        if (key != std::get<ObjectElement>(object.tokens[pos]).key) {
+            throw ReadException("Incorrect key");
+        }
+    } catch (const std::bad_optional_access&) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+
+void ObjectReader::array_begin() {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    if (!std::get_if<ArrayBegin>(&object.tokens[pos])) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+void ObjectReader::array_end() {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    if (!std::get_if<ArrayEnd>(&object.tokens[pos])) {
+        throw ReadException("Incorrect token");
+    }
+    pos++;
+}
+
+bool ObjectReader::array_element() {
+    if (pos >= object.tokens.size()) {
+        throw ReadException("Reached end of input");
+    }
+    if (!std::get_if<ArrayElement>(&object.tokens[pos])) {
+        return false;
+    }
+    pos++;
+    return true;
 }
 
 } // namespace datapack

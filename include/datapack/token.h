@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "datapack/binary.h"
+#include "datapack/reader.h"
 
 
 namespace datapack {

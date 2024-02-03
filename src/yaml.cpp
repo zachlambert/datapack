@@ -1,4 +1,4 @@
-#include "datapack/yaml.h"
+#include "datapack/yaml.hpp"
 
 namespace datapack {
 

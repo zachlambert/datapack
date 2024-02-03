@@ -1,4 +1,4 @@
-#include "datapack/writer.h"
+#include "datapack/writer.hpp"
 namespace datapack {
 
 void write(Writer& writer, const int& value) {

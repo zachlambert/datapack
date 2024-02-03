@@ -1,4 +1,4 @@
-#include "datapack/object.h"
+#include "datapack/object.hpp"
 
 namespace datapack {
 

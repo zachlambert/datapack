@@ -1,5 +1,5 @@
-#include <datapack/object.h>
-#include <datapack/yaml.h>
+#include <datapack/object.hpp>
+#include <datapack/yaml.hpp>
 #include <iostream>
 
 int main() {

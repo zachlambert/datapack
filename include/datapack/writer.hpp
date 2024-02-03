@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include "datapack/binary.h"
+#include "datapack/binary.hpp"
 
 
 namespace datapack {

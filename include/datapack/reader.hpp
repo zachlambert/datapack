@@ -6,7 +6,7 @@
 #include <vector>
 #include <tsl/ordered_map.h>
 #include <optional>
-#include "datapack/binary.h"
+#include "datapack/binary.hpp"
 
 
 namespace datapack {

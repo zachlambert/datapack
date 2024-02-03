@@ -2,13 +2,14 @@
 
 #include <sstream>
 #include <stack>
-#include "datapack/writer.h"
+#include "datapack/writer.hpp"
+#include "datapack/parser.hpp"
 
 namespace datapack {
 
-class YamlWriter: public Writer {
+class JsonWriter: public Writer {
 public:
-    YamlWriter();
+    JsonWriter();
 
     void i32(int value) override;
     void i64(long value) override;

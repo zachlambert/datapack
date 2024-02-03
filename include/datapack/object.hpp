@@ -5,9 +5,9 @@
 #include <optional>
 #include <vector>
 
-#include "datapack/token.h"
-#include "datapack/writer.h"
-#include "datapack/reader.h"
+#include "datapack/token.hpp"
+#include "datapack/writer.hpp"
+#include "datapack/reader.hpp"
 
 namespace datapack {
 

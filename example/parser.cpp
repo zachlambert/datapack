@@ -7,8 +7,8 @@
 #include <iostream>
 #include <memory>
 
-#include "datapack/writer.h"
-#include "datapack/yaml.h"
+#include <datapack/writer.hpp>
+#include <datapack/yaml.hpp>
 
 namespace datapack {
 

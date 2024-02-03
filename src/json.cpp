@@ -1,4 +1,4 @@
-#include "datapack/json.h"
+#include "datapack/json.hpp"
 
 namespace datapack {
 

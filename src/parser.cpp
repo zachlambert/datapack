@@ -1,4 +1,4 @@
-#include "datapack/parser.h"
+#include "datapack/parser.hpp"
 
 namespace datapack {
 

@@ -5,8 +5,8 @@
 #include <optional>
 #include <vector>
 
-#include "datapack/binary.h"
-#include "datapack/reader.h"
+#include "datapack/binary.hpp"
+#include "datapack/reader.hpp"
 
 
 namespace datapack {

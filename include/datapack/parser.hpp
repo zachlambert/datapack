@@ -1,7 +1,7 @@
 #pragma once
 
-#include "datapack/token.h"
-#include "datapack/object.h"
+#include "datapack/token.hpp"
+#include "datapack/object.hpp"
 
 namespace datapack {
 

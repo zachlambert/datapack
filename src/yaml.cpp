@@ -9,25 +9,6 @@ YamlWriter::YamlWriter():
     // start_object();
 }
 
-void YamlWriter::key(const std::string& key) {
-    assert_at_value(false);
-    assert_is_array(false);
-    if (!first_key_in_array) {
-        indent();
-    }
-    first_key_in_array = false;
-    ss << key << ": ";
-    at_value = true;
-}
-
-void YamlWriter::next() {
-    assert_at_value(false);
-    assert_is_array(true);
-    indent();
-    ss << "- ";
-    at_value = true;
-}
-
 void YamlWriter::i32(int value) {
     assert_at_value(true);
     ss << value << "\n";
@@ -81,22 +62,7 @@ void YamlWriter::binary(const binary_t& value) {
     at_value = false;
 }
 
-void YamlWriter::start_array() {
-    ss << "\n";
-    assert_at_value(true);
-    is_array.push(true);
-    at_value = false;
-}
-
-void YamlWriter::end_array() {
-    assert_is_array(true);
-    if (is_array.empty()) {
-        throw WriteException("Unknown error");
-    }
-    is_array.pop();
-}
-
-void YamlWriter::start_object() {
+void YamlWriter::object_begin() {
     if (!is_array.empty()) {
         if (is_array.top()) {
             first_key_in_array = true;
@@ -109,13 +75,48 @@ void YamlWriter::start_object() {
     at_value = false;
 }
 
-void YamlWriter::end_object() {
+void YamlWriter::object_end() {
     assert_is_array(false);
     if (is_array.empty()) {
         throw WriteException("Unknown error");
     }
     is_array.pop();
 }
+
+void YamlWriter::object_element(const std::string& key) {
+    assert_at_value(false);
+    assert_is_array(false);
+    if (!first_key_in_array) {
+        indent();
+    }
+    first_key_in_array = false;
+    ss << key << ": ";
+    at_value = true;
+}
+
+void YamlWriter::array_begin() {
+    ss << "\n";
+    assert_at_value(true);
+    is_array.push(true);
+    at_value = false;
+}
+
+void YamlWriter::array_end() {
+    assert_is_array(true);
+    if (is_array.empty()) {
+        throw WriteException("Unknown error");
+    }
+    is_array.pop();
+}
+
+void YamlWriter::array_element() {
+    assert_at_value(false);
+    assert_is_array(true);
+    indent();
+    ss << "- ";
+    at_value = true;
+}
+
 
 std::string YamlWriter::result() {
     if (!is_array.empty()) {

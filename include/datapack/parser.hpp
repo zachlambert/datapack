@@ -5,6 +5,19 @@
 
 namespace datapack {
 
+class ParseException: public std::exception {
+public:
+    ParseException(const std::string& message):
+        message(message)
+    {}
+
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+
 class Parser {
 public:
     virtual std::optional<Token> next() = 0;

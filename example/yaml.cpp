@@ -4,37 +4,37 @@
 int main() {
     datapack::YamlWriter writer;
 
-    writer.start_object();
-    writer.key("a");
+    writer.object_begin();
+    writer.object_element("a");
     writer.i32(12);
-    writer.key("b");
+    writer.object_element("b");
     writer.i32(24);
-    writer.key("c");
+    writer.object_element("c");
     {
-        writer.start_object();
-        writer.key("foo");
+        writer.object_begin();
+        writer.object_element("foo");
         {
-            writer.start_array();
-            writer.next();
+            writer.array_begin();
+            writer.array_element();
             writer.f64(1.23);
-            writer.next();
+            writer.array_element();
             {
-                writer.start_object();
-                writer.key("one");
+                writer.object_begin();
+                writer.object_element("one");
                 writer.string("two");
-                writer.key("three");
+                writer.object_element("three");
                 writer.string("four");
-                writer.end_object();
+                writer.object_end();
             }
-            writer.next();
+            writer.array_element();
             writer.f64(1.23);
-            writer.end_array();
+            writer.array_end();
         }
-        writer.key("bar");
+        writer.object_element("bar");
         writer.boolean(true);
-        writer.end_object();
+        writer.object_end();
     }
-    writer.end_object();
+    writer.object_end();
 
     std::cout << writer.result();
     return 0;

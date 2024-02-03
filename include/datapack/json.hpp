@@ -41,4 +41,23 @@ private:
     bool first_key_in_array;
 };
 
+class JsonParser: public Parser {
+public:
+    JsonParser(const std::string& source);
+
+    std::optional<Token> next() override;
+
+private:
+    static constexpr int EXPECT_KEY = 1 << 0;
+    static constexpr int EXPECT_VALUE = 1 << 1;
+    static constexpr int EXPECT_END = 1 << 2;
+    static constexpr int EXPECT_NEXT = 1 << 3;
+    static constexpr int IS_OBJECT = 1 << 4;
+    static constexpr int IS_ARRAY = 1 << 5;
+
+    std::string_view source;
+    std::size_t pos;
+    std::stack<int> states;
+};
+
 } // namespace datpack

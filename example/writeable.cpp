@@ -7,11 +7,12 @@ struct Foo: public datapack::Writeable {
     int a;
     int b;
     void write(datapack::Writer& writer) const override {
-        writer
-            .start_object()
-            .key("a").value(a)
-            .key("b").value(b)
-            .end_object();
+        writer.object_begin();
+        writer.object_element("a");
+        writer.value(a);
+        writer.object_element("b");
+        writer.value(b);
+        writer.object_end();
     }
 };
 
@@ -21,10 +22,12 @@ struct Bar {
 };
 
 void write(datapack::Writer& writer, const Bar& value) {
-    writer.start_object();
-    writer.key("x").value(value.x);
-    writer.key("y").value(value.y);
-    writer.end_object();
+    writer.object_begin();
+    writer.object_element("x");
+    writer.value(value.x);
+    writer.object_element("y");
+    writer.value(value.y);
+    writer.object_end();
 }
 
 struct Both: public datapack::Writeable {
@@ -32,11 +35,12 @@ struct Both: public datapack::Writeable {
     Bar bar;
 
     void write(datapack::Writer& writer) const override {
-        writer.
-            start_object()
-                .key("foo").value(foo)
-                .key("bar").value(bar)
-            .end_object();
+        writer.object_begin();
+        writer.object_element("foo");
+        writer.value(foo);
+        writer.object_element("bar");
+        writer.value(bar);
+        writer.object_end();
     }
 };
 
@@ -46,13 +50,21 @@ int main() {
     value.foo.b = 10;
     value.bar.x = 15;
     value.bar.y = 20;
-    std::cout << datapack::YamlWriter().value(value).result();
+    {
+        datapack::YamlWriter writer;
+        writer.value(value);
+        std::cout << writer.result();
+    }
 
     std::vector<Both> values;
     for (std::size_t i = 0; i < 4; i++) {
         values.push_back(value);
     }
-    std::cout << datapack::YamlWriter().value(values).result();
+    {
+        datapack::YamlWriter writer;
+        writer.value(values);
+        std::cout << writer.result();
+    }
 
     return 0;
 }

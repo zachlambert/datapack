@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <type_traits>
 #include "datapack/binary.hpp"
 
 
@@ -32,8 +33,6 @@ concept writeable = requires(const T& value, Writer& writer)
     { write(writer, value) };
 };
 
-// Note: Child class T can return T& instead of Writer& on the overriden
-// functions
 class Writer {
 public:
     virtual void i32(int value) = 0;

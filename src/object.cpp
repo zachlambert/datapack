@@ -95,76 +95,82 @@ ObjectReader::ObjectReader(const Object& object):
     pos(0)
 {}
 
-void ObjectReader::i32(int& value) {
+int ObjectReader::i32() {
     if (pos >= object.tokens.size()) {
         throw ReadException("Reached end of input");
     }
+    const auto& token = object.tokens[pos];
+    pos++;
     try {
-        value = std::get<int>(std::get<Primitive>(object.tokens[pos]));
+        return std::get<int>(std::get<Primitive>(token));
     } catch (const std::bad_optional_access&) {
         throw ReadException("Incorrect token");
     }
-    pos++;
 }
 
-void ObjectReader::i64(long& value) {
+long ObjectReader::i64() {
     if (pos >= object.tokens.size()) {
         throw ReadException("Reached end of input");
     }
+    const auto& token = object.tokens[pos];
+    pos++;
     try {
-        value = std::get<long>(std::get<Primitive>(object.tokens[pos]));
+        return std::get<long>(std::get<Primitive>(token));
     } catch (const std::bad_optional_access&) {
         throw ReadException("Incorrect token");
     }
-    pos++;
 }
 
-void ObjectReader::f32(float& value) {
+float ObjectReader::f32() {
     if (pos >= object.tokens.size()) {
         throw ReadException("Reached end of input");
     }
+    const auto& token = object.tokens[pos];
+    pos++;
     try {
-        value = std::get<float>(std::get<Primitive>(object.tokens[pos]));
+        return std::get<float>(std::get<Primitive>(token));
     } catch (const std::bad_optional_access&) {
         throw ReadException("Incorrect token");
     }
-    pos++;
 }
 
-void ObjectReader::f64(double& value) {
+double ObjectReader::f64() {
     if (pos >= object.tokens.size()) {
         throw ReadException("Reached end of input");
     }
+    const auto& token = object.tokens[pos];
+    pos++;
     try {
-        value = std::get<double>(std::get<Primitive>(object.tokens[pos]));
+        return std::get<double>(std::get<Primitive>(token));
     } catch (const std::bad_optional_access&) {
         throw ReadException("Incorrect token");
     }
-    pos++;
 }
 
-void ObjectReader::string(std::string& value) {
+std::string ObjectReader::string() {
     if (pos >= object.tokens.size()) {
         throw ReadException("Reached end of input");
     }
+    const auto& token = object.tokens[pos];
+    pos++;
     try {
-        value = std::get<std::string>(std::get<Primitive>(object.tokens[pos]));
+        return std::get<std::string>(std::get<Primitive>(token));
     } catch (const std::bad_optional_access&) {
         throw ReadException("Incorrect token");
     }
-    pos++;
 }
 
-void ObjectReader::boolean(bool& value) {
+bool ObjectReader::boolean() {
     if (pos >= object.tokens.size()) {
         throw ReadException("Reached end of input");
     }
+    const auto& token = object.tokens[pos];
+    pos++;
     try {
-        value = std::get<bool>(std::get<Primitive>(object.tokens[pos]));
+        return std::get<bool>(std::get<Primitive>(token));
     } catch (const std::bad_optional_access&) {
         throw ReadException("Incorrect token");
     }
-    pos++;
 }
 
 bool ObjectReader::null() {
@@ -183,16 +189,16 @@ bool ObjectReader::null() {
     return false; // Unreachable
 }
 
-void ObjectReader::binary(binary_t& value) {
+binary_t ObjectReader::binary() {
     if (pos >= object.tokens.size()) {
         throw ReadException("Reached end of input");
     }
+    const auto& token = object.tokens[pos];
     try {
-        value = std::get<binary_t>(std::get<Primitive>(object.tokens[pos]));
+        return std::get<binary_t>(std::get<Primitive>(token));
     } catch (const std::bad_optional_access&) {
         throw ReadException("Incorrect token");
     }
-    pos++;
 }
 
 

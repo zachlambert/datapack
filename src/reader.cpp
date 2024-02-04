@@ -3,31 +3,31 @@
 namespace datapack {
 
 void read(Reader& reader, int& value) {
-    reader.i32(value);
+    value = reader.i32();
 }
 
 void read(Reader& reader, long& value) {
-    reader.i64(value);
+    value = reader.i64();
 }
 
 void read(Reader& reader, float& value) {
-    reader.f32(value);
+    value = reader.f32();
 }
 
 void read(Reader& reader, double& value) {
-    reader.f64(value);
+    value = reader.f64();
 }
 
 void read(Reader& reader, std::string& value) {
-    reader.string(value);
+    value = reader.string();
 }
 
 void read(Reader& reader, bool& value) {
-    reader.boolean(value);
+    value = reader.boolean();
 }
 
 void read(Reader& reader, binary_t& value) {
-    reader.binary(value);
+    value = reader.binary();
 }
 
 void read(Reader& reader, Readable& value) {

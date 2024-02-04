@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stack>
 #include "datapack/writer.hpp"
+#include "datapack/reader.hpp"
 #include "datapack/parser.hpp"
 
 namespace datapack {
@@ -10,7 +11,9 @@ namespace datapack {
 class JsonWriter: public Writer {
 public:
     JsonWriter();
+    std::string result();
 
+private:
     void i32(int value) override;
     void i64(long value) override;
     void f32(float value) override;
@@ -28,9 +31,6 @@ public:
     void array_end() override;
     void array_element() override;
 
-    std::string result();
-
-private:
     void assert_is_array(bool expected);
     void assert_at_value(bool expected);
     void indent();
@@ -40,6 +40,13 @@ private:
     bool at_value;
     bool first_key_in_array;
 };
+
+template <writeable T>
+std::string to_json(const T& value) {
+    JsonWriter writer;
+    writer.value(value);
+    return writer.result();
+}
 
 class JsonParser: public Parser {
 public:

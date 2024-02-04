@@ -48,14 +48,14 @@ class ObjectReader: public Reader {
 public:
     ObjectReader(const Object& object);
 
-    void i32(int& value) override;
-    void i64(long& value) override;
-    void f32(float& value) override;
-    void f64(double& value) override;
-    void string(std::string& value) override;
-    void boolean(bool& value) override;
+    int i32() override;
+    long i64() override;
+    float f32() override;
+    double f64() override;
+    std::string string() override;
+    bool boolean() override;
     bool null() override;
-    void binary(binary_t& value) override;
+    binary_t binary() override;
 
     void object_begin() override;
     void object_end() override;

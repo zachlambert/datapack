@@ -35,14 +35,14 @@ concept readable = requires(T& value, Reader& reader) {
 // functions
 class Reader {
 public:
-    virtual void i32(int& value) = 0;
-    virtual void i64(long& value) = 0;
-    virtual void f32(float& value) = 0;
-    virtual void f64(double& value) = 0;
-    virtual void string(std::string& value) = 0;
-    virtual void boolean(bool& value) = 0;
+    virtual int i32() = 0;
+    virtual long i64() = 0;
+    virtual float f32() = 0;
+    virtual double f64() = 0;
+    virtual std::string string() = 0;
+    virtual bool boolean() = 0;
     virtual bool null() = 0;
-    virtual void binary(binary_t& value) = 0;
+    virtual binary_t binary() = 0;
 
     virtual void object_begin() = 0;
     virtual void object_end() = 0;
@@ -53,12 +53,23 @@ public:
     virtual bool array_element() = 0;
 
     template <readable T>
-    void value(T& value);
+    T value();
+    template <readable T>
+    T value_like(const T& _dummy);
 };
 
 template <readable T>
-void Reader::value(T& value) {
+T Reader::value() {
+    T value;
     read(*this, value);
+    return value;
+}
+
+template <readable T>
+T Reader::value_like(const T& _dummy) {
+    T value;
+    read(*this, value);
+    return value;
 }
 
 class Readable {
@@ -90,8 +101,7 @@ void read(Reader& reader, std::vector<T>& value) {
     value.clear();
     reader.array_begin();
     while (reader.array_element()) {
-        value.emplace_back();
-        reader.value(value.back());
+        value.push_back(reader.value<T>());
     }
     reader.array_end();
 }

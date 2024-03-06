@@ -41,13 +41,6 @@ private:
     bool first_key_in_array;
 };
 
-template <writeable T>
-std::string to_json(const T& value) {
-    JsonWriter writer;
-    writer.value(value);
-    return writer.result();
-}
-
 class JsonParser: public Parser {
 public:
     JsonParser(const std::string& source);
@@ -66,5 +59,12 @@ private:
     std::size_t pos;
     std::stack<int> states;
 };
+
+template <writeable T>
+std::string to_json(const T& value) {
+    JsonWriter writer;
+    writer.value(value);
+    return writer.result();
+}
 
 } // namespace datpack

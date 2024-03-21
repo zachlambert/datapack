@@ -15,7 +15,7 @@ endif()
 # Library
 
 add_library(datapack SHARED
-  src/json.cpp
+  src/datapack.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -25,7 +25,7 @@ target_include_directories(datapack PUBLIC
 
 # Additional targets
 
-if(BUILD_ADDITIONAL_TARGETS)
+if (BUILD_ADDITIONAL_TARGETS)
     FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
     include(GoogleTest)
     set(INSTALL_GTEST OFF)
@@ -34,9 +34,12 @@ if(BUILD_ADDITIONAL_TARGETS)
 
     enable_testing()
 
-    add_executable(test_json test/json.cpp)
-    target_link_libraries(test_json datapack GTest::gtest_main)
-    gtest_discover_tests(test_json)
+    # TODO
+endif()
+
+if (BUILD_ADDITIONAL_TARGETS)
+    add_executable(example_datapack example/datapack.cpp)
+    target_link_libraries(example_datapack datapack)
 endif()
 
 

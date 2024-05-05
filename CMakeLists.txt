@@ -15,7 +15,9 @@ endif()
 # Library
 
 add_library(datapack SHARED
-  src/datapack.cpp
+  src/binary.cpp
+  src/debug.cpp
+  src/random.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

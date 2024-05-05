@@ -1,4 +1,4 @@
-#include "datapack/random.h"
+#include "datapack/random.hpp"
 
 namespace datapack {
 

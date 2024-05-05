@@ -1,7 +1,7 @@
-#include "datapack/random.h"
-#include "datapack/binary.h"
-#include "datapack/debug.h"
-#include "datapack/variant.h"
+#include "datapack/random.hpp"
+#include "datapack/binary.hpp"
+#include "datapack/debug.hpp"
+#include "datapack/variant.hpp"
 #include <time.h>
 
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datapack/writer.h"
+#include "datapack/writer.hpp"
 #include <iostream>
 
 namespace datapack {

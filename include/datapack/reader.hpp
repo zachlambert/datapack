@@ -6,7 +6,7 @@
 #include <string>
 #include <variant>
 #include <stdexcept>
-#include "datapack/variant.h"
+#include "datapack/variant.hpp"
 
 
 namespace datapack {

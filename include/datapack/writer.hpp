@@ -5,7 +5,7 @@
 #include <concepts>
 #include <string>
 #include <variant>
-#include "datapack/variant.h"
+#include "datapack/variant.hpp"
 
 
 namespace datapack {

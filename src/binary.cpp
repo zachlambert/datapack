@@ -1,4 +1,4 @@
-#include "datapack/binary.h"
+#include "datapack/binary.hpp"
 
 
 namespace datapack {

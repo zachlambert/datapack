@@ -1,7 +1,7 @@
 #pragma once
 
-#include "datapack/reader.h"
-#include "datapack/writer.h"
+#include "datapack/reader.hpp"
+#include "datapack/writer.hpp"
 #include <vector>
 #include <cstring>
 #include <iostream>

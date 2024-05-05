@@ -1,6 +1,6 @@
 #pragma once
 
-#include <datapack/reader.h>
+#include <datapack/reader.hpp>
 
 namespace datapack {
 

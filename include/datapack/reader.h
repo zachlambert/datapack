@@ -56,10 +56,10 @@ public:
             variant_end();
         } else {
             if constexpr(sizeof...(Remainder) != 0) {
-                variant_value<Variant, Remainder...>();
+                variant_value<Variant, Remainder...>(value);
             }
             if constexpr(sizeof...(Remainder) == 0) {
-                error();
+                error("No matchin variant");
             }
         }
     }
@@ -70,8 +70,8 @@ public:
     }
 
     // Error handling
-    virtual void error() {
-        throw std::runtime_error("Error reading");
+    virtual void error(const std::string& error) {
+        throw std::runtime_error(error);
     }
 
     // Primitive

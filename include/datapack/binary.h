@@ -4,7 +4,8 @@
 #include "datapack/writer.h"
 #include <vector>
 #include <cstring>
-#include <iostream> // TEMP
+#include <iostream>
+
 
 namespace datapack {
 
@@ -17,7 +18,7 @@ public:
 
     void value_f64(double& value) override {
         if (pos + sizeof(double) > data.size()) {
-            error();
+            error("Input data is too short");
             return;
         }
         value = *((double*)&data[pos]);
@@ -26,7 +27,7 @@ public:
 
     void value_i32(int& value) override {
         if (pos + sizeof(int) > data.size()) {
-            error();
+            error("Input data is too short");
             return;
         }
         value = *((int*)&data[pos]);
@@ -35,7 +36,7 @@ public:
 
     bool optional_begin() override {
         if (pos + 1 > data.size()) {
-            error();
+            error("Input data is too short");
         }
         std::uint8_t flag = data[pos];
         pos++;
@@ -44,7 +45,7 @@ public:
         } else if (flag == 0x01) {
             return true;
         } else {
-            error();
+            error("Unexpected byte value for optional flag");
             return false;
         }
     }
@@ -56,7 +57,7 @@ public:
     bool variant_begin(const char* label) override {
         bool match = std::strncmp(label, (char*)&data[pos], data.size()-pos) == 0;
         if (match) {
-            pos += std::strlen(label);
+            pos += (std::strlen(label) + 1);
             return true;
         } else {
             return false;

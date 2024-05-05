@@ -45,12 +45,12 @@ public:
     }
 
     template <typename ...Args>
-    void value(std::variant<Args...>& value) {
+    void value(const std::variant<Args...>& value) {
         using Variant = std::variant<Args...>;
         std::visit([&](const auto& value) {
             using T = std::decay_t<decltype(value)>;
-            variant_begin(variant_label<Variant, T>);
-            value(value);
+            variant_begin(variant_label<Variant, T>());
+            this->value(value);
             variant_end();
         }, value);
     }

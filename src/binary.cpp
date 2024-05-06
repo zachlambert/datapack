@@ -37,7 +37,7 @@ bool BinaryReader::optional_begin() {
     }
 }
 
-bool BinaryReader::variant_begin(const char* label) {
+bool BinaryReader::variant_match(const char* label) {
     bool match = std::strncmp(label, (char*)&data[pos], data.size()-pos) == 0;
     if (match) {
         pos += (std::strlen(label) + 1);
@@ -63,7 +63,7 @@ void BinaryWriter::optional_begin(bool has_value) {
     data.push_back(has_value ? 0x01 : 0x00);
 }
 
-void BinaryWriter::variant_begin(const char* label) {
+void BinaryWriter::variant_match(const char* label) {
     std::size_t length = strlen(label) + 1;
     std::size_t pos = data.size();
     data.resize(pos + length);

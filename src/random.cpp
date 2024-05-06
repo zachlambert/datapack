@@ -2,6 +2,9 @@
 
 namespace datapack {
 
+RandomReader::RandomReader()
+{}
+
 void RandomReader::value_f64(double& value) {
     value = (double)rand() / RAND_MAX;
 }
@@ -18,13 +21,16 @@ void RandomReader::optional_end() {
 
 }
 
-bool RandomReader::variant_begin(const char* label) {
-    // Note: Can't give a meaningful result here without the full schema
-    return random() % 2;
+void RandomReader::variant_begin(const std::vector<std::string>& types) {
+    next_variant = types[random() % types.size()];
+}
+
+bool RandomReader::variant_match(const char* label) {
+    return next_variant == label;
 }
 
 void RandomReader::variant_end() {
-
+    next_variant = "";
 }
 
 void RandomReader::object_begin() {

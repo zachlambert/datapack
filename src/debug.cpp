@@ -23,7 +23,11 @@ void DebugWriter::optional_end() {
     depth--;
 }
 
-void DebugWriter::variant_begin(const char* label) {
+void DebugWriter::variant_begin() {
+
+}
+
+void DebugWriter::variant_match(const char* label) {
     os << "variant[" << label << "]: ";
 }
 

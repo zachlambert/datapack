@@ -2,7 +2,7 @@
 #include "datapack/binary.hpp"
 #include "datapack/debug.hpp"
 #include "datapack/variant.hpp"
-#include <time.h>
+#include <chrono>
 
 
 using namespace datapack;
@@ -44,6 +44,12 @@ const char* datapack::variant_label<Fruit, Apple>() { return "apple"; }
 template <>
 const char* datapack::variant_label<Fruit, Banana>() { return "banana"; }
 
+template <>
+const std::vector<std::string>& datapack::variant_labels<Fruit>() {
+    static const std::vector<std::string> data = { "apple", "banana" };
+    return data;
+}
+
 struct Foo: public WriteableObject, ReadableObject {
     double x;
     std::optional<double> y;
@@ -74,7 +80,7 @@ struct Foo: public WriteableObject, ReadableObject {
 };
 
 int main() {
-    srand(time(nullptr));
+    srand(std::chrono::high_resolution_clock::now().time_since_epoch().count() % std::numeric_limits<unsigned int>::max());
 
     Foo in, out;
 

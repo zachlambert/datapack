@@ -47,12 +47,13 @@ public:
     template <typename ...Args>
     void value(const std::variant<Args...>& value) {
         using Variant = std::variant<Args...>;
+        variant_begin();
         std::visit([&](const auto& value) {
             using T = std::decay_t<decltype(value)>;
-            variant_begin(variant_label<Variant, T>());
+            variant_match(variant_label<Variant, T>());
             this->value(value);
-            variant_end();
         }, value);
+        variant_end();
     }
 
     // Primitive
@@ -62,7 +63,8 @@ public:
     // Compound
     virtual void optional_begin(bool has_value) = 0;
     virtual void optional_end() = 0;
-    virtual void variant_begin(const char* label) = 0;
+    virtual void variant_begin() = 0;
+    virtual void variant_match(const char* label) = 0;
     virtual void variant_end() = 0;
 
     // Container

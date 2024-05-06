@@ -22,7 +22,8 @@ public:
     bool optional_begin() override;
     void optional_end() override {}
 
-    bool variant_begin(const char* label) override;
+    void variant_begin(const std::vector<std::string>& type) override {}
+    bool variant_match(const char* type) override;
     void variant_end() override {}
 
     void object_begin() override {}
@@ -45,7 +46,8 @@ public:
 
     void optional_begin(bool has_value) override;
     void optional_end() override {}
-    void variant_begin(const char* label) override;
+    void variant_begin() override {}
+    void variant_match(const char* type) override;
     void variant_end() override {}
 
     void object_begin() override {}

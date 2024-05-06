@@ -49,11 +49,10 @@ public:
 
     template <typename Variant, typename T, typename ...Remainder>
     void variant_value(Variant& value) {
-        if (variant_begin(variant_label<Variant, T>())) {
+        if (variant_match(variant_label<Variant, T>())) {
             T variant_value;
             this->value(variant_value);
             value = variant_value;
-            variant_end();
         } else {
             if constexpr(sizeof...(Remainder) != 0) {
                 variant_value<Variant, Remainder...>(value);
@@ -66,7 +65,10 @@ public:
 
     template <typename ...Args>
     void value(std::variant<Args...>& value) {
+        using Variant = std::variant<Args...>;
+        variant_begin(variant_labels<Variant>());
         variant_value<std::variant<Args...>, Args...>(value);
+        variant_end();
     }
 
     // Error handling
@@ -81,7 +83,8 @@ public:
     // Compound
     virtual bool optional_begin() = 0;
     virtual void optional_end() = 0;
-    virtual bool variant_begin(const char* type) = 0;
+    virtual void variant_begin(const std::vector<std::string>& types) = 0;
+    virtual bool variant_match(const char* type) = 0;
     virtual void variant_end() = 0;
 
     // Container

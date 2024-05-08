@@ -7,11 +7,15 @@
 
 using namespace datapack;
 
+template <bool Read>
+using Def = std::conditional_t<Read, Reader, Writer>;
+
 struct Apple: public WriteableObject, ReadableObject {
     int a;
     Apple():
         a(0)
     {}
+#if 0
     void write(Writer& writer) const override {
         writer.object_next("a");
         writer.value(a);
@@ -20,6 +24,15 @@ struct Apple: public WriteableObject, ReadableObject {
         reader.object_next("a");
         reader.value(a);
     }
+#else
+    template <bool Read>
+    void def(Def<Read>& def)  {
+        def.object_next("a");
+        def.value(a);
+    }
+    void read(Reader& reader) override { def<true>(reader); }
+    void write(Writer& writer) const override { const_cast<Apple*>(this)->def<false>(writer); }
+#endif
 };
 
 struct Banana: public WriteableObject, ReadableObject {
@@ -60,6 +73,7 @@ struct Foo: public WriteableObject, ReadableObject {
         fruit(Apple())
     {}
 
+#if 0
     void write(Writer& writer) const override {
         writer.object_next("x");
         writer.value(x);
@@ -77,6 +91,24 @@ struct Foo: public WriteableObject, ReadableObject {
         reader.object_next("fruit");
         reader.value(fruit);
     }
+#else
+    template <bool Read>
+    void def(Def<Read>& def) {
+        def.object_next("x");
+        def.value(x);
+        def.object_next("y");
+        def.value(y);
+        def.object_next("fruit");
+        def.value(fruit);
+    }
+
+    void write(Writer& writer) const override {
+        const_cast<Foo*>(this)->def<false>(writer);
+    }
+    void read(Reader& reader) override {
+        def<true>(reader);
+    }
+#endif
 };
 
 int main() {
@@ -84,6 +116,7 @@ int main() {
 
     Foo in, out;
 
+#if 0
     RandomReader random_reader;
     in.read(random_reader);
 
@@ -100,6 +133,7 @@ int main() {
     debug_writer.value(in);
     std::cout << "Out:\n";
     debug_writer.value(out);
+#endif
 
     return 0;
 }

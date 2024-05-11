@@ -24,6 +24,10 @@ public:
     virtual void write(Writer&) const = 0;
 };
 
+inline void write(Writer& writer, const Writeable& value) {
+    value.write(writer);
+}
+
 class Writer {
 public:
     template <writeable T>
@@ -31,8 +35,10 @@ public:
         write(*this, value);
     }
 
-    void value(const Writeable& value) {
-        value.write(*this);
+    template <writeable T>
+    void value(const char* key, T& value) {
+        object_next(key);
+        write(*this, value);
     }
 
     virtual void value_i32(std::int32_t value) = 0;
@@ -46,45 +52,24 @@ public:
     virtual void value_string(const std::string&) = 0;
     virtual void value_bool(bool value) = 0;
 
-    virtual void enumerate(int value, const std::vector<std::string>& labels) = 0;
-
-    template <annotated_enum T>
-    void value(const T& value) {
-        enumerate((int)value, variant_labels<T>());
-    }
+    virtual void enumerate(int value, const std::vector<const char*>& labels) = 0;
 
     virtual void optional(bool has_value);
 
-    template <writeable T>
-    void value(const std::optional<T>& value) {
-        optional(value.has_value());
-        if (value.has_value()) {
-            this->value(value.value());
-        }
-    }
-
-    virtual void variant(const char* label, const std::vector<std::string>& labels) = 0;
-
-    template <annotated_variant T>
-    void value(const T& value) {
-        variant(variant_to_label(value), variant_labels<T>());
-        std::visit([&](const auto& value){
-            this->value(value);
-        }, value);
-    }
+    virtual void variant(const char* label, const std::vector<const char*>& labels) = 0;
 
     virtual void binary(std::size_t size, const std::uint8_t* data) = 0;
 
     template <typename T>
     void value_binary(const std::vector<T>& value) {
-        static_assert(std::is_pod_v<T>);
-        binary(value.size() * sizeof(T), value.data());
+        static_assert(std::is_trivial_v<T>);
+        binary(value.size() * sizeof(T), (const std::uint8_t*)value.data());
     }
 
     template <typename T, std::size_t N>
     void value_binary(std::array<T, N>& value) {
-        static_assert(std::is_pod_v<T>);
-        binary(value.size() * sizeof(T), value.data());
+        static_assert(std::is_trivial_v<T>);
+        binary(value.size() * sizeof(T), (std::uint8_t*)value.data());
     }
 
     virtual void object_begin() = 0;
@@ -134,6 +119,27 @@ inline void write(Writer& writer, std::string value) {
 
 inline void write(Writer& writer, bool value) {
     writer.value_bool(value);
+}
+
+template <annotated_enum T>
+void write(Writer& writer, const T& value) {
+    writer.enumerate((int)value, enum_labels<T>());
+}
+
+template <writeable T>
+void write(Writer& writer, const std::optional<T>& value) {
+    writer.optional(value.has_value());
+    if (value.has_value()) {
+        writer.value(value.value());
+    }
+}
+
+template <annotated_variant T>
+void write(Writer& writer, const T& value) {
+    writer.variant(variant_to_label(value), variant_labels<T>());
+    std::visit([&](const auto& value){
+        writer.value(value);
+    }, value);
 }
 
 } // namespace datapack

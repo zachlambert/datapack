@@ -2,6 +2,8 @@
 
 namespace datapack {
 
+#if 0
+
 void DebugWriter::value_f64(const double& value) {
     os << value << "\n";
 }
@@ -56,5 +58,7 @@ void DebugWriter::indent() {
         os << "    ";
     }
 }
+
+#endif
 
 } // namespace datapack

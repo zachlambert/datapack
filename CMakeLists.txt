@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 
+add_definitions("-fconcepts-diagnostics-depth=2")
+
 set(BUILD_ADDITIONAL_TARGETS OFF)
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)
@@ -15,9 +17,9 @@ endif()
 # Library
 
 add_library(datapack SHARED
-  src/binary.cpp
-  src/debug.cpp
-  src/random.cpp
+    # src/binary.cpp
+    src/debug.cpp
+    # src/random.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -40,8 +42,12 @@ if (BUILD_ADDITIONAL_TARGETS)
 endif()
 
 if (BUILD_ADDITIONAL_TARGETS)
-    add_executable(example_datapack example/datapack.cpp)
-    target_link_libraries(example_datapack datapack)
+    add_library(example_common example/example.cpp)
+    target_include_directories(example_common PUBLIC example)
+    target_link_libraries(example_common datapack)
+
+    # add_executable(example_datapack example/datapack.cpp)
+    # target_link_libraries(example_datapack datapack example_common)
 endif()
 
 

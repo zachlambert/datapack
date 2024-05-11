@@ -24,6 +24,10 @@ public:
     virtual void read(Reader&) = 0;
 };
 
+inline void read(Reader& reader, Readable& value) {
+    value.read(reader);
+}
+
 class Reader {
 public:
     template <readable T>
@@ -31,8 +35,10 @@ public:
         read(*this, value);
     }
 
-    void value(Readable& value) {
-        value.read(*this);
+    template <readable T>
+    void value(const char* key, T& value) {
+        object_next(key);
+        this->value(value);
     }
 
     virtual void value_i32(std::int32_t& value) = 0;
@@ -46,43 +52,19 @@ public:
     virtual void value_string(std::string& value) = 0;
     virtual void value_bool(bool& value) = 0;
 
-    virtual void enumerate(int& value, const std::vector<std::string>& labels) = 0;
-
-    template <annotated_enum T>
-    void value(T& value) {
-        value = (T)enumerate(variant_labels<T>());
-    }
+    virtual int enumerate(const std::vector<const char*>& labels) = 0;
 
     virtual bool optional() = 0;
 
-    template <readable T>
-    void value(std::optional<T>& value) {
-        if (optional()) {
-            value.emplace();
-            this->value(value.value());
-        } else {
-            value = std::nullopt;
-        }
-    }
+    virtual const char* variant(const std::vector<const char*>& labels) = 0;
 
-    virtual const char* variant(const std::vector<std::string>& labels) = 0;
-
-    template <annotated_variant T>
-    void value(T& value) {
-        const char* label = variant(variant_labels<T>());
-        value = variant_from_label<T>(label);
-        std::visit([&](auto& value) {
-            this->value(value);
-        }, value);
-    }
-
-    virtual std::size_t binary_size() = 0;
+    virtual std::size_t binary_size(std::size_t expected_size=0) = 0;
     virtual void binary_data(std::uint8_t* data) = 0;
 
     template <typename T>
-    void value_binary(std::vector<T>& value) {
-        static_assert(std::is_pod_v<T>);
-        std::size_t size = binary_size();
+    void value_binary(std::vector<T>& value, std::size_t expected_size=0) {
+        static_assert(std::is_trivial_v<T>);
+        std::size_t size = binary_size(expected_size * sizeof(T));
         if (size % sizeof(T) != 0) {
             error("Incorrect binary size");
         }
@@ -92,7 +74,7 @@ public:
 
     template <typename T, std::size_t N>
     void value_binary(std::array<T, N>& value) {
-        static_assert(std::is_pod_v<T>);
+        static_assert(std::is_trivial_v<T>);
         std::size_t size = binary_size();
         if (value.size() * sizeof(T) != size) {
             error("Incorrect binary size");
@@ -152,6 +134,30 @@ inline void read(Reader& reader, std::string& value) {
 
 inline void read(Reader& reader, bool& value) {
     reader.value_bool(value);
+}
+
+template <annotated_enum T>
+void read(Reader& reader, T& value) {
+    value = (T)reader.enumerate(enum_labels<T>());
+}
+
+template <readable T>
+void read(Reader& reader, std::optional<T>& value) {
+    if (reader.optional()) {
+        value.emplace();
+        reader.value(value.value());
+    } else {
+        value = std::nullopt;
+    }
+}
+
+template <annotated_variant T>
+void read(Reader& reader, T& value) {
+    const char* label = variant(variant_labels<T>());
+    value = variant_from_label<T>(label);
+    std::visit([&](auto& value) {
+        reader.value(value);
+    }, value);
 }
 
 } // namespace datapack

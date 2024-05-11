@@ -5,6 +5,8 @@
 
 namespace datapack {
 
+#if 0
+
 class DebugWriter: public Writer {
 public:
     DebugWriter(std::ostream& os):
@@ -32,5 +34,7 @@ private:
     std::ostream& os;
     int depth;
 };
+
+#endif
 
 } // namespace datapack

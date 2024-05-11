@@ -1,10 +1,12 @@
 #pragma once
 
-#include <type_traits>
-#include <optional>
+#include <array>
 #include <concepts>
+#include <optional>
 #include <string>
+#include <type_traits>
 #include <variant>
+#include "datapack/enum.hpp"
 #include "datapack/variant.hpp"
 
 
@@ -17,7 +19,7 @@ concept writeable = requires(Writer& writer, const T& value) {
     { write(writer, value) };
 };
 
-class WriteableObject {
+class Writeable {
 public:
     virtual void write(Writer&) const = 0;
 };
@@ -29,67 +31,109 @@ public:
         write(*this, value);
     }
 
-    void value(const WriteableObject& value) {
-        object_begin();
+    void value(const Writeable& value) {
         value.write(*this);
-        object_end();
     }
+
+    virtual void value_i32(std::int32_t value) = 0;
+    virtual void value_i64(std::int64_t value) = 0;
+    virtual void value_u32(std::uint32_t value) = 0;
+    virtual void value_u64(std::uint64_t value) = 0;
+
+    virtual void value_f32(float value) = 0;
+    virtual void value_f64(double value) = 0;
+
+    virtual void value_string(const std::string&) = 0;
+    virtual void value_bool(bool value) = 0;
+
+    virtual void enumerate(int value, const std::vector<std::string>& labels) = 0;
+
+    template <annotated_enum T>
+    void value(const T& value) {
+        enumerate((int)value, variant_labels<T>());
+    }
+
+    virtual void optional(bool has_value);
 
     template <writeable T>
     void value(const std::optional<T>& value) {
-        optional_begin(value.has_value());
+        optional(value.has_value());
         if (value.has_value()) {
             this->value(value.value());
-            optional_end();
         }
     }
 
-    template <typename ...Args>
-    void value(const std::variant<Args...>& value) {
-        using Variant = std::variant<Args...>;
-        variant_begin();
-        std::visit([&](const auto& value) {
-            using T = std::decay_t<decltype(value)>;
-            variant_match(variant_label<Variant, T>());
+    virtual void variant(const char* label, const std::vector<std::string>& labels) = 0;
+
+    template <annotated_variant T>
+    void value(const T& value) {
+        variant(variant_to_label(value), variant_labels<T>());
+        std::visit([&](const auto& value){
             this->value(value);
         }, value);
-        variant_end();
     }
 
-    // Primitive
-    virtual void value_f64(const double& value) = 0;
-    virtual void value_i32(const int& value) = 0;
+    virtual void binary(std::size_t size, const std::uint8_t* data) = 0;
 
-    // Compound
-    virtual void optional_begin(bool has_value) = 0;
-    virtual void optional_end() = 0;
-    virtual void variant_begin() = 0;
-    virtual void variant_match(const char* label) = 0;
-    virtual void variant_end() = 0;
+    template <typename T>
+    void value_binary(const std::vector<T>& value) {
+        static_assert(std::is_pod_v<T>);
+        binary(value.size() * sizeof(T), value.data());
+    }
 
-    // Container
+    template <typename T, std::size_t N>
+    void value_binary(std::array<T, N>& value) {
+        static_assert(std::is_pod_v<T>);
+        binary(value.size() * sizeof(T), value.data());
+    }
+
     virtual void object_begin() = 0;
     virtual void object_end() = 0;
     virtual void object_next(const char* key) = 0;
 
-#if 0
-    virtual void array_begin() = 0;
-    virtual void array_end() = 0;
-    virtual bool array_next() = 0;
+    virtual void tuple_begin() = 0;
+    virtual void tuple_end() = 0;
+    virtual void tuple_next() = 0;
 
     virtual void map_begin() = 0;
     virtual void map_end() = 0;
-    virtual bool map_next(std::string& key) = 0;
-    virtual bool map_next(char* key, size_t& length, size_t capacity) = 0;
-#endif
+    virtual void map_next(const std::string& key) = 0;
+
+    virtual void list_begin() = 0;
+    virtual void list_end() = 0;
+    virtual void list_next() = 0;
 };
 
-inline void write(Writer& writer, const int& value) {
+inline void write(Writer& writer, std::int32_t value) {
     writer.value_i32(value);
 }
 
-inline void write(Writer& writer, const double& value) {
+inline void write(Writer& writer, std::int64_t value) {
+    writer.value_i64(value);
+}
+
+inline void write(Writer& writer, std::uint32_t value) {
+    writer.value_u32(value);
+}
+
+inline void write(Writer& writer, std::uint64_t value) {
+    writer.value_u64(value);
+}
+
+inline void write(Writer& writer, float value) {
+    writer.value_f32(value);
+}
+
+inline void write(Writer& writer, double value) {
     writer.value_f64(value);
+}
+
+inline void write(Writer& writer, std::string value) {
+    writer.value_string(value);
+}
+
+inline void write(Writer& writer, bool value) {
+    writer.value_bool(value);
 }
 
 } // namespace datapack

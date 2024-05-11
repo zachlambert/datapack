@@ -6,6 +6,7 @@
 #include <string>
 #include <type_traits>
 #include <variant>
+#include <unordered_map>
 #include "datapack/enum.hpp"
 #include "datapack/variant.hpp"
 
@@ -53,9 +54,7 @@ public:
     virtual void value_bool(bool value) = 0;
 
     virtual void enumerate(int value, const std::vector<const char*>& labels) = 0;
-
     virtual void optional(bool has_value);
-
     virtual void variant(const char* label, const std::vector<const char*>& labels) = 0;
 
     virtual void binary(std::size_t size, const std::uint8_t* data) = 0;
@@ -140,6 +139,49 @@ void write(Writer& writer, const T& value) {
     std::visit([&](const auto& value){
         writer.value(value);
     }, value);
+}
+
+template <writeable T>
+void write(Writer& writer, const std::vector<T>& value) {
+    writer.list_begin();
+    for (const auto& element: value) {
+        writer.list_next();
+        writer.value(element);
+    }
+    writer.list_end();
+}
+
+template <writeable T, std::size_t Size>
+void write(Writer& writer, const std::array<T, Size>& value) {
+    writer.tuple_begin();
+    for (const auto& element: value) {
+        writer.tuple_next();
+        writer.value(element);
+    }
+    writer.tuple_end();
+}
+
+template <writeable K, writeable V>
+void write(Writer& writer, const std::unordered_map<K, V>& value) {
+    if constexpr(std::is_same_v<K, std::string>) {
+        std::string key;
+        writer.map_begin();
+        for (const auto& pair: value) {
+            writer.map_next(pair.first);
+            writer.value(pair.second);
+        }
+        writer.map_end();
+    }
+    if constexpr(!std::is_same_v<K, std::string>) {
+        writer.list_begin();
+        for (const auto& pair: value) {
+            writer.tuple_begin();
+            writer.value(pair.first);
+            writer.value(pair.second);
+            writer.tuple_end();
+        }
+        writer.list_end();
+    }
 }
 
 } // namespace datapack

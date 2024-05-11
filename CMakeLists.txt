@@ -7,8 +7,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FetchContent)
 
-add_definitions("-fconcepts-diagnostics-depth=2")
-
 set(BUILD_ADDITIONAL_TARGETS OFF)
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)

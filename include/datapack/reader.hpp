@@ -7,6 +7,7 @@
 #include <variant>
 #include <array>
 #include <stdexcept>
+#include <unordered_map>
 #include "datapack/enum.hpp"
 #include "datapack/variant.hpp"
 
@@ -53,9 +54,7 @@ public:
     virtual void value_bool(bool& value) = 0;
 
     virtual int enumerate(const std::vector<const char*>& labels) = 0;
-
     virtual bool optional() = 0;
-
     virtual const char* variant(const std::vector<const char*>& labels) = 0;
 
     virtual std::size_t binary_size(std::size_t expected_size=0) = 0;
@@ -153,11 +152,58 @@ void read(Reader& reader, std::optional<T>& value) {
 
 template <annotated_variant T>
 void read(Reader& reader, T& value) {
-    const char* label = variant(variant_labels<T>());
+    const char* label = reader.variant(variant_labels<T>());
     value = variant_from_label<T>(label);
     std::visit([&](auto& value) {
         reader.value(value);
     }, value);
+}
+
+template <readable T>
+void read(Reader& reader, std::vector<T>& value) {
+    value.clear();
+    reader.list_begin();
+    while (reader.list_next()) {
+        value.emplace_back();
+        reader.value(value.back());
+    }
+    reader.list_end();
+}
+
+template <readable T, std::size_t Size>
+void read(Reader& reader, std::array<T, Size>& value) {
+    reader.tuple_begin();
+    for (auto& element: value) {
+        reader.tuple_next();
+        reader.value(element);
+    }
+    reader.tuple_end();
+}
+
+template <readable K, readable V>
+void read(Reader& reader, std::unordered_map<K, V>& value) {
+    if constexpr(std::is_same_v<K, std::string>) {
+        std::string key;
+        reader.map_begin();
+        while (reader.map_next(key)) {
+            V element;
+            reader.value(element);
+            value.emplace(key, element);
+        }
+        reader.map_end();
+    }
+    if constexpr(!std::is_same_v<K, std::string>) {
+        std::pair<K, V> pair;
+        reader.list_begin();
+        while (reader.list_next()) {
+            reader.tuple_begin();
+            reader.value(pair.first);
+            reader.value(pair.second);
+            reader.tuple_end();
+            value.insert(pair);
+        }
+        reader.list_end();
+    }
 }
 
 } // namespace datapack

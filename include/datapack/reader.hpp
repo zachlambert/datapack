@@ -197,7 +197,9 @@ void read(Reader& reader, std::unordered_map<K, V>& value) {
         reader.list_begin();
         while (reader.list_next()) {
             reader.tuple_begin();
+            reader.tuple_next();
             reader.value(pair.first);
+            reader.tuple_next();
             reader.value(pair.second);
             reader.tuple_end();
             value.insert(pair);

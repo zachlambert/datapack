@@ -2,50 +2,75 @@
 
 namespace datapack {
 
-#if 0
+DebugWriter::DebugWriter(std::ostream& os):
+    os(os),
+    depth(0)
+{}
 
-void DebugWriter::value_f64(const double& value) {
+void DebugWriter::value_i32(std::int32_t value) {
     os << value << "\n";
 }
 
-void DebugWriter::value_i32(const int& value) {
+void DebugWriter::value_i64(std::int64_t value) {
     os << value << "\n";
 }
 
-void DebugWriter::optional_begin(bool has_value) {
-    if (has_value) {
-        os << "optional:\n";
-        depth++;
-    } else {
-        os << "optional: null\n";
+void DebugWriter::value_u32(std::uint32_t value) {
+    os << value << "\n";
+}
+
+void DebugWriter::value_u64(std::uint64_t value) {
+    os << value << "\n";
+}
+
+
+void DebugWriter::value_f32(float value) {
+    os << value << "\n";
+}
+
+void DebugWriter::value_f64(double value) {
+    os << value << "\n";
+}
+
+
+void DebugWriter::value_string(const std::string& value) {
+    os << value << "\n";
+}
+
+void DebugWriter::value_bool(bool value) {
+    os << (value ? "true" : "false") << "\n";
+}
+
+
+void DebugWriter::enumerate(int value, const std::vector<const char*>& labels) {
+    os << "(enum, type=" << labels[value] << " )\n";
+}
+
+void DebugWriter::optional(bool has_value) {
+    if (!has_value) {
+        os << "null\n";
     }
 }
 
-void DebugWriter::optional_end() {
-    depth--;
+void DebugWriter::variant(const char* label, const std::vector<const char*>& labels) {
+    os << "(variant, type=" << label << " ) ";
 }
 
-void DebugWriter::variant_begin() {
 
+void DebugWriter::binary(std::size_t size, const std::uint8_t* data) {
+    os << "(binary, size=" << size << ")\n";
 }
 
-void DebugWriter::variant_match(const char* label) {
-    os << "variant[" << label << "]: ";
-}
-
-void DebugWriter::variant_end() {
-
-}
 
 void DebugWriter::object_begin() {
-    if (depth != 0) {
-        os << "\n";
-    }
+    os << "(object) {\n";
     depth++;
 }
 
 void DebugWriter::object_end() {
     depth--;
+    indent();
+    os << "}\n";
 }
 
 void DebugWriter::object_next(const char* key) {
@@ -53,12 +78,60 @@ void DebugWriter::object_next(const char* key) {
     os << key << ": ";
 }
 
+
+void DebugWriter::tuple_begin() {
+    os << "(tuple) [\n";
+    depth++;
+}
+
+void DebugWriter::tuple_end() {
+    depth--;
+    indent();
+    os << "]\n";
+}
+
+void DebugWriter::tuple_next() {
+    indent();
+}
+
+
+void DebugWriter::map_begin() {
+    os << "(map) {\n";
+    depth++;
+}
+
+void DebugWriter::map_end() {
+    depth--;
+    indent();
+    os << "}\n";
+}
+
+void DebugWriter::map_next(const std::string& key) {
+    indent();
+    os << key << ": ";
+}
+
+
+void DebugWriter::list_begin() {
+    os << "(list) [\n";
+    depth++;
+}
+
+void DebugWriter::list_end() {
+    depth--;
+    indent();
+    os << "]\n";
+}
+
+void DebugWriter::list_next() {
+    indent();
+}
+
+
 void DebugWriter::indent() {
     for (int i = 0; i < depth; i++) {
         os << "    ";
     }
 }
-
-#endif
 
 } // namespace datapack

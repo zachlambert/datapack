@@ -4,19 +4,29 @@
 
 
 void read(datapack::Reader& reader, Circle& value) {
-
+    reader.object_begin();
+    reader.value("radius", value.radius);
+    reader.object_end();
 }
 
 void write(datapack::Writer& writer, const Circle& value) {
-
+    writer.object_begin();
+    writer.value("radius", value.radius);
+    writer.object_end();
 }
 
 void read(datapack::Reader& reader, Rect& value) {
-
+    reader.object_begin();
+    reader.value("width", value.width);
+    reader.value("height", value.height);
+    reader.object_end();
 }
 
 void write(datapack::Writer& writer, const Rect& value) {
-
+    writer.object_begin();
+    writer.value("width", value.width);
+    writer.value("height", value.height);
+    writer.object_end();
 }
 
 std::vector<const char*> datapack::enum_details<Physics>::labels = {

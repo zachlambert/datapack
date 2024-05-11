@@ -54,7 +54,7 @@ public:
     virtual void value_bool(bool value) = 0;
 
     virtual void enumerate(int value, const std::vector<const char*>& labels) = 0;
-    virtual void optional(bool has_value);
+    virtual void optional(bool has_value) = 0;
     virtual void variant(const char* label, const std::vector<const char*>& labels) = 0;
 
     virtual void binary(std::size_t size, const std::uint8_t* data) = 0;
@@ -175,8 +175,11 @@ void write(Writer& writer, const std::unordered_map<K, V>& value) {
     if constexpr(!std::is_same_v<K, std::string>) {
         writer.list_begin();
         for (const auto& pair: value) {
+            writer.list_next();
             writer.tuple_begin();
+            writer.tuple_next();
             writer.value(pair.first);
+            writer.tuple_next();
             writer.value(pair.second);
             writer.tuple_end();
         }

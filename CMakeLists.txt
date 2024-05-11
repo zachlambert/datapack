@@ -44,8 +44,8 @@ if (BUILD_ADDITIONAL_TARGETS)
     target_include_directories(example_common PUBLIC example)
     target_link_libraries(example_common datapack)
 
-    # add_executable(example_datapack example/datapack.cpp)
-    # target_link_libraries(example_datapack datapack example_common)
+    add_executable(example_debug_writer example/debug_writer.cpp)
+    target_link_libraries(example_debug_writer datapack example_common)
 endif()
 
 

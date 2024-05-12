@@ -15,9 +15,9 @@ endif()
 # Library
 
 add_library(datapack SHARED
+    src/util/debug.cpp
+    src/util/random.cpp
     # src/binary.cpp
-    src/debug.cpp
-    # src/random.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -44,8 +44,11 @@ if (BUILD_ADDITIONAL_TARGETS)
     target_include_directories(example_common PUBLIC example)
     target_link_libraries(example_common datapack)
 
-    add_executable(example_debug_writer example/debug_writer.cpp)
-    target_link_libraries(example_debug_writer datapack example_common)
+    add_executable(example_debug example/debug.cpp)
+    target_link_libraries(example_debug datapack example_common)
+
+    add_executable(example_random example/random.cpp)
+    target_link_libraries(example_random datapack example_common)
 endif()
 
 

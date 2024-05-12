@@ -1,4 +1,4 @@
-#include "datapack/debug.hpp"
+#include "datapack/util/debug.hpp"
 
 namespace datapack {
 

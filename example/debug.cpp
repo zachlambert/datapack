@@ -1,5 +1,5 @@
 #include "example.hpp"
-#include <datapack/debug.hpp>
+#include <datapack/util/debug.hpp>
 
 int main() {
     Entity value = Entity::example();

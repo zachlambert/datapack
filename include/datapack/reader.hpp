@@ -71,7 +71,7 @@ public:
 
     virtual void tuple_begin() = 0;
     virtual void tuple_end() = 0;
-    virtual bool tuple_next() = 0;
+    virtual void tuple_next() = 0;
 
     virtual void map_begin() = 0;
     virtual void map_end() = 0;

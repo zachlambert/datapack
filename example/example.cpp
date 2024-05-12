@@ -1,6 +1,8 @@
 #include "example.hpp"
+
 #include <cstring>
 #include <cmath>
+#include <datapack/common/common.hpp>
 
 
 void read(datapack::Reader& reader, Circle& value) {
@@ -141,7 +143,7 @@ void Entity::read(datapack::Reader& reader) {
     reader.value("physics", physics);
     reader.value("hitbox", hitbox);
     reader.value("sprite", sprite);
-    // reader.value("items", items);
+    reader.value("items", items);
     reader.value("assigned_items", assigned_items);
     reader.value("properties", properties);
     reader.value("flags", flags);
@@ -158,7 +160,7 @@ void Entity::write(datapack::Writer& writer) const {
     writer.value("physics", physics);
     writer.value("hitbox", hitbox);
     writer.value("sprite", sprite);
-    // writer.value("items", items);
+    writer.value("items", items);
     writer.value("assigned_items", assigned_items);
     writer.value("properties", properties);
     writer.value("flags", flags);

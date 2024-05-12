@@ -1,15 +1,10 @@
 #pragma once
 
-#include <type_traits>
-#include <optional>
 #include <concepts>
 #include <string>
-#include <variant>
-#include <array>
 #include <stdexcept>
-#include <unordered_map>
-#include "datapack/enum.hpp"
-#include "datapack/variant.hpp"
+#include <vector>
+
 
 namespace datapack {
 
@@ -18,6 +13,11 @@ class Reader;
 template <typename T>
 concept readable = requires(Reader& reader, T& value) {
     { read(reader, value) };
+};
+
+template <typename T>
+concept readable_binary = requires(Reader& reader, T& value, std::size_t expected_size) {
+    { read_binary(reader, value, expected_size) };
 };
 
 class Readable {
@@ -60,25 +60,9 @@ public:
     virtual std::size_t binary_size(std::size_t expected_size=0) = 0;
     virtual void binary_data(std::uint8_t* data) = 0;
 
-    template <typename T>
-    void value_binary(std::vector<T>& value, std::size_t expected_size=0) {
-        static_assert(std::is_trivial_v<T>);
-        std::size_t size = binary_size(expected_size * sizeof(T));
-        if (size % sizeof(T) != 0) {
-            error("Incorrect binary size");
-        }
-        value.resize(size / sizeof(T));
-        binary_data((std::uint8_t*)value.data());
-    }
-
-    template <typename T, std::size_t N>
-    void value_binary(std::array<T, N>& value) {
-        static_assert(std::is_trivial_v<T>);
-        std::size_t size = binary_size();
-        if (value.size() * sizeof(T) != size) {
-            error("Incorrect binary size");
-        }
-        binary_data((std::uint8_t*)value.data());
+    template <readable_binary T>
+    void value_binary(T& value, std::size_t expected_size = 0) {
+        read_binary(*this, value, expected_size);
     }
 
     virtual void object_begin() = 0;
@@ -97,115 +81,9 @@ public:
     virtual void list_end() = 0;
     virtual bool list_next() = 0;
 
-protected:
-    virtual void error(const std::string& error) {
+    void error(const std::string& error) {
         throw std::runtime_error(error);
     }
 };
-
-inline void read(Reader& reader, std::int32_t& value) {
-    reader.value_i32(value);
-}
-
-inline void read(Reader& reader, std::int64_t& value) {
-    reader.value_i64(value);
-}
-
-inline void read(Reader& reader, std::uint32_t& value) {
-    reader.value_u32(value);
-}
-
-inline void read(Reader& reader, std::uint64_t& value) {
-    reader.value_u64(value);
-}
-
-inline void read(Reader& reader, float& value) {
-    reader.value_f32(value);
-}
-
-inline void read(Reader& reader, double& value) {
-    reader.value_f64(value);
-}
-
-inline void read(Reader& reader, std::string& value) {
-    reader.value_string(value);
-}
-
-inline void read(Reader& reader, bool& value) {
-    reader.value_bool(value);
-}
-
-template <annotated_enum T>
-void read(Reader& reader, T& value) {
-    value = (T)reader.enumerate(enum_labels<T>());
-}
-
-template <readable T>
-void read(Reader& reader, std::optional<T>& value) {
-    if (reader.optional()) {
-        value.emplace();
-        reader.value(value.value());
-    } else {
-        value = std::nullopt;
-    }
-}
-
-template <annotated_variant T>
-void read(Reader& reader, T& value) {
-    const char* label = reader.variant(variant_labels<T>());
-    value = variant_from_label<T>(label);
-    std::visit([&](auto& value) {
-        reader.value(value);
-    }, value);
-}
-
-template <readable T>
-void read(Reader& reader, std::vector<T>& value) {
-    value.clear();
-    reader.list_begin();
-    while (reader.list_next()) {
-        value.emplace_back();
-        reader.value(value.back());
-    }
-    reader.list_end();
-}
-
-template <readable T, std::size_t Size>
-void read(Reader& reader, std::array<T, Size>& value) {
-    reader.tuple_begin();
-    for (auto& element: value) {
-        reader.tuple_next();
-        reader.value(element);
-    }
-    reader.tuple_end();
-}
-
-template <readable K, readable V>
-void read(Reader& reader, std::unordered_map<K, V>& value) {
-    if constexpr(std::is_same_v<K, std::string>) {
-        std::string key;
-        reader.map_begin();
-        while (reader.map_next(key)) {
-            V element;
-            reader.value(element);
-            value.emplace(key, element);
-        }
-        reader.map_end();
-    }
-    if constexpr(!std::is_same_v<K, std::string>) {
-        std::pair<K, V> pair;
-        reader.list_begin();
-        while (reader.list_next()) {
-            reader.tuple_begin();
-            reader.tuple_next();
-            reader.value(pair.first);
-            reader.tuple_next();
-            reader.value(pair.second);
-            reader.tuple_end();
-            value.insert(pair);
-        }
-        reader.list_end();
-    }
-}
 
 } // namespace datapack

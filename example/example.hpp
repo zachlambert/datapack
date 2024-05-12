@@ -1,8 +1,14 @@
 #pragma once
 
+#include <array>
+#include <optional>
+#include <unordered_map>
+
 #include <datapack/reader.hpp>
 #include <datapack/writer.hpp>
-#include <unordered_map>
+#include <datapack/labelled_enum.hpp>
+#include <datapack/labelled_variant.hpp>
+
 
 struct Circle {
     double radius;
@@ -33,7 +39,7 @@ struct datapack::enum_details<Physics> {
     static const char* to_label(const Physics& value);
     static Physics from_label(const char* label);
 };
-static_assert(datapack::annotated_enum<Physics>);
+static_assert(datapack::labelled_enum<Physics>);
 
 using Shape = std::variant<Circle, Rect>;
 
@@ -43,7 +49,7 @@ struct datapack::variant_details<Shape> {
     static const char* to_label(const Shape& value);
     static Shape from_label(const char* label);
 };
-static_assert(datapack::annotated_variant<Shape>);
+static_assert(datapack::labelled_variant<Shape>);
 
 struct Pose {
     double x;

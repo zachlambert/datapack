@@ -3,6 +3,7 @@
 #include "datapack/labelled_variant.hpp"
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
+#include "datapack/schema.hpp"
 
 
 namespace datapack {
@@ -23,5 +24,11 @@ void write(Writer& writer, const T& value) {
         writer.value(value);
     }, value);
 }
+
+template <labelled_variant T>
+void define(Definer& definer, const T& value) {
+    definer.variant(variant_labels<T>());
+}
+
 
 } // namespace datapack

@@ -3,6 +3,7 @@
 #include <array>
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
+#include "datapack/schema.hpp"
 
 
 namespace datapack {
@@ -27,6 +28,16 @@ void write(Writer& writer, const std::array<T, Size>& value) {
     writer.tuple_end();
 }
 
+template <defined T, std::size_t Size>
+void define(Definer& definer, const std::array<T, Size>& value) {
+    definer.tuple_begin();
+    for (const auto& element: value) {
+        definer.tuple_next();
+        definer.value(element);
+    }
+    definer.tuple_end();
+}
+
 template <typename T, std::size_t N>
 void read_binary(Reader& reader, std::array<T, N>& value, std::size_t expected_size) {
     if (value.size() != expected_size) {
@@ -41,9 +52,16 @@ void read_binary(Reader& reader, std::array<T, N>& value, std::size_t expected_s
 }
 
 template <typename T, std::size_t N>
-void write_binary(Writer& writer, std::array<T, N>& value) {
+void write_binary(Writer& writer, const std::array<T, N>& value) {
     static_assert(std::is_trivial_v<T>);
-    writer.binary(value.size() * sizeof(T), (std::uint8_t*)value.data());
+    writer.binary(value.size() * sizeof(T));
+}
+
+template <typename T, std::size_t N>
+void define_binary(Definer& definer, const std::array<T, N>& value) {
+    static_assert(std::is_trivial_v<T>);
+    definer.binary(value.size() * sizeof(T));
+    definer.value(T());
 }
 
 } // namespace datapack

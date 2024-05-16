@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
+#include "datapack/schema.hpp"
 
 
 namespace datapack {
@@ -58,6 +59,21 @@ void write(Writer& writer, const std::unordered_map<K, V>& value) {
             writer.tuple_end();
         }
         writer.list_end();
+    }
+}
+
+template <defined K, defined V>
+void define(Definer& definer, const std::unordered_map<K, V>& value) {
+    if constexpr(std::is_same_v<K, std::string>) {
+        definer.map();
+        definer.value(V());
+    }
+    if constexpr(!std::is_same_v<K, std::string>) {
+        definer.list();
+        definer.tuple_begin();
+        definer.value(K());
+        definer.value(V());
+        definer.tuple_end();
     }
 }
 

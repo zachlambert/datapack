@@ -2,6 +2,7 @@
 
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
+#include "datapack/schema.hpp"
 
 
 namespace datapack {
@@ -68,6 +69,38 @@ inline void write(Writer& writer, std::string value) {
 
 inline void write(Writer& writer, bool value) {
     writer.value_bool(value);
+}
+
+inline void define(Definer& definer, std::int32_t value) {
+    definer.value_primitive(value);
+}
+
+inline void define(Definer& definer, std::int64_t value) {
+    definer.value_primitive(value);
+}
+
+inline void define(Definer& definer, std::uint32_t value) {
+    definer.value_primitive(value);
+}
+
+inline void define(Definer& definer, std::uint64_t value) {
+    definer.value_primitive(value);
+}
+
+inline void define(Definer& definer, float value) {
+    definer.value_primitive(value);
+}
+
+inline void define(Definer& definer, double value) {
+    definer.value_primitive(value);
+}
+
+inline void define(Definer& definer, std::string value) {
+    definer.value_primitive(value);
+}
+
+inline void define(Definer& definer, bool value) {
+    definer.value_primitive(value);
 }
 
 } // namespace datapack

@@ -56,7 +56,7 @@ struct Sprite {
 };
 DATAPACK_VISITOR_FUNCS_DEF(Sprite)
 
-struct Entity : public datapack::Readable, public datapack::Writeable {
+struct Entity : public datapack::Visitor {
     int index;        // Primitives
     std::string name;
     bool enabled;
@@ -71,5 +71,5 @@ struct Entity : public datapack::Readable, public datapack::Writeable {
 
     static Entity example();
 
-    DATAPACK_VISITOR_METHODS_DEF()
+    DATAPACK_VISITOR_METHODS_DEF(Entity)
 };

@@ -3,6 +3,7 @@
 #include <vector>
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
+#include "datapack/schema.hpp"
 
 
 namespace datapack {
@@ -28,6 +29,12 @@ void write(Writer& writer, const std::vector<T>& value) {
     writer.list_end();
 }
 
+template <defined T>
+void define(Definer& definer, const std::vector<T>& value) {
+    definer.list();
+    definer.value(T());
+}
+
 template <typename T>
 void read_binary(Reader& reader, std::vector<T>& value, std::size_t expected_size) {
     static_assert(std::is_trivial_v<T>);
@@ -43,6 +50,13 @@ template <typename T>
 void write_binary(Writer& writer, const std::vector<T>& value) {
     static_assert(std::is_trivial_v<T>);
     writer.binary(value.size() * sizeof(T), (const std::uint8_t*)value.data());
+}
+
+template <typename T>
+void define_binary(Definer& definer, const std::vector<T>& value) {
+    static_assert(std::is_trivial_v<T>);
+    definer.binary();
+    definer.value(T());
 }
 
 } // namespace datapack

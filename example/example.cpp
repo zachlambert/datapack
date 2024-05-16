@@ -5,27 +5,22 @@
 #include <datapack/common/common.hpp>
 
 
-template <typename Handle>
-void readwrite(Handle& handle, Circle& value) {
-    handle.object_begin();
-    handle.value("radius", value.radius);
-    handle.object_end();
+template <typename V>
+void visit(V& visitor, Circle& value) {
+    visitor.object_begin();
+    visitor.value("radius", value.radius);
+    visitor.object_end();
 }
-readwritefuncimpl(Circle)
+DATAPACK_VISITOR_FUNCS_IMPL(Circle)
 
-void read(datapack::Reader& reader, Rect& value) {
-    reader.object_begin();
-    reader.value("width", value.width);
-    reader.value("height", value.height);
-    reader.object_end();
+template <typename V>
+void visit(V& visitor, Rect& value) {
+    visitor.object_begin();
+    visitor.value("width", value.width);
+    visitor.value("height", value.height);
+    visitor.object_end();
 }
-
-void write(datapack::Writer& writer, const Rect& value) {
-    writer.object_begin();
-    writer.value("width", value.width);
-    writer.value("height", value.height);
-    writer.object_end();
-}
+DATAPACK_VISITOR_FUNCS_IMPL(Rect)
 
 std::vector<const char*> datapack::enum_details<Physics>::labels = {
     "dynamic", "kinematic", "static"
@@ -82,72 +77,57 @@ Shape datapack::variant_details<Shape>::from_label(const char* label) {
     return Circle();
 }
 
-void read(datapack::Reader& reader, Pose& value) {
-    reader.object_begin();
-    reader.value("x", value.x);
-    reader.value("y", value.y);
-    reader.value("angle", value.angle);
-    reader.object_end();
+template <typename V>
+void visit(V& visitor, Pose& value) {
+    visitor.object_begin();
+    visitor.value("x", value.x);
+    visitor.value("y", value.y);
+    visitor.value("angle", value.angle);
+    visitor.object_end();
 }
+DATAPACK_VISITOR_FUNCS_IMPL(Pose)
 
-void write(datapack::Writer& writer, const Pose& value) {
-    writer.object_begin();
-    writer.value("x", value.x);
-    writer.value("y", value.y);
-    writer.value("angle", value.angle);
-    writer.object_end();
+template <typename V>
+void visit(V& visitor, Item& value) {
+    visitor.object_begin();
+    visitor.value("count", value.count);
+    visitor.value("name", value.name);
+    visitor.object_end();
 }
+DATAPACK_VISITOR_FUNCS_IMPL(Item)
 
-void read(datapack::Reader& reader, Item& value) {
-    reader.object_begin();
-    reader.value("count", value.count);
-    reader.value("name", value.name);
-    reader.object_end();
+template <typename V>
+void visit(V& visitor, Sprite& value) {
+    visitor.object_begin();
+    visitor.value("width", value.width);
+    visitor.value("height", value.height);
+    if constexpr(std::is_same_v<V, datapack::Reader>) {
+        visitor.value_binary("data", value.data, value.width * value.height);
+    }
+    if constexpr(std::is_same_v<V, datapack::Writer>) {
+        visitor.value_binary("data", value.data);
+    }
+    visitor.object_end();
 }
+DATAPACK_VISITOR_FUNCS_IMPL(Sprite)
 
-void write(datapack::Writer& writer, const Item& value) {
-    writer.object_begin();
-    writer.value("count", value.count);
-    writer.value("name", value.name);
-    writer.object_end();
+template <typename V>
+void Entity::visit(V& visitor) {
+    visitor.object_begin();
+    visitor.value("index", index);
+    visitor.value("name", name);
+    visitor.value("enabled", enabled);
+    visitor.value("pose", pose);
+    visitor.value("physics", physics);
+    visitor.value("hitbox", hitbox);
+    visitor.value("sprite", sprite);
+    visitor.value("items", items);
+    visitor.value("assigned_items", assigned_items);
+    visitor.value("properties", properties);
+    visitor.value("flags", flags);
+    visitor.object_end();
 }
-
-void read(datapack::Reader& reader, Sprite& value) {
-    reader.object_begin();
-    reader.value("width", value.width);
-    reader.value("height", value.height);
-    reader.object_next("data");
-    reader.value_binary(value.data, value.width * value.height);
-    reader.object_end();
-}
-
-void write(datapack::Writer& writer, const Sprite& value) {
-    writer.object_begin();
-    writer.value("width", value.width);
-    writer.value("height", value.height);
-    writer.object_next("data");
-    writer.value_binary(value.data);
-    writer.object_end();
-}
-
-template <typename T>
-void Entity::readwrite(T& reader) {
-    reader.object_begin();
-    reader.value("index", index);
-    reader.value("name", name);
-    reader.value("enabled", enabled);
-    reader.value("pose", pose);
-    reader.value("physics", physics);
-    reader.value("hitbox", hitbox);
-    reader.value("sprite", sprite);
-    reader.value("items", items);
-    reader.value("assigned_items", assigned_items);
-    reader.value("properties", properties);
-    reader.value("flags", flags);
-    reader.object_end();
-}
-template void Entity::readwrite(datapack::Reader&);
-template void Entity::readwrite(datapack::Writer&);
+DATAPACK_VISITOR_METHODS_IMPL(Entity)
 
 Entity Entity::example() {
     Entity result;

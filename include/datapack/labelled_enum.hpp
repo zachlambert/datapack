@@ -32,4 +32,13 @@ const char* enum_to_label(const T& value) {
     return enum_details<T>::to_label(value);
 }
 
+#define DATAPACK_LABELLED_ENUM(T) \
+template <> \
+struct datapack::enum_details<Physics> { \
+    static std::vector<const char*> labels; \
+    static const char* to_label(const T& value); \
+    static T from_label(const char* label); \
+}; \
+static_assert(datapack::labelled_enum<T>);
+
 } // namespace datapack

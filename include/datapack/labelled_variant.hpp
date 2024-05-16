@@ -32,4 +32,13 @@ const char* variant_to_label(const T& value) {
     return variant_details<T>::to_label(value);
 }
 
+#define DATAPACK_LABELLED_VARIANT(T) \
+template <> \
+struct datapack::variant_details<T> { \
+    static std::vector<const char*> labels; \
+    static const char* to_label(const T& value); \
+    static T from_label(const char* label); \
+}; \
+static_assert(datapack::labelled_variant<T>);
+
 } // namespace datapack

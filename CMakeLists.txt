@@ -17,7 +17,7 @@ endif()
 add_library(datapack SHARED
     src/util/debug.cpp
     src/util/random.cpp
-    # src/binary.cpp
+    src/binary.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -49,6 +49,9 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     add_executable(example_random example/random.cpp)
     target_link_libraries(example_random datapack example_common)
+
+    add_executable(example_binary example/binary.cpp)
+    target_link_libraries(example_binary datapack example_common)
 endif()
 
 

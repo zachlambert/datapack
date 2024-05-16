@@ -103,7 +103,7 @@ public:
 
 private:
     template <typename T>
-    void value_number(T value) {
+    void value_number(T& value) {
         if (pos + sizeof(T) > data.size()) {
             error("Input data is too short");
             return;

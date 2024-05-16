@@ -29,6 +29,7 @@ void BinaryWriter::variant(const char* label, const std::vector<const char*>& la
 
 
 void BinaryWriter::binary(std::size_t binary_size, const std::uint8_t* binary_data) {
+    value_number((std::uint64_t)binary_size);
     std::size_t pos = data.size();
     data.resize(pos + binary_size);
     std::memcpy(&data[pos], binary_data, binary_size);
@@ -76,6 +77,7 @@ void BinaryReader::value_bool(bool& value) {
         error("Input data too short");
     }
     std::uint8_t byte = data[pos];
+    pos++;
     if (byte >= 0x02) {
         error("Unexpected byte for bool");
     }
@@ -143,7 +145,7 @@ void BinaryReader::map_end() {
 bool BinaryReader::map_next(std::string& key) {
     bool has_next;
     value_bool(has_next);
-    if (has_next) {
+    if (!has_next) {
         return false;
     }
     value_string(key);

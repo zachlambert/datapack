@@ -39,7 +39,7 @@ public:
     template <readable T>
     void value(const char* key, T& value) {
         object_next(key);
-        this->value(value);
+        read(*this, value);
     }
 
     virtual void value_i32(std::int32_t& value) = 0;
@@ -62,6 +62,12 @@ public:
 
     template <readable_binary T>
     void value_binary(T& value, std::size_t expected_size = 0) {
+        read_binary(*this, value, expected_size);
+    }
+
+    template <readable_binary T>
+    void value_binary(const char* key, T& value, std::size_t expected_size = 0) {
+        object_next(key);
         read_binary(*this, value, expected_size);
     }
 

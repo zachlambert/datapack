@@ -9,14 +9,25 @@
 #include <datapack/labelled_enum.hpp>
 #include <datapack/labelled_variant.hpp>
 
+#define readwritefunc(T) \
+template <typename Handle> \
+void readwrite(Handle& handle, T& value); \
+inline void read(datapack::Reader& reader, T& value) { \
+    readwrite(reader, value); \
+} \
+inline void write(datapack::Writer& writer, const T& value) { \
+    readwrite(writer, const_cast<T&>(value)); \
+} \
+static_assert(datapack::readable<T> && datapack::writeable<T>);
+
+#define readwritefuncimpl(T) \
+template void readwrite<datapack::Reader>(datapack::Reader&, T&); \
+template void readwrite<datapack::Writer>(datapack::Writer&, T&);
 
 struct Circle {
     double radius;
 };
-
-void read(datapack::Reader& reader, Circle& value);
-void write(datapack::Writer& writer, const Circle& value);
-static_assert(datapack::readable<Circle> && datapack::writeable<Circle>);
+readwritefunc(Circle)
 
 struct Rect {
     double width;
@@ -98,8 +109,15 @@ struct Entity : public datapack::Readable, public datapack::Writeable {
     std::unordered_map<std::string, double> properties;  // Map with key=string
     std::unordered_map<int, bool> flags; // Map with key!=string -> list of tpules
 
-    void read(datapack::Reader& reader) override;
-    void write(datapack::Writer& writer) const override;
+    template <typename T>
+    void readwrite(T& value);
+
+    void read(datapack::Reader& reader) override {
+        readwrite(reader);
+    }
+    void write(datapack::Writer& writer) const override {
+        const_cast<Entity*>(this)->readwrite(writer);
+    }
 
     static Entity example();
 };

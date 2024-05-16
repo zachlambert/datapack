@@ -5,17 +5,13 @@
 #include <datapack/common/common.hpp>
 
 
-void read(datapack::Reader& reader, Circle& value) {
-    reader.object_begin();
-    reader.value("radius", value.radius);
-    reader.object_end();
+template <typename Handle>
+void readwrite(Handle& handle, Circle& value) {
+    handle.object_begin();
+    handle.value("radius", value.radius);
+    handle.object_end();
 }
-
-void write(datapack::Writer& writer, const Circle& value) {
-    writer.object_begin();
-    writer.value("radius", value.radius);
-    writer.object_end();
-}
+readwritefuncimpl(Circle)
 
 void read(datapack::Reader& reader, Rect& value) {
     reader.object_begin();
@@ -134,7 +130,8 @@ void write(datapack::Writer& writer, const Sprite& value) {
     writer.object_end();
 }
 
-void Entity::read(datapack::Reader& reader) {
+template <typename T>
+void Entity::readwrite(T& reader) {
     reader.object_begin();
     reader.value("index", index);
     reader.value("name", name);
@@ -149,23 +146,8 @@ void Entity::read(datapack::Reader& reader) {
     reader.value("flags", flags);
     reader.object_end();
 }
-
-void Entity::write(datapack::Writer& writer) const {
-    static_assert(datapack::writeable<Item>);
-    writer.object_begin();
-    writer.value("index", index);
-    writer.value("name", name);
-    writer.value("enabled", enabled);
-    writer.value("pose", pose);
-    writer.value("physics", physics);
-    writer.value("hitbox", hitbox);
-    writer.value("sprite", sprite);
-    writer.value("items", items);
-    writer.value("assigned_items", assigned_items);
-    writer.value("properties", properties);
-    writer.value("flags", flags);
-    writer.object_end();
-}
+template void Entity::readwrite(datapack::Reader&);
+template void Entity::readwrite(datapack::Writer&);
 
 Entity Entity::example() {
     Entity result;

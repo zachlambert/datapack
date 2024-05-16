@@ -63,6 +63,12 @@ public:
         write_binary(*this, value);
     }
 
+    template <writeable_binary T>
+    void value_binary(const char* key, const T& value) {
+        object_next(key);
+        write_binary(*this, value);
+    }
+
     virtual void object_begin() = 0;
     virtual void object_end() = 0;
     virtual void object_next(const char* key) = 0;

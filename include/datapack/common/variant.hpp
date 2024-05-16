@@ -27,7 +27,14 @@ void write(Writer& writer, const T& value) {
 
 template <labelled_variant T>
 void define(Definer& definer, const T& value) {
-    definer.variant(variant_labels<T>());
+    definer.variant_begin();
+    for (const auto& label: variant_labels<T>()) {
+        definer.variant_next(label);
+        std::visit([&](const auto& value){
+            definer.value(value);
+        }, variant_from_label<T>(label));
+    }
+    definer.variant_end();
 }
 
 

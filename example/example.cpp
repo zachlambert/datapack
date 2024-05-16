@@ -107,6 +107,15 @@ void visit(V& visitor, Sprite& value) {
     if constexpr(std::is_same_v<V, datapack::Writer>) {
         visitor.value_binary("data", value.data);
     }
+    if constexpr(std::is_same_v<V, datapack::Definer>) {
+        visitor.object_next("data");
+        visitor.binary();
+        visitor.object_begin();
+        visitor.value("x", 0.0);
+        visitor.value("y", 0.0);
+        visitor.value("z", 0.0);
+        visitor.object_end();
+    }
     visitor.object_end();
 }
 DATAPACK_VISITOR_FUNCS_IMPL(Sprite)

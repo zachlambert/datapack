@@ -99,7 +99,7 @@ public:
     }
 
     template <defined T>
-    void value(const char* key, T& value) {
+    void value(const char* key, const T& value) {
         object_next(key);
         define(*this, value);
     }
@@ -118,12 +118,14 @@ public:
     void optional() {
         tokens_.push_back(dtoken::Optional());
     }
-    void variant(const std::vector<const char*>& labels) {
+    void variant_begin() {
         tokens_.push_back(dtoken::VariantBegin());
-        for (const auto& label: labels) {
-            tokens_.push_back(dtoken::VariantNext(std::string(label)));
-        }
+    }
+    void variant_end() {
         tokens_.push_back(dtoken::VariantEnd());
+    }
+    void variant_next(const char* label) {
+        tokens_.push_back(dtoken::VariantNext(std::string(label)));
     }
 
     void binary(std::size_t expected_size = 0) {
@@ -176,3 +178,5 @@ private:
 };
 
 } // namespace datapack
+
+std::ostream& operator<<(std::ostream& os, const std::vector<datapack::DToken>& tokens);

@@ -71,7 +71,9 @@ void define(Definer& definer, const std::unordered_map<K, V>& value) {
     if constexpr(!std::is_same_v<K, std::string>) {
         definer.list();
         definer.tuple_begin();
+        definer.tuple_next();
         definer.value(K());
+        definer.tuple_next();
         definer.value(V());
         definer.tuple_end();
     }

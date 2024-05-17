@@ -2,7 +2,7 @@
 
 #include <cstring>
 #include <cmath>
-#include <datapack/common/common.hpp>
+#include <datapack/common.hpp>
 
 
 template <typename V>

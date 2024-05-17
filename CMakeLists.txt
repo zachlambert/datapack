@@ -17,7 +17,7 @@ endif()
 add_library(datapack SHARED
     src/util/debug.cpp
     src/util/random.cpp
-    src/binary.cpp
+    src/format/binary.cpp
     src/schema.cpp
 )
 target_include_directories(datapack PUBLIC

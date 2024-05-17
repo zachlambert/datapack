@@ -1,5 +1,5 @@
 #include "example.hpp"
-#include <datapack/binary.hpp>
+#include <datapack/format/binary.hpp>
 #include <datapack/util/debug.hpp>
 
 int main() {

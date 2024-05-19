@@ -135,50 +135,231 @@ private:
 };
 
 
-#if 0
 class ObjectReader: public Reader {
 public:
-    ObjectReader();
+    ObjectReader(const Object& object):
+        object(object),
+        node(object.root()),
+        list_start(false)
+    {}
 
-    void value_i32(std::int32_t& value) override;
-    void value_i64(std::int64_t& value) override;
-    void value_u32(std::uint32_t& value) override;
-    void value_u64(std::uint64_t& value) override;
+    void value_i32(std::int32_t& value) override {
+        if (!value_obj_int(value)) {
+            error("Incorrect value type");
+        }
+    }
+    void value_i64(std::int64_t& value) override {
+        if (!value_obj_int(value)) {
+            error("Incorrect value type");
+        }
+    }
+    void value_u32(std::uint32_t& value) override {
+        if (!value_obj_int(value)) {
+            error("Incorrect value type");
+        }
+    }
+    void value_u64(std::uint64_t& value) override {
+        if (!value_obj_int(value)) {
+            error("Incorrect value type");
+        }
+    }
 
-    void value_f32(float& value) override;
-    void value_f64(double& value) override;
+    void value_f32(float& value) override {
+        if (value_obj_float(value)) return;
+        if (value_obj_int(value)) return;
+        error("Incorrect value type");
+    }
+    void value_f64(double& value) override {
+        if (value_obj_float(value)) return;
+        if (value_obj_int(value)) return;
+        error("Incorrect value type");
+    }
 
-    void value_string(std::string& value) override;
-    void value_bool(bool& value) override;
+    void value_string(std::string& value) override {
+        if (auto x = node.get_if<object::str_t>()){
+            value = *x;
+        }
+        error("Incorrect value type");
+    }
+    void value_bool(bool& value) override {
+        if (auto x = node.get_if<object::bool_t>()){
+            value = *x;
+        }
+        error("Incorrect value type");
+    }
 
-    int enumerate(const std::vector<const char*>& labels) override;
-    bool optional() override;
-    const char* variant(const std::vector<const char*>& labels) override;
+    int enumerate(const std::vector<const char*>& labels) override {
+        auto x = node.get_if<object::str_t>();
+        if (!x) {
+            error("Incorrect value type");
+            return 0;
+        }
+        for (int i = 0; i < labels.size(); i++) {
+            if ((*x) == labels[i]) {
+                return i;
+            }
+        }
+        error("Unknown enum label");
+        return 0;
+    }
+    bool optional() override {
+        if (node.get_if<object::null_t>()) {
+            return false;
+        }
+        return true;
+    }
+    const char* variant_begin(const std::vector<const char*>& labels) override {
+        object_begin();
+        object_next("type");
+        std::string label;
+        value_string(label);
 
-    std::size_t binary_size(std::size_t expected_size=0) override;
-    void binary_data(std::uint8_t* data) override;
+        const char* result = nullptr;
+        for (int i = 0; i < labels.size(); i++) {
+            if (label == labels[i]) {
+                result = labels[i];
+                break;
+            }
+        }
+        if (!result) {
+            error("Unknown variant label");
+        }
 
-    void object_begin() override;
-    void object_end() override;
-    void object_next(const char* key) override;
+        object_next("value");
+        return result;
+    }
+    void variant_end() override {
+        object_end();
+    }
 
-    void tuple_begin() override;
-    void tuple_end() override;
-    void tuple_next() override;
+    std::size_t binary_size(std::size_t expected_size=0) override {
+        if (auto x = node.get_if<object::binary_t>()) {
+            return x->size();
+        }
+        error("Incorrect value type");
+        return 0;
+    }
+    void binary_data(std::uint8_t* data) override {
+        if (auto x = node.get_if<object::binary_t>()) {
+            std::memcpy(data, x->data(), x->size());
+        }
+        error("Incorrect value type");
+    }
 
-    void map_begin() override;
-    void map_end() override;
-    bool map_next(std::string& key) override;
+    void object_begin() override {
+        if (!node.get_if<object::map_t>()) {
+            error("Incorrect value type");
+        }
+    }
+    void object_end() override {
+        node = node.parent();
+    }
+    void object_next(const char* key) override {
+        auto parent = node.parent();
+        if (!parent) {
+            error("Not in a map");
+            return;
+        }
+        if (!parent.get_if<object::map_t>()) {
+            error("Not in a map");
+            return;
+        }
+        auto next = parent[std::string(key)];
+        if (!next) {
+            error("Key not found");
+            return;
+        }
+        node = next;
+    }
 
-    void list_begin() override;
-    void list_end() override;
-    bool list_next() override;
+    void tuple_begin() override {
+        if (!node.get_if<object::list_t>()) {
+            error("Incorrect value type");
+        }
+        list_start = true;
+    }
+    void tuple_end() override {
+        node = node.parent();
+    }
+    void tuple_next() override {
+        if (list_start) {
+            list_start = false;
+            node = node.child();
+        } else {
+            node = node.next();
+        }
+        if (!node) {
+            error("Tuple element missing");
+        }
+    }
+
+    void map_begin() override {
+        if (!node.get_if<object::map_t>()) {
+            error("Incorrect value type");
+        }
+        list_start = true;
+    }
+    void map_end() override {
+        node = node.parent();
+    }
+    bool map_next(std::string& key) override {
+        if (list_start) {
+            list_start = false;
+            node = node.child();
+        } else {
+            node = node.next();
+        }
+        if (!node) {
+            return false;
+        }
+
+        if (node.key().empty()) {
+            error("Empty map key");
+        }
+        key = node.key();
+        return true;
+    }
+
+    void list_begin() override {
+        if (!node.get_if<object::list_t>()) {
+            error("Incorrect value type");
+        }
+        list_start = true;
+    }
+    void list_end() override {
+        node = node.parent();
+    }
+    bool list_next() override {
+        if (list_start) {
+            list_start = false;
+            node = node.child();
+        } else {
+            node = node.next();
+        }
+        return bool(node);
+    }
 
 private:
-    int container_counter;
-    std::size_t next_binary_size;
-};
-#endif
+    template <typename T>
+    bool value_obj_int(T& value) {
+        if (auto x = node.get_if<object::int_t>()) {
+            value = *x;
+            return true;
+        }
+        return false;
+    }
+    template <typename T>
+    bool value_obj_float(T& value) {
+        if (auto x = node.get_if<object::float_t>()) {
+            value = *x;
+            return true;
+        }
+        return false;
+    }
 
+    const Object& object;
+    Object::ConstPointer node;
+    bool list_start;
+};
 
 } // namespace datapack

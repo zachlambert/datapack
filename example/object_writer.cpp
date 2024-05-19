@@ -12,7 +12,7 @@ int main() {
     std::cout << "TYPE:\n";
     datapack::DebugWriter(std::cout).value(entity);
 
-    std::cout << "OBJECT\n" << object;
+    std::cout << "OBJECT\n" << object << std::endl;
 
     return 0;
 }

@@ -16,23 +16,23 @@ public:
     {}
 
     void value_i32(std::int32_t value) override {
-        set_value((object::int_t)value);
+        set_value((Object::int_t)value);
     }
     void value_i64(std::int64_t value) override {
-        set_value((object::int_t)value);
+        set_value((Object::int_t)value);
     }
     void value_u32(std::uint32_t value) override {
-        set_value((object::int_t)value);
+        set_value((Object::int_t)value);
     }
     void value_u64(std::uint64_t value) override {
-        set_value((object::int_t)value);
+        set_value((Object::int_t)value);
     }
 
     void value_f32(float value) override {
-        set_value((object::float_t)value);
+        set_value((Object::float_t)value);
     }
     void value_f64(double value) override {
-        set_value((object::float_t)value);
+        set_value((Object::float_t)value);
     }
 
     void value_string(const std::string& value) override {
@@ -67,7 +67,7 @@ public:
     }
 
     void object_begin() override {
-        set_value(object::map_t());
+        set_value(Object::map_t());
     }
     void object_end() override {
         nodes.pop();
@@ -77,7 +77,7 @@ public:
     }
 
     void tuple_begin() override {
-        set_value(object::list_t());
+        set_value(Object::list_t());
     }
     void tuple_end() override {
         nodes.pop();
@@ -87,7 +87,7 @@ public:
     }
 
     void map_begin() override {
-        set_value(object::map_t());
+        set_value(Object::map_t());
     }
     void map_end() override {
         nodes.pop();
@@ -97,7 +97,7 @@ public:
     }
 
     void list_begin() override {
-        set_value(object::list_t());
+        set_value(Object::list_t());
     }
     void list_end() override {
         nodes.pop();
@@ -107,39 +107,38 @@ public:
     }
 
 private:
-    void set_value(const object::value_t& value) {
-        Object::Pointer next = object.null();
+    void set_value(const Object::value_t& value) {
+        Object next;
 
         if (nodes.empty()) {
-            object.set_root(value);
+            object = Object(value);
             next = object.root();
         } else {
             const auto& node = nodes.top();
-            if (node.get_if<object::map_t>()) {
+            if (node.get_if<Object::map_t>()) {
                 next = node.insert(next_key, value);
-            } else if (node.get_if<object::list_t>()) {
+            } else if (node.get_if<Object::list_t>()) {
                 next = node.append(value);
             } else {
                 throw std::runtime_error("Shouldn't reach here");
             }
         }
 
-        if (next.get_if<object::map_t>() || next.get_if<object::list_t>()) {
+        if (next.get_if<Object::map_t>() || next.get_if<Object::list_t>()) {
             nodes.push(next);
         }
     }
 
     Object& object;
-    std::stack<Object::Pointer> nodes;
+    std::stack<Object> nodes;
     std::string next_key;
 };
 
 
 class ObjectReader: public Reader {
 public:
-    ObjectReader(const Object& object):
-        object(object),
-        node(object.root()),
+    ObjectReader(ConstObject object):
+        node(object),
         list_start(false)
     {}
 
@@ -176,14 +175,14 @@ public:
     }
 
     void value_string(std::string& value) override {
-        if (auto x = node.get_if<object::str_t>()){
+        if (auto x = node.get_if<Object::str_t>()){
             value = *x;
             return;
         }
         error("Incorrect value type (string)");
     }
     void value_bool(bool& value) override {
-        if (auto x = node.get_if<object::bool_t>()){
+        if (auto x = node.get_if<Object::bool_t>()){
             value = *x;
             return;
         }
@@ -191,7 +190,7 @@ public:
     }
 
     int enumerate(const std::vector<const char*>& labels) override {
-        auto x = node.get_if<object::str_t>();
+        auto x = node.get_if<Object::str_t>();
         if (!x) {
             error("Incorrect value type (enumerate)");
             return 0;
@@ -205,7 +204,7 @@ public:
         return 0;
     }
     bool optional() override {
-        if (node.get_if<object::null_t>()) {
+        if (node.get_if<Object::null_t>()) {
             return false;
         }
         return true;
@@ -235,17 +234,17 @@ public:
     }
 
     std::size_t binary_size(std::size_t expected_size=0) override {
-        if (auto x = node.get_if<object::binary_t>()) {
+        if (auto x = node.get_if<Object::binary_t>()) {
             return x->size();
         }
-        if (auto x = node.get_if<object::str_t>()) {
+        if (auto x = node.get_if<Object::str_t>()) {
             error("TODO: Handle base-64 encoded binary data");
         }
         error("Incorrect value type (binary)");
         return 0;
     }
     void binary_data(std::uint8_t* data) override {
-        if (auto x = node.get_if<object::binary_t>()) {
+        if (auto x = node.get_if<Object::binary_t>()) {
             std::memcpy(data, x->data(), x->size());
             return;
         }
@@ -253,7 +252,7 @@ public:
     }
 
     void object_begin() override {
-        if (!node.get_if<object::map_t>()) {
+        if (!node.get_if<Object::map_t>()) {
             error("Incorrect value type");
         }
         nodes.push(node);
@@ -269,7 +268,7 @@ public:
             error("Not in a map");
             return;
         }
-        if (!parent.get_if<object::map_t>()) {
+        if (!parent.get_if<Object::map_t>()) {
             error("Not in a map");
             return;
         }
@@ -282,7 +281,7 @@ public:
     }
 
     void tuple_begin() override {
-        if (!node.get_if<object::list_t>()) {
+        if (!node.get_if<Object::list_t>()) {
             error("Incorrect value type");
         }
         list_start = true;
@@ -305,7 +304,7 @@ public:
     }
 
     void map_begin() override {
-        if (!node.get_if<object::map_t>()) {
+        if (!node.get_if<Object::map_t>()) {
             error("Incorrect value type");
         }
         list_start = true;
@@ -334,7 +333,7 @@ public:
     }
 
     void list_begin() override {
-        if (!node.get_if<object::list_t>()) {
+        if (!node.get_if<Object::list_t>()) {
             error("Incorrect value type");
         }
         list_start = true;
@@ -357,7 +356,7 @@ public:
 private:
     template <typename T>
     bool value_obj_int(T& value) {
-        if (auto x = node.get_if<object::int_t>()) {
+        if (auto x = node.get_if<Object::int_t>()) {
             value = *x;
             return true;
         }
@@ -365,16 +364,15 @@ private:
     }
     template <typename T>
     bool value_obj_float(T& value) {
-        if (auto x = node.get_if<object::float_t>()) {
+        if (auto x = node.get_if<Object::float_t>()) {
             value = *x;
             return true;
         }
         return false;
     }
 
-    const Object& object;
-    std::stack<Object::ConstPointer> nodes;
-    Object::ConstPointer node;
+    ConstObject node;
+    std::stack<ConstObject> nodes;
     bool list_start;
 };
 

@@ -5,12 +5,11 @@
 
 namespace datapack {
 
-#if 0
 bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
-    std::stack<Object::ConstPointer> nodes_lhs;
-    std::stack<Object::ConstPointer> nodes_rhs;
-    nodes_lhs.push(Object::ConstPointer(lhs.root()));
-    nodes_rhs.push(Object::ConstPointer(rhs.root()));
+    std::stack<ConstObject> nodes_lhs;
+    std::stack<ConstObject> nodes_rhs;
+    nodes_lhs.push(lhs);
+    nodes_rhs.push(rhs);
 
     while (!nodes_lhs.empty()) {
         auto lhs = nodes_lhs.top();
@@ -25,12 +24,12 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
             continue;
         }
 
-        if (lhs.parent() && lhs.parent().get_if<object::map_t>()) {
+        if (lhs.parent() && lhs.parent().get_if<Object::map_t>()) {
             auto lhs_next = lhs.next();
             nodes_lhs.push(lhs_next);
             nodes_rhs.push(rhs.parent()[lhs_next.key()]);
         }
-        if (lhs.parent() && lhs.parent().get_if<object::list_t>()) {
+        if (lhs.parent() && lhs.parent().get_if<Object::list_t>()) {
             nodes_lhs.push(lhs.next());
             nodes_rhs.push(rhs.next());
         }
@@ -39,14 +38,14 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
             return false;
         }
 
-        if (lhs.get_if<object::map_t>()) {
+        if (lhs.get_if<Object::map_t>()) {
             auto lhs_child = lhs.child();
             auto rhs_child = rhs[lhs_child.key()];
             nodes_lhs.push(lhs_child);
             nodes_rhs.push(rhs_child);
             continue;
         }
-        if (lhs.get_if<object::list_t>()) {
+        if (lhs.get_if<Object::list_t>()) {
             nodes_lhs.push(lhs.child());
             nodes_rhs.push(rhs.child());
             continue;
@@ -60,22 +59,22 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
             }
             const auto& rhs_value = *rhs_value_ptr;
 
-            if constexpr(std::is_same_v<object::int_t, T>) {
+            if constexpr(std::is_same_v<Object::int_t, T>) {
                 return (rhs_value == lhs_value);
             }
-            if constexpr(std::is_same_v<object::float_t, T>) {
+            if constexpr(std::is_same_v<Object::float_t, T>) {
                 return std::abs(rhs_value - lhs_value) < float_threshold;
             }
-            if constexpr(std::is_same_v<object::bool_t, T>) {
+            if constexpr(std::is_same_v<Object::bool_t, T>) {
                 return (rhs_value == lhs_value);
             }
-            if constexpr(std::is_same_v<object::str_t, T>) {
+            if constexpr(std::is_same_v<Object::str_t, T>) {
                 return (rhs_value == lhs_value);
             }
-            if constexpr(std::is_same_v<object::null_t, T>) {
+            if constexpr(std::is_same_v<Object::null_t, T>) {
                 return true;
             }
-            if constexpr(std::is_same_v<object::binary_t, T>) {
+            if constexpr(std::is_same_v<Object::binary_t, T>) {
                 if (lhs_value.size() != rhs_value.size()) {
                     return false;
                 }
@@ -86,10 +85,10 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
                 }
                 return true;
             }
-            if constexpr(std::is_same_v<object::map_t, T>) {
+            if constexpr(std::is_same_v<Object::map_t, T>) {
                 return true; // Unreachable
             }
-            if constexpr(std::is_same_v<object::list_t, T>) {
+            if constexpr(std::is_same_v<Object::list_t, T>) {
                 return true; // Unreachable
             }
         }, lhs.value());
@@ -99,7 +98,6 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
     }
     return true;
 }
-#endif
 
 } // namespace datapack
 

@@ -24,10 +24,19 @@ int main() {
     std::cout << "object: " << object << std::endl;
 
     std::cout << "object[\"a\"]: " << object["a"] << std::endl;
-    std::cout << "object[\"c\"]: " << object["c"] << std::endl;
+
+    std::cout << "object[\"c\"] (before): " << c << std::endl;
+
+    c[0].set("goodbye");
+    std::cout << "object[\"c\"] (after): " << c << std::endl;
+
+    std::cout << "object (after): " << c << std::endl;
 
     auto e_clone = object["e"].clone();
-    std::cout << "object[\"e\"]: " << e_clone << std::endl;
+    e_clone["and"].set("and");
+    std::cout << "object[\"e\"] (cloned, edited): " << e_clone << std::endl;
+
+    std::cout << "object (original, unaffected): " << object["e"] << std::endl;
 
     return 0;
 }

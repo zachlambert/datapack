@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <memory>
 #include <stack>
+#include <iostream>
 
 
 namespace datapack {
@@ -35,7 +36,7 @@ namespace _object {
 
     struct Node {
         value_t value;
-        const std::string key;
+        std::string key;
         int parent;
         int child;
         int prev;
@@ -180,6 +181,9 @@ public:
         }
         return iter;
     }
+    Object_ operator[](int index) const {
+        return (*this)[(std::size_t)index];
+    }
 
     std::size_t size() const {
         std::size_t count = 0;
@@ -236,6 +240,68 @@ public:
         return result;
     }
 
+    void set(const value_t& value) {
+        static_assert(!IsConst);
+        clear();
+        this->value() = value;
+    }
+
+    void erase() {
+        static_assert(!IsConst);
+        clear();
+        if (auto prev = this->prev()) {
+            prev.node().next = node().next;
+        }
+        if (auto next = this->next()) {
+            next.node().prev = node().prev;
+        }
+        if (auto parent = this->parent()) {
+            if (parent.node().child == index) {
+                parent.node().child = node().next;
+            }
+        }
+
+        if (nodes->size() == 1) {
+            nodes->clear();
+        }
+
+        // Instead of leaving gaps, move the last node in the list
+        // to this index
+        (*nodes)[index] = nodes->back();
+        int back_prev_index = nodes->size() - 1;
+        nodes->pop_back();
+
+        // Now, the current node points to the "back" node
+        // Update the neighbour/parent/child indices
+        if (auto prev = this->prev()) {
+            prev.node().next = index;
+        }
+        if (auto next = this->next()) {
+            next.node().prev = index;
+        }
+        if (auto parent = this->parent()) {
+            if (parent.node().child == back_prev_index) {
+                parent.node().child = index;
+            }
+        }
+        if (auto child = this->child()) {
+            while (child) {
+                child.node().parent = index;
+                child = child.next();
+            }
+        }
+    }
+
+    void clear() {
+        static_assert(!IsConst);
+        auto iter = child();
+        while (iter) {
+            auto prev = iter;
+            iter = iter.next();
+            prev.erase();
+        }
+    }
+
 private:
     Object_(nodes_t nodes, int index):
         nodes(nodes), index(index)
@@ -260,7 +326,7 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold=1e-12)
 } // namespace datapack
 
 std::ostream& operator<<(std::ostream& os, datapack::ConstObject object);
-std::ostream& operator<<(std::ostream& os, datapack::Object object) {
+inline std::ostream& operator<<(std::ostream& os, datapack::Object object) {
     os << static_cast<datapack::ConstObject>(object);
     return os;
 }

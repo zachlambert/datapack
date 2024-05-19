@@ -21,7 +21,8 @@ public:
 
     int enumerate(const std::vector<const char*>& labels) override;
     bool optional() override;
-    const char* variant(const std::vector<const char*>& labels) override;
+    const char* variant_begin(const std::vector<const char*>& labels) override;
+    void variant_end() override;
 
     std::size_t binary_size(std::size_t expected_size=0) override;
     void binary_data(std::uint8_t* data) override;

@@ -18,6 +18,7 @@ add_library(datapack SHARED
     src/util/debug.cpp
     src/util/random.cpp
     src/format/binary.cpp
+    src/object.cpp
     src/schema.cpp
 )
 target_include_directories(datapack PUBLIC
@@ -59,6 +60,12 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     add_executable(example_object example/object.cpp)
     target_link_libraries(example_object datapack example_common)
+
+    add_executable(example_object_writer example/object_writer.cpp)
+    target_link_libraries(example_object_writer datapack example_common)
+
+    add_executable(example_object_compare example/object_compare.cpp)
+    target_link_libraries(example_object_compare datapack example_common)
 endif()
 
 

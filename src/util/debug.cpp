@@ -52,10 +52,13 @@ void DebugWriter::optional(bool has_value) {
     }
 }
 
-void DebugWriter::variant(const char* label, const std::vector<const char*>& labels) {
+void DebugWriter::variant_begin(const char* label, const std::vector<const char*>& labels) {
     os << "(variant, type=" << label << " ) ";
 }
 
+void DebugWriter::variant_end() {
+
+}
 
 void DebugWriter::binary(std::size_t size, const std::uint8_t* data) {
     os << "(binary, size=" << size << ")\n";

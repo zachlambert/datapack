@@ -54,7 +54,8 @@ public:
 
     virtual void enumerate(int value, const std::vector<const char*>& labels) = 0;
     virtual void optional(bool has_value) = 0;
-    virtual void variant(const char* label, const std::vector<const char*>& labels) = 0;
+    virtual void variant_begin(const char* label, const std::vector<const char*>& labels) = 0;
+    virtual void variant_end() = 0;
 
     virtual void binary(std::size_t size, const std::uint8_t* data) = 0;
 

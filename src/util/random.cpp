@@ -55,10 +55,13 @@ bool RandomReader::optional() {
     return rand() % 2 == 1;
 }
 
-const char* RandomReader::variant(const std::vector<const char*>& labels) {
+const char* RandomReader::variant_begin(const std::vector<const char*>& labels) {
     return labels[rand() % labels.size()];
 }
 
+void RandomReader::variant_end() {
+
+}
 
 std::size_t RandomReader::binary_size(std::size_t expected_size) {
     if (expected_size == 0) {

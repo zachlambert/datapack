@@ -55,7 +55,8 @@ public:
 
     virtual int enumerate(const std::vector<const char*>& labels) = 0;
     virtual bool optional() = 0;
-    virtual const char* variant(const std::vector<const char*>& labels) = 0;
+    virtual const char* variant_begin(const std::vector<const char*>& labels) = 0;
+    virtual void variant_end() = 0;
 
     virtual std::size_t binary_size(std::size_t expected_size=0) = 0;
     virtual void binary_data(std::uint8_t* data) = 0;

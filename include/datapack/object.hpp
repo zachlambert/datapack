@@ -10,25 +10,35 @@
 
 namespace datapack {
 
-struct ObjectList {};
-struct ObjectMap {};
+namespace object {
 
-using ObjectValue = std::variant<
-    double,
-    std::nullopt_t,
-    std::string,
-    bool,
-    ObjectList,
-    ObjectMap
+struct list_t {};
+struct map_t {};
+using int_t = std::int64_t;
+using float_t = double;
+using binary_t = std::vector<std::uint8_t>;
+using null_t = std::nullopt_t;
+using str_t = std::string;
+using bool_t = bool;
+
+using value_t = std::variant<
+    int_t,
+    float_t,
+    bool_t,
+    str_t,
+    null_t,
+    binary_t,
+    map_t,
+    list_t
 >;
 
-struct ObjectNode {
-    ObjectValue value;
+struct Node {
+    value_t value;
     std::string key;
     int parent;
     int next;
     int child;
-    ObjectNode(const ObjectValue& value, const std::string& key, int parent):
+    Node(const value_t& value, const std::string& key, int parent):
         value(value),
         key(key),
         parent(parent),
@@ -39,14 +49,14 @@ struct ObjectNode {
 
 
 template <bool IsConst>
-class ObjectPointer_ {
+class Pointer_ {
     using nodes_ptr_t = std::conditional_t<
         IsConst,
-        const std::vector<ObjectNode>*,
-        std::vector<ObjectNode>*
+        const std::vector<Node>*,
+        std::vector<Node>*
     >;
 public:
-    ObjectPointer_(int index, nodes_ptr_t nodes):
+    Pointer_(int index, nodes_ptr_t nodes):
         index(index),
         nodes(nodes)
     {}
@@ -59,17 +69,21 @@ public:
         return node().key;
     }
 
+    std::conditional_t<IsConst, const value_t&, value_t&> value() const {
+        return node().value;
+    }
+
     template <typename T>
     std::conditional_t<IsConst, const T*, T*> get_if() const {
         if (index == -1) return nullptr;
         return std::get_if<T>(&node().value);
     }
 
-    ObjectPointer_ operator[](const std::string& key) const {
+    Pointer_ operator[](const std::string& key) const {
         if (index == -1) {
             return null();
         }
-        if (!get_if<ObjectMap>()) {
+        if (!get_if<map_t>()) {
             return null();
         }
         auto iter = this->child();
@@ -77,13 +91,14 @@ public:
             if (iter.key() == key) {
                 return iter;
             }
+            iter = iter.next();
         }
         return null();
     }
 
-    ObjectPointer_ insert(const std::string& key, const ObjectValue& value) const {
+    Pointer_ insert(const std::string& key, const value_t& value) const {
         static_assert(!IsConst);
-        if (index == -1 || !get_if<ObjectMap>()) {
+        if (index == -1 || !get_if<map_t>()) {
             throw std::runtime_error("Cannot call insert on non-map node");
         }
 
@@ -104,11 +119,11 @@ public:
         return iter.next();
     }
 
-    ObjectPointer_ operator[](std::size_t index) const {
+    Pointer_ operator[](std::size_t index) const {
         if (index == -1) {
             return null();
         }
-        if (!get_if<ObjectList>()) {
+        if (!get_if<list_t>()) {
             return null();
         }
         auto iter = this->child();
@@ -118,9 +133,9 @@ public:
         return iter;
     }
 
-    ObjectPointer_ append(const ObjectValue& value) const {
+    Pointer_ append(const value_t& value) const {
         static_assert(!IsConst);
-        if (index == -1 || !get_if<ObjectList>()) {
+        if (index == -1 || !get_if<list_t>()) {
             throw std::runtime_error("Cannot call insert on non-list node");
         }
 
@@ -150,69 +165,91 @@ public:
         return result;
     }
 
-    ObjectPointer_ next() const {
+    Pointer_ next() const {
         if (index == -1) {
             return null();
         }
-        return ObjectPointer_(node().next, nodes);
+        return Pointer_(node().next, nodes);
     }
 
-    ObjectPointer_ child() const {
+    Pointer_ child() const {
         if (index == -1) {
             return null();
         }
-        return ObjectPointer_(node().child, nodes);
+        return Pointer_(node().child, nodes);
+    }
+
+    Pointer_ parent() const {
+        if (index == -1) {
+            return null();
+        }
+        return Pointer_(node().parent, nodes);
     }
 
     template <bool FromConst, typename = std::enable_if_t<IsConst || !FromConst>>
-    ObjectPointer_(const ObjectPointer_<FromConst>& from):
+    Pointer_(const Pointer_<FromConst>& from):
         index(from.index),
         nodes(from.nodes)
     {}
 
 private:
-    std::conditional_t<IsConst, const ObjectNode&, ObjectNode&> node() const {
+    std::conditional_t<IsConst, const Node&, Node&> node() const {
         return (*nodes)[index];
     }
 
-    ObjectPointer_ null() const {
-        return ObjectPointer_(-1, nodes);
+    Pointer_ null() const {
+        return Pointer_(-1, nodes);
     }
 
     int index;
     nodes_ptr_t nodes;
 
     template <bool OtherConst>
-    friend class ObjectPointer_;
+    friend class Pointer_;
 };
-
-using ObjectPointer = ObjectPointer_<false>;
-using ObjectConstPointer = ObjectPointer_<true>;
-
 
 class Object {
 public:
+    using Pointer = Pointer_<false>;
+    using ConstPointer = Pointer_<true>;
+
     Object():
         root_(-1)
     {}
 
-    ObjectPointer root() {
-        return ObjectPointer(root_, &nodes);
+    Pointer root() {
+        return Pointer(root_, &nodes);
     }
 
-    ObjectConstPointer root() const {
-        return ObjectConstPointer(root_, &nodes);
+    ConstPointer root() const {
+        return ConstPointer(root_, &nodes);
     }
 
-    void set_root(const ObjectValue& value) {
+    void set_root(const value_t& value) {
         nodes.clear();
         root_ = 0;
         nodes.emplace_back(value, "", -1);
     }
 
+    Pointer null() {
+        return Pointer(-1, &nodes);
+    }
+
+    ConstPointer null() const {
+        return ConstPointer(-1, &nodes);
+    }
+
 private:
     int root_;
-    std::vector<ObjectNode> nodes;
+    std::vector<Node> nodes;
 };
 
+} // namespace object
+
+using Object = object::Object;
+
+bool compare(const Object& lhs, const Object& rhs, double float_threshold=1e-12);
+
 } // namespace datapack
+
+std::ostream& operator<<(std::ostream& os, const datapack::Object& object);

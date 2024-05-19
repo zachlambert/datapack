@@ -23,10 +23,9 @@ void BinaryWriter::optional(bool has_value) {
     value_bool(has_value);
 }
 
-void BinaryWriter::variant(const char* label, const std::vector<const char*>& labels) {
+void BinaryWriter::variant_begin(const char* label, const std::vector<const char*>& labels) {
     value_string(label);
 }
-
 
 void BinaryWriter::binary(std::size_t binary_size, const std::uint8_t* binary_data) {
     value_number((std::uint64_t)binary_size);
@@ -97,7 +96,7 @@ bool BinaryReader::optional() {
     return has_value;
 }
 
-const char* BinaryReader::variant(const std::vector<const char*>& labels) {
+const char* BinaryReader::variant_begin(const std::vector<const char*>& labels) {
     std::size_t max_len = data.size() - pos;
     std::size_t len = strnlen((char*)&data[pos], max_len);
     if (len == max_len) {

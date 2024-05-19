@@ -61,14 +61,14 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(example_object example/object.cpp)
     target_link_libraries(example_object datapack example_common)
 
-    add_executable(example_object_compare example/object_compare.cpp)
-    target_link_libraries(example_object_compare datapack example_common)
+    # add_executable(example_object_compare example/object_compare.cpp)
+    # target_link_libraries(example_object_compare datapack example_common)
 
-    add_executable(example_object_writer example/object_writer.cpp)
-    target_link_libraries(example_object_writer datapack example_common)
+    # add_executable(example_object_writer example/object_writer.cpp)
+    # target_link_libraries(example_object_writer datapack example_common)
 
-    add_executable(example_object_reader example/object_reader.cpp)
-    target_link_libraries(example_object_reader datapack example_common)
+    # add_executable(example_object_reader example/object_reader.cpp)
+    # target_link_libraries(example_object_reader datapack example_common)
 endif()
 
 

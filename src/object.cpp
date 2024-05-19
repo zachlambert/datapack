@@ -5,6 +5,7 @@
 
 namespace datapack {
 
+#if 0
 bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
     std::stack<Object::ConstPointer> nodes_lhs;
     std::stack<Object::ConstPointer> nodes_rhs;
@@ -98,57 +99,74 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
     }
     return true;
 }
+#endif
 
 } // namespace datapack
 
-std::ostream& operator<<(std::ostream& os, const datapack::Object& object) {
+std::ostream& operator<<(std::ostream& os, datapack::ConstObject object) {
     using namespace datapack;
 
-    std::stack<Object::ConstPointer> nodes;
-    nodes.push(Object::ConstPointer(object.root()));
-
+    std::stack<datapack::ConstObject> nodes;
+    nodes.push(object);
     int depth = 0;
+    bool first = true;
+
     while (!nodes.empty()) {
         auto node = nodes.top();
         nodes.pop();
+
         if (!node) {
             depth--;
             continue;
         }
-        nodes.push(node.next());
+        if (!first) {
+            os << "\n";
+        }
+        first = false;
 
         for (int i = 0; i < depth; i++) {
             os << "    ";
         }
-
-        if (!node.key().empty()) {
-            os << node.key() << ": ";
+        if (depth > 0) {
+            if (!node.key().empty()) {
+                os << node.key() << ": ";
+            } else {
+                os << "- ";
+            }
         }
 
-        if (node.get_if<object::map_t>()) {
-            os << "map:\n";
+        if (node.get_if<Object::map_t>()) {
+            os << "map:";
+        }
+        else if (node.get_if<Object::list_t>()) {
+            os << "list:";
+        }
+        else if (auto value = node.get_if<Object::int_t>()) {
+            os << *value << "";
+        }
+        else if (auto value = node.get_if<Object::float_t>()) {
+            os << *value;
+        }
+        else if (auto value = node.get_if<Object::bool_t>()) {
+            os << (*value ? "true" : "false");
+        }
+        else if (auto value = node.get_if<Object::str_t>()) {
+            os << *value;
+        }
+        else if (node.get_if<Object::null_t>()) {
+            os << "null";
+        }
+        else if (auto value = node.get_if<Object::binary_t>()) {
+            os << "binary (size=" << value->size() << ")";
+        }
+
+        if (depth > 0) {
+            nodes.push(node.next());
+        }
+
+        if (node.get_if<Object::map_t>() || node.get_if<Object::list_t>()) {
             nodes.push(node.child());
             depth++;
-            continue;
-        }
-        else if (node.get_if<object::list_t>()) {
-            os << "list:\n";
-            depth++;
-            nodes.push(node.child());
-            continue;
-        }
-
-        if (auto value = node.get_if<double>()) {
-            os << *value << "\n";
-        }
-        else if (auto value = node.get_if<std::string>()) {
-            os << *value << "\n";
-        }
-        else if (auto value = node.get_if<bool>()) {
-            os << (*value ? "true" : "false") << "\n";
-        }
-        else if (node.get_if<std::nullopt_t>()) {
-            os << "null\n";
         }
     }
     return os;

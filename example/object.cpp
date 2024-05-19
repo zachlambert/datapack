@@ -6,24 +6,28 @@
 int main() {
     using namespace datapack;
 
-    Object object;
-    object.set_root(object::map_t());
+    Object object = Object(Object::map_t());
 
-    auto root = object.root();
-    root.insert("a", 1.0);
-    root.insert("b", 2.0);
+    object.insert("a", 1.1);
+    object.insert("b", 2.2);
 
-    auto c = root.insert("c", object::list_t());
+    auto c = object.insert("c", Object::list_t());
     c.append("hello");
     c.append("world");
 
-    root.insert("d", true);
-    auto e = root.insert("e", object::map_t());
+    object.insert("d", true);
+    auto e = object.insert("e", Object::map_t());
     e.insert("foo", "foo");
     e.insert("bar", "bar");
     e.insert("and", std::nullopt);
 
-    std::cout << object;
+    std::cout << "object: " << object << std::endl;
+
+    std::cout << "object[\"a\"]: " << object["a"] << std::endl;
+    std::cout << "object[\"c\"]: " << object["c"] << std::endl;
+
+    auto e_clone = object["e"].clone();
+    std::cout << "object[\"e\"]: " << e_clone << std::endl;
 
     return 0;
 }

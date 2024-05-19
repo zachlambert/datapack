@@ -16,23 +16,23 @@ public:
     {}
 
     void value_i32(std::int32_t value) override {
-        set_value((double)value);
+        set_value((object::int_t)value);
     }
     void value_i64(std::int64_t value) override {
-        set_value((double)value);
+        set_value((object::int_t)value);
     }
     void value_u32(std::uint32_t value) override {
-        set_value((double)value);
+        set_value((object::int_t)value);
     }
     void value_u64(std::uint64_t value) override {
-        set_value((double)value);
+        set_value((object::int_t)value);
     }
 
     void value_f32(float value) override {
-        set_value((double)value);
+        set_value((object::float_t)value);
     }
     void value_f64(double value) override {
-        set_value((double)value);
+        set_value((object::float_t)value);
     }
 
     void value_string(const std::string& value) override {
@@ -145,53 +145,55 @@ public:
 
     void value_i32(std::int32_t& value) override {
         if (!value_obj_int(value)) {
-            error("Incorrect value type");
+            error("Incorrect value type (i32)");
         }
     }
     void value_i64(std::int64_t& value) override {
         if (!value_obj_int(value)) {
-            error("Incorrect value type");
+            error("Incorrect value type (i64)");
         }
     }
     void value_u32(std::uint32_t& value) override {
         if (!value_obj_int(value)) {
-            error("Incorrect value type");
+            error("Incorrect value type (u32)");
         }
     }
     void value_u64(std::uint64_t& value) override {
         if (!value_obj_int(value)) {
-            error("Incorrect value type");
+            error("Incorrect value type (u64)");
         }
     }
 
     void value_f32(float& value) override {
         if (value_obj_float(value)) return;
         if (value_obj_int(value)) return;
-        error("Incorrect value type");
+        error("Incorrect value type (f32)");
     }
     void value_f64(double& value) override {
         if (value_obj_float(value)) return;
         if (value_obj_int(value)) return;
-        error("Incorrect value type");
+        error("Incorrect value type (f64)");
     }
 
     void value_string(std::string& value) override {
         if (auto x = node.get_if<object::str_t>()){
             value = *x;
+            return;
         }
-        error("Incorrect value type");
+        error("Incorrect value type (string)");
     }
     void value_bool(bool& value) override {
         if (auto x = node.get_if<object::bool_t>()){
             value = *x;
+            return;
         }
-        error("Incorrect value type");
+        error("Incorrect value type (bool)");
     }
 
     int enumerate(const std::vector<const char*>& labels) override {
         auto x = node.get_if<object::str_t>();
         if (!x) {
-            error("Incorrect value type");
+            error("Incorrect value type (enumerate)");
             return 0;
         }
         for (int i = 0; i < labels.size(); i++) {
@@ -236,23 +238,30 @@ public:
         if (auto x = node.get_if<object::binary_t>()) {
             return x->size();
         }
-        error("Incorrect value type");
+        if (auto x = node.get_if<object::str_t>()) {
+            error("TODO: Handle base-64 encoded binary data");
+        }
+        error("Incorrect value type (binary)");
         return 0;
     }
     void binary_data(std::uint8_t* data) override {
         if (auto x = node.get_if<object::binary_t>()) {
             std::memcpy(data, x->data(), x->size());
+            return;
         }
-        error("Incorrect value type");
+        error("Incorrect value type (binary)");
     }
 
     void object_begin() override {
         if (!node.get_if<object::map_t>()) {
             error("Incorrect value type");
         }
+        nodes.push(node);
+        node = node.child();
     }
     void object_end() override {
-        node = node.parent();
+        node = nodes.top();
+        nodes.pop();
     }
     void object_next(const char* key) override {
         auto parent = node.parent();
@@ -277,17 +286,19 @@ public:
             error("Incorrect value type");
         }
         list_start = true;
+        nodes.push(node);
+        node = node.child();
     }
     void tuple_end() override {
-        node = node.parent();
+        list_start = false;
+        node = nodes.top();
+        nodes.pop();
     }
     void tuple_next() override {
-        if (list_start) {
-            list_start = false;
-            node = node.child();
-        } else {
+        if (!list_start) {
             node = node.next();
         }
+        list_start = false;
         if (!node) {
             error("Tuple element missing");
         }
@@ -298,17 +309,19 @@ public:
             error("Incorrect value type");
         }
         list_start = true;
+        nodes.push(node);
+        node = node.child();
     }
     void map_end() override {
-        node = node.parent();
+        list_start = false;
+        node = nodes.top();
+        nodes.pop();
     }
     bool map_next(std::string& key) override {
-        if (list_start) {
-            list_start = false;
-            node = node.child();
-        } else {
+        if (!list_start) {
             node = node.next();
         }
+        list_start = false;
         if (!node) {
             return false;
         }
@@ -325,17 +338,19 @@ public:
             error("Incorrect value type");
         }
         list_start = true;
+        nodes.push(node);
+        node = node.child();
     }
     void list_end() override {
-        node = node.parent();
+        list_start = false;
+        node = nodes.top();
+        nodes.pop();
     }
     bool list_next() override {
-        if (list_start) {
-            list_start = false;
-            node = node.child();
-        } else {
+        if (!list_start) {
             node = node.next();
         }
+        list_start = false;
         return bool(node);
     }
 
@@ -358,6 +373,7 @@ private:
     }
 
     const Object& object;
+    std::stack<Object::ConstPointer> nodes;
     Object::ConstPointer node;
     bool list_start;
 };

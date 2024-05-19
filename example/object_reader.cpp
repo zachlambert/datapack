@@ -17,5 +17,7 @@ int main() {
     std::cout << "OUT:\n";
     datapack::DebugWriter(std::cout).value(in);
 
+    std::cout << "EQUAL ? " << (compare(in, out) ? "yes" : "no") << std::endl;
+
     return 0;
 }

@@ -73,3 +73,5 @@ struct Entity : public datapack::Visitor {
 
     DATAPACK_VISITOR_METHODS_DEF(Entity)
 };
+
+bool compare(const Entity& a, const Entity& b, double float_threshold = 1e-12);

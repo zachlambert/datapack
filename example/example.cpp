@@ -185,3 +185,63 @@ Entity Entity::example() {
     }();
     return result;
 }
+
+bool compare(const Entity& a, const Entity& b, double float_threshold) {
+    if (a.index != b.index) return false;
+    if (a.name != b.name) return false;
+    if (a.enabled != b.enabled) return false;
+
+    if (a.pose.x != b.pose.x) return false;
+    if (a.pose.y != b.pose.y) return false;
+    if (a.pose.angle != b.pose.angle) return false;
+
+    if (a.physics != b.physics) return false;
+
+    if (a.hitbox.has_value() != b.hitbox.has_value()) return false;
+    if (auto a_circle = std::get_if<Circle>(&a.hitbox.value())) {
+        auto b_circle = std::get_if<Circle>(&b.hitbox.value());
+        if (!b_circle) return false;
+        if (a_circle->radius != b_circle->radius) return false;
+    }
+    else if (auto a_rect = std::get_if<Rect>(&a.hitbox.value())) {
+        auto b_rect = std::get_if<Rect>(&b.hitbox.value());
+        if (!b_rect) return false;
+        if (a_rect->width != b_rect->width) return false;
+        if (a_rect->height != b_rect->height) return false;
+    }
+
+    if (a.sprite.width != b.sprite.width) return false;
+    if (a.sprite.height != b.sprite.height) return false;
+    if (a.sprite.data.size() != b.sprite.data.size()) return false;
+    for (std::size_t i = 0; i < a.sprite.data.size(); i++) {
+        const auto& a_pixel = a.sprite.data[i];
+        const auto& b_pixel = b.sprite.data[i];
+        if (std::abs(a_pixel.r - b_pixel.r) > float_threshold) return false;
+        if (std::abs(a_pixel.g - b_pixel.g) > float_threshold) return false;
+        if (std::abs(a_pixel.b - b_pixel.b) > float_threshold) return false;
+    }
+
+    if (a.items.size() != b.items.size()) return false;
+    for (std::size_t i = 0; i < a.items.size(); i++) {
+        const auto& a_item = a.items[i];
+        const auto& b_item = b.items[i];
+        if (a_item.name != b_item.name) return false;
+        if (a_item.count != b_item.count) return false;
+    }
+
+    for (const auto& a_pair: a.properties) {
+        auto b_iter = b.properties.find(a_pair.first);
+        if (b_iter == b.properties.end()) return false;
+        const auto& b_pair = *b_iter;
+        if (std::abs(a_pair.second - b_pair.second) > float_threshold) return false;
+    }
+
+    for (const auto& a_pair: a.flags) {
+        auto b_iter = b.flags.find(a_pair.first);
+        if (b_iter == b.flags.end()) return false;
+        const auto& b_pair = *b_iter;
+        if (a_pair.second != b_pair.second) return false;
+    }
+
+    return true;
+}

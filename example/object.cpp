@@ -38,5 +38,9 @@ int main() {
 
     std::cout << "object (original, unaffected): " << object["e"] << std::endl;
 
+    object["c"].set(3.3);
+    object["e"].set(false);
+    std::cout << "object (overwrite \"c\" and \"e\"): " << object << std::endl;
+
     return 0;
 }

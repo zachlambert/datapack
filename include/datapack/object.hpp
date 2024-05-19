@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <memory>
 #include <stack>
-#include <iostream>
 
 
 namespace datapack {
@@ -45,6 +44,11 @@ namespace _object {
             value(value), key(key), parent(parent), child(-1), prev(prev), next(-1)
         {}
     };
+
+    struct State {
+        std::vector<Node> nodes;
+        std::stack<int> free;
+    };
 } // namespace object
 
 template <bool IsConst>
@@ -62,9 +66,11 @@ public:
     using Node = _object::Node;
 
 private:
-    using nodes_t = std::conditional_t<IsConst,
-        std::shared_ptr<const std::vector<Node>>,
-        std::shared_ptr<std::vector<Node>>
+    using State = _object::State;
+    using state_t = std::conditional_t<
+        IsConst,
+        std::shared_ptr<const State>,
+        std::shared_ptr<State>
     >;
 
 public:
@@ -73,21 +79,21 @@ public:
     {}
 
     Object_(const value_t& root_value):
-        nodes(std::make_shared<std::vector<Node>>()),
+        state(std::make_shared<State>()),
         index(0)
     {
         static_assert(!IsConst);
-        nodes->push_back(Node(root_value, "", -1, -1));
+        state->nodes.push_back(Node(root_value, "", -1, -1));
     }
 
     template <bool OtherConst, typename = std::enable_if_t<IsConst || !OtherConst>>
     Object_(const Object_<OtherConst>& other):
-        nodes(other.nodes),
+        state(other.state),
         index(other.index)
     {}
 
     Object_ root() const {
-        return Object_(nodes, 0);
+        return Object_(state, 0);
     }
     Object_<true> const_root() const {
         return root();
@@ -109,36 +115,35 @@ public:
     }
 
     Object_ prev() const {
-        return Object_(nodes, node().prev);
+        return Object_(state, node().prev);
     }
     Object_ next() const {
-        return Object_(nodes, node().next);
+        return Object_(state, node().next);
     }
     Object_ parent() const {
-        return Object_(nodes, node().parent);
+        return Object_(state, node().parent);
     }
     Object_ child() const {
-        return Object_(nodes, node().child);
+        return Object_(state, node().child);
     }
 
     Object_ insert(const std::string& key, const value_t& value) const {
         if (!get_if<map_t>()) {
             throw std::runtime_error("Not in a map");
         }
+        auto new_node = create_node(Node(value, key, index, -1));
+
         auto iter = child();
-        int new_index = nodes->size();
-        int prev = -1;
         if (!iter) {
-            node().child = new_index;
+            node().child = new_node.index;
         } else {
             while (iter.next()) {
                 iter = iter.next();
             }
-            iter.node().next = new_index;
-            prev = iter.index;
+            iter.node().next = new_node.index;
+            new_node.node().prev = iter.index;
         }
-        nodes->push_back(Node(value, key, index, prev));
-        return Object_(nodes, new_index);
+        return new_node;
     }
 
     Object_ operator[](const std::string& key) const {
@@ -156,20 +161,19 @@ public:
         if (!get_if<list_t>()) {
             throw std::runtime_error("Not in a list");
         }
+        auto new_node = create_node(Node(value, "", index, -1));
+
         auto iter = child();
-        int new_index = nodes->size();
-        int prev = -1;
         if (!iter) {
-            node().child = new_index;
+            node().child = new_node.index;
         } else {
             while (iter.next()) {
                 iter = iter.next();
             }
-            iter.node().next = new_index;
-            prev = iter.index;
+            iter.node().next = new_node.index;
+            new_node.node().prev = iter.index;
         }
-        nodes->push_back(Node(value, "", index, prev));
-        return Object_(nodes, new_index);
+        return new_node;
     }
 
     Object_ operator[](std::size_t index) const {
@@ -261,34 +265,10 @@ public:
             }
         }
 
-        if (nodes->size() == 1) {
-            nodes->clear();
-        }
-
-        // Instead of leaving gaps, move the last node in the list
-        // to this index
-        (*nodes)[index] = nodes->back();
-        int back_prev_index = nodes->size() - 1;
-        nodes->pop_back();
-
-        // Now, the current node points to the "back" node
-        // Update the neighbour/parent/child indices
-        if (auto prev = this->prev()) {
-            prev.node().next = index;
-        }
-        if (auto next = this->next()) {
-            next.node().prev = index;
-        }
-        if (auto parent = this->parent()) {
-            if (parent.node().child == back_prev_index) {
-                parent.node().child = index;
-            }
-        }
-        if (auto child = this->child()) {
-            while (child) {
-                child.node().parent = index;
-                child = child.next();
-            }
+        if (index == state->nodes.size() - 1) {
+            state->nodes.pop_back();
+        } else {
+            state->free.push(index);
         }
     }
 
@@ -303,15 +283,28 @@ public:
     }
 
 private:
-    Object_(nodes_t nodes, int index):
-        nodes(nodes), index(index)
+    Object_(state_t state, int index):
+        state(state), index(index)
     {}
 
     std::conditional_t<IsConst, const Node&, Node&> node() const {
-        return (*nodes)[index];
+        return state->nodes[index];
     }
 
-    nodes_t nodes;
+    Object_ create_node(const Node& node) const {
+        int index;
+        if (state->free.empty()) {
+            state->nodes.push_back(node);
+            index = state->nodes.size() - 1;
+        } else {
+            index = state->free.top();
+            state->free.pop();
+            state->nodes[index] = node;
+        }
+        return Object_(state, index);
+    }
+
+    state_t state;
     int index;
 
     template <bool OtherConst>

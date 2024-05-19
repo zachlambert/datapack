@@ -49,7 +49,9 @@ namespace _object {
         std::vector<Node> nodes;
         std::stack<int> free;
     };
-} // namespace object
+
+} // namespace _object
+
 
 template <bool IsConst>
 class Object_ {
@@ -127,160 +129,25 @@ public:
         return Object_(state, node().child);
     }
 
-    Object_ insert(const std::string& key, const value_t& value) const {
-        if (!get_if<map_t>()) {
-            throw std::runtime_error("Not in a map");
-        }
-        auto new_node = create_node(Node(value, key, index, -1));
-
-        auto iter = child();
-        if (!iter) {
-            node().child = new_node.index;
-        } else {
-            while (iter.next()) {
-                iter = iter.next();
-            }
-            iter.node().next = new_node.index;
-            new_node.node().prev = iter.index;
-        }
-        return new_node;
-    }
-
-    Object_ operator[](const std::string& key) const {
-        auto iter = child();
-        while (iter && iter.key() != key) {
-            iter = iter.next();
-        }
-        return iter;
-    }
+    Object_ insert(const std::string& key, const value_t& value) const;
+    Object_ operator[](const std::string& key) const;
     Object_ operator[](const char* key) const {
         return (*this)[std::string(key)];
     }
 
-    Object_ append(const value_t& value) const {
-        if (!get_if<list_t>()) {
-            throw std::runtime_error("Not in a list");
-        }
-        auto new_node = create_node(Node(value, "", index, -1));
-
-        auto iter = child();
-        if (!iter) {
-            node().child = new_node.index;
-        } else {
-            while (iter.next()) {
-                iter = iter.next();
-            }
-            iter.node().next = new_node.index;
-            new_node.node().prev = iter.index;
-        }
-        return new_node;
-    }
-
-    Object_ operator[](std::size_t index) const {
-        auto iter = child();
-        std::size_t i = 0;
-        while (iter && i != index) {
-            iter = iter.next();
-            i++;
-        }
-        return iter;
-    }
+    Object_ append(const value_t& value) const;
+    Object_ operator[](std::size_t index) const;
     Object_ operator[](int index) const {
         return (*this)[(std::size_t)index];
     }
 
-    std::size_t size() const {
-        std::size_t count = 0;
-        auto iter = child();
-        while (iter) {
-            iter = iter.next();
-            count++;
-        }
-        return count;
-    }
+    std::size_t size() const;
 
-    Object_ clone() const {
-        Object_ result(value());
+    Object_ clone() const;
 
-        if (!get_if<map_t>() && !get_if<list_t>()) {
-            return result;
-        }
-        if (!child()) {
-            return result;
-        }
-
-        std::stack<Object_<true>> from_stack;
-        from_stack.push(child());
-        std::stack<Object_<false>> to_stack;
-        to_stack.push(result.root());
-
-        while (!from_stack.empty()) {
-            auto from = from_stack.top();
-            from_stack.pop();
-            if (!from){
-                to_stack.pop();
-                continue;
-            }
-            from_stack.push(from.next());
-
-            auto to = to_stack.top();
-            Object_<false> new_to;
-            if (to.get_if<map_t>()) {
-                new_to = to.insert(from.key(), from.value());
-            }
-            else if (to.get_if<list_t>()) {
-                new_to = to.append(from.value());
-            }
-            else {
-                throw std::runtime_error("Unreachable code");
-            }
-
-            if (from.get_if<map_t>() || from.get_if<list_t>()) {
-                from_stack.push(from.child());
-                to_stack.push(new_to);
-            }
-        }
-
-        return result;
-    }
-
-    void set(const value_t& value) {
-        static_assert(!IsConst);
-        clear();
-        this->value() = value;
-    }
-
-    void erase() {
-        static_assert(!IsConst);
-        clear();
-        if (auto prev = this->prev()) {
-            prev.node().next = node().next;
-        }
-        if (auto next = this->next()) {
-            next.node().prev = node().prev;
-        }
-        if (auto parent = this->parent()) {
-            if (parent.node().child == index) {
-                parent.node().child = node().next;
-            }
-        }
-
-        if (index == state->nodes.size() - 1) {
-            state->nodes.pop_back();
-        } else {
-            state->free.push(index);
-        }
-    }
-
-    void clear() {
-        static_assert(!IsConst);
-        auto iter = child();
-        while (iter) {
-            auto prev = iter;
-            iter = iter.next();
-            prev.erase();
-        }
-    }
+    void set(const value_t& value) const;
+    void erase() const;
+    void clear() const;
 
 private:
     Object_(state_t state, int index):
@@ -291,18 +158,7 @@ private:
         return state->nodes[index];
     }
 
-    Object_ create_node(const Node& node) const {
-        int index;
-        if (state->free.empty()) {
-            state->nodes.push_back(node);
-            index = state->nodes.size() - 1;
-        } else {
-            index = state->free.top();
-            state->free.pop();
-            state->nodes[index] = node;
-        }
-        return Object_(state, index);
-    }
+    Object_ create_node(const Node& node) const;
 
     state_t state;
     int index;

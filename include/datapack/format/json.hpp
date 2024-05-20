@@ -3,7 +3,9 @@
 #include <sstream>
 #include <stack>
 #include "datapack/writer.hpp"
-// #include "datapack/parser.hpp"
+#include "datapack/reader.hpp"
+#include "datapack/object.hpp"
+#include "datapack/util/object.hpp"
 
 namespace datapack {
 
@@ -53,6 +55,30 @@ private:
     int depth;
 };
 
+
+Object parse_json(const std::string& json);
+
+std::string write_json(ConstObject object) {
+    std::string result;
+    // TODO: Make object writeable
+    // JsonWriter(result).value(object);
+    return result;
+}
+
+template <readable T>
+T read_json(const std::string& json) {
+    Object object = parse_json(json);
+    T result;
+    ObjectReader(object).value(result);
+    return result;
+}
+
+template <writeable T>
+std::string write_json(const T& value) {
+    std::string result;
+    JsonWriter(result).value(value);
+    return result;
+}
 
 #if 0
 class JsonParser: public Parser {

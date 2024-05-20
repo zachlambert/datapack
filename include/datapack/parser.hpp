@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datapack/token.hpp"
+#include "datapack/object.hpp"
 
 namespace datapack {
 

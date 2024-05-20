@@ -19,6 +19,7 @@ add_library(datapack SHARED
     src/util/object.cpp
     src/util/random.cpp
     src/format/binary.cpp
+    src/format/json.cpp
     src/object.cpp
     src/schema.cpp
 )
@@ -70,6 +71,9 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     add_executable(example_object_reader example/object_reader.cpp)
     target_link_libraries(example_object_reader datapack example_common)
+
+    add_executable(example_json_writer example/json_writer.cpp)
+    target_link_libraries(example_json_writer datapack example_common)
 endif()
 
 

@@ -2,41 +2,133 @@
 
 namespace datapack {
 
-void JsonWriter::value_f64(const double& value) {
+JsonWriter::JsonWriter(std::string& result):
+    result(result),
+    first_element(false),
+    depth(0)
+{}
 
+void JsonWriter::value_i32(std::int32_t value) {
+    result += std::to_string(value);
 }
 
-void JsonWriter::value_i32(const int& value) {
-
+void JsonWriter::value_i64(std::int64_t value) {
+    result += std::to_string(value);
 }
 
-void JsonWriter::optional_begin(bool has_value) {
-
+void JsonWriter::value_u32(std::uint32_t value) {
+    result += std::to_string(value);
 }
 
-void JsonWriter::optional_end() {
-
+void JsonWriter::value_u64(std::uint64_t value) {
+    result += std::to_string(value);
 }
 
-void JsonWriter::variant_begin(const char* label) {
 
+void JsonWriter::value_f32(float value) {
+    result += std::to_string(value);
+}
+
+void JsonWriter::value_f64(double value) {
+    result += std::to_string(value);
+}
+
+
+void JsonWriter::value_string(const std::string& value) {
+    result += "\"" + value + "\"";
+}
+
+void JsonWriter::value_bool(bool value) {
+    result += (value ? "true" : "false");
+}
+
+
+void JsonWriter::enumerate(int value, const std::vector<const char*>& labels) {
+    value_string(std::string(labels[value]));
+}
+
+void JsonWriter::optional(bool has_value) {
+    if (!has_value) {
+        result += "null";
+    }
+}
+
+void JsonWriter::variant_begin(const char* label, const std::vector<const char*>& labels) {
+    object_begin();
+    object_next("label");
+    value_string(label);
+    object_next("value");
 }
 
 void JsonWriter::variant_end() {
-
+    object_end();
 }
 
-void JsonWriter::object_begin() {
 
+void JsonWriter::binary(std::size_t size, const std::uint8_t* data) {
+    result += "\"binary - not implemented\"";
 }
 
-void JsonWriter::object_end() {
 
+void JsonWriter::map_begin() {
+    result += "{\n";
+    first_element = true;
+    depth++;
 }
 
-void JsonWriter::object_next(const char* key) {
-
+void JsonWriter::map_end() {
+    depth--;
+    if (!first_element) {
+        result += "\n";
+        indent();
+    }
+    result += "}";
+    first_element = false;
 }
+
+void JsonWriter::map_next(const std::string& key) {
+    if (!first_element) {
+        result += ",\n";
+    }
+    first_element = false;
+    indent();
+    result += "\"" + key + "\": ";
+}
+
+
+void JsonWriter::list_begin() {
+    result += "{\n";
+    first_element = true;
+    depth++;
+}
+
+void JsonWriter::list_end() {
+    depth--;
+    if (!first_element) {
+        result += "\n";
+        indent();
+    }
+    result += "]";
+    first_element = false;
+}
+
+void JsonWriter::list_next() {
+    if (!first_element) {
+        result += ",\n";
+    }
+    first_element = false;
+    indent();
+}
+
+
+void JsonWriter::indent() {
+    for (int i = 0; i < depth; i++) {
+        result += "    ";
+    }
+}
+
+
+#if 0
 
 JsonParser::JsonParser(const std::string& source):
     source(source),
@@ -211,5 +303,7 @@ Token JsonParser::next() {
     }
     return std::nullopt;
 }
+
+#endif
 
 } // namespace datapack

@@ -42,6 +42,17 @@ public:
         read(*this, value);
     }
 
+    template <readable_binary T>
+    void value_binary(T& value, std::size_t expected_size = 0) {
+        read_binary(*this, value, expected_size);
+    }
+
+    template <readable_binary T>
+    void value_binary(const char* key, T& value, std::size_t expected_size = 0) {
+        object_next(key);
+        read_binary(*this, value, expected_size);
+    }
+
     virtual void value_i32(std::int32_t& value) = 0;
     virtual void value_i64(std::int64_t& value) = 0;
     virtual void value_u32(std::uint32_t& value) = 0;
@@ -60,17 +71,6 @@ public:
 
     virtual std::size_t binary_size(std::size_t expected_size=0) = 0;
     virtual void binary_data(std::uint8_t* data) = 0;
-
-    template <readable_binary T>
-    void value_binary(T& value, std::size_t expected_size = 0) {
-        read_binary(*this, value, expected_size);
-    }
-
-    template <readable_binary T>
-    void value_binary(const char* key, T& value, std::size_t expected_size = 0) {
-        object_next(key);
-        read_binary(*this, value, expected_size);
-    }
 
     virtual void object_begin() = 0;
     virtual void object_end() = 0;

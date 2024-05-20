@@ -3,40 +3,58 @@
 #include <sstream>
 #include <stack>
 #include "datapack/writer.hpp"
-#include "datapack/parser.hpp"
+// #include "datapack/parser.hpp"
 
 namespace datapack {
 
 class JsonWriter: public Writer {
 public:
-    JsonWriter(std::ostream& os);
+    JsonWriter(std::string& result);
 
-    void value_f64(const double& value) override;
-    void value_i32(const int& value) override;
+    void value_i32(std::int32_t value) override;
+    void value_i64(std::int64_t value) override;
+    void value_u32(std::uint32_t value) override;
+    void value_u64(std::uint64_t value) override;
 
-    void optional_begin(bool has_value) override;
-    void optional_end() override;
-    void variant_begin() override;
-    void variant_match(const char* label) override;
+    void value_f32(float value) override;
+    void value_f64(double value) override;
+
+    void value_string(const std::string&) override;
+    void value_bool(bool value) override;
+
+    void enumerate(int value, const std::vector<const char*>& labels) override;
+    void optional(bool has_value) override;
+    void variant_begin(const char* label, const std::vector<const char*>& labels) override;
     void variant_end() override;
 
-    void object_begin() override;
-    void object_end() override;
-    void object_next(const char* key) override;
-    std::string result();
+    void binary(std::size_t size, const std::uint8_t* data) override;
+
+    void object_begin() override { map_begin(); }
+    void object_end() override { map_end(); }
+    void object_next(const char* key) override { map_next(key); }
+
+    void tuple_begin() override { list_begin(); }
+    void tuple_end() override { list_end(); }
+    void tuple_next() override { list_next(); }
+
+    void map_begin() override;
+    void map_end() override;
+    void map_next(const std::string& key) override;
+
+    void list_begin() override;
+    void list_end() override;
+    void list_next() override;
 
 private:
-    void assert_is_array(bool expected);
-    void assert_at_value(bool expected);
     void indent();
 
-    std::ostream& os;
-    std::stack<bool> is_array;
-    bool at_value;
-    bool first_key_in_array;
+    std::string& result;
+    bool first_element;
+    int depth;
 };
 
 
+#if 0
 class JsonParser: public Parser {
 public:
     JsonParser(const std::string& source);
@@ -57,5 +75,6 @@ private:
     std::size_t pos;
     std::stack<int> states;
 };
+#endif
 
 } // namespace datpack

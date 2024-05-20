@@ -41,6 +41,17 @@ public:
         write(*this, value);
     }
 
+    template <writeable_binary T>
+    void value_binary(const T& value) {
+        write_binary(*this, value);
+    }
+
+    template <writeable_binary T>
+    void value_binary(const char* key, const T& value) {
+        object_next(key);
+        write_binary(*this, value);
+    }
+
     virtual void value_i32(std::int32_t value) = 0;
     virtual void value_i64(std::int64_t value) = 0;
     virtual void value_u32(std::uint32_t value) = 0;
@@ -58,17 +69,6 @@ public:
     virtual void variant_end() = 0;
 
     virtual void binary(std::size_t size, const std::uint8_t* data) = 0;
-
-    template <writeable_binary T>
-    void value_binary(const T& value) {
-        write_binary(*this, value);
-    }
-
-    template <writeable_binary T>
-    void value_binary(const char* key, const T& value) {
-        object_next(key);
-        write_binary(*this, value);
-    }
 
     virtual void object_begin() = 0;
     virtual void object_end() = 0;

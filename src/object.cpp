@@ -1,6 +1,6 @@
 #include "datapack/object.hpp"
 #include <stack>
-#include <iostream>
+#include <assert.h>
 
 
 namespace datapack {
@@ -9,7 +9,7 @@ namespace datapack {
 template <bool IsConst>
 Object_<IsConst> Object_<IsConst>::insert(const std::string& key, const value_t& value) const {
     if (!get_if<map_t>()) {
-        throw std::runtime_error("Not in a map");
+        throw ObjectException("Not in a map");
     }
     auto new_node = create_node(Node(value, key, index, -1));
 
@@ -42,7 +42,7 @@ template Object Object::operator[](const std::string&) const;
 template <bool IsConst>
 Object_<IsConst> Object_<IsConst>::append(const value_t& value) const {
     if (!get_if<list_t>()) {
-        throw std::runtime_error("Not in a list");
+        throw ObjectException("Not in a list");
     }
     auto new_node = create_node(Node(value, "", index, -1));
 
@@ -123,7 +123,7 @@ Object_<IsConst> Object_<IsConst>::clone() const {
             new_to = to.append(from.value());
         }
         else {
-            throw std::runtime_error("Unreachable code");
+            assert(false);
         }
 
         if (from.get_if<map_t>() || from.get_if<list_t>()) {

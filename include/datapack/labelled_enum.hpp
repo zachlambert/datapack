@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <optional>
 #include <concepts>
 
 
@@ -13,7 +14,7 @@ template <typename T>
 concept labelled_enum = requires(const char* label, T& value) {
     std::is_enum_v<T>;
     { enum_details<T>::labels } -> std::convertible_to<std::vector<const char*>>;
-    { enum_details<T>::from_label(label) } -> std::convertible_to<T>;
+    { enum_details<T>::from_label(label) } -> std::convertible_to<std::optional<T>>;
     { enum_details<T>::to_label(value) } -> std::convertible_to<const char*>;
 };
 
@@ -23,7 +24,7 @@ const std::vector<const char*>& enum_labels() {
 }
 
 template <labelled_enum T>
-T enum_from_label(const char* label) {
+std::optional<T> enum_from_label(const char* label) {
     return enum_details<T>::from_label(label);
 }
 
@@ -37,7 +38,7 @@ template <> \
 struct datapack::enum_details<Physics> { \
     static std::vector<const char*> labels; \
     static const char* to_label(const T& value); \
-    static T from_label(const char* label); \
+    static std::optional<T> from_label(const char* label); \
 }; \
 static_assert(datapack::labelled_enum<T>);
 

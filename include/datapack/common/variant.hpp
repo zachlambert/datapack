@@ -11,7 +11,11 @@ namespace datapack {
 template <labelled_variant T>
 void read(Reader& reader, T& value) {
     const char* label = reader.variant_begin(variant_labels<T>());
-    value = variant_from_label<T>(label);
+    auto value_opt = variant_from_label<T>(label);
+    if (!value_opt.has_value()) {
+        throw ReadException("Invalid variant label '" + std::string(label) + "'");
+    }
+    value = value_opt.value();
     std::visit([&](auto& value) {
         reader.value(value);
     }, value);
@@ -34,7 +38,7 @@ void define(Definer& definer, const T& value) {
         definer.variant_next(label);
         std::visit([&](const auto& value){
             definer.value(value);
-        }, variant_from_label<T>(label));
+        }, variant_from_label<T>(label).value());
     }
     definer.variant_end();
 }

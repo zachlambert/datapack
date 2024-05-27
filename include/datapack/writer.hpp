@@ -87,4 +87,17 @@ public:
     virtual void list_next() = 0;
 };
 
+class WriteException: public std::exception {
+public:
+    WriteException(const std::string& message):
+        message(message)
+    {}
+
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+
 } // namespace datapack

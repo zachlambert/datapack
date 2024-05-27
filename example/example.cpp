@@ -38,7 +38,7 @@ const char* datapack::enum_details<Physics>::to_label(const Physics& value) {
     return "";
 }
 
-Physics datapack::enum_details<Physics>::from_label(const char* label) {
+std::optional<Physics> datapack::enum_details<Physics>::from_label(const char* label) {
     if (std::strcmp(label, "dynamic") == 0) {
         return Physics::Dynamic;
     }
@@ -48,8 +48,7 @@ Physics datapack::enum_details<Physics>::from_label(const char* label) {
     if (std::strcmp(label, "static") == 0) {
         return Physics::Static;
     }
-    throw std::runtime_error("Invalid label");
-    return Physics::Dynamic;
+    return std::nullopt;
 }
 
 std::vector<const char*> datapack::variant_details<Shape>::labels = {
@@ -66,15 +65,14 @@ const char* datapack::variant_details<Shape>::to_label(const Shape& value) {
     return "";
 }
 
-Shape datapack::variant_details<Shape>::from_label(const char* label) {
+std::optional<Shape> datapack::variant_details<Shape>::from_label(const char* label) {
     if (std::strcmp(label, "circle") == 0) {
         return Circle();
     }
     if (std::strcmp(label, "rect") == 0) {
         return Rect();
     }
-    throw std::runtime_error("Invalid label");
-    return Circle();
+    return std::nullopt;
 }
 
 template <typename V>

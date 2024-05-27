@@ -93,4 +93,17 @@ public:
     }
 };
 
+class ReadException: public std::exception {
+public:
+    ReadException(const std::string& message):
+        message(message)
+    {}
+
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+
 } // namespace datapack

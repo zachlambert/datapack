@@ -1,5 +1,4 @@
 #include "datapack/format/json.hpp"
-#include "datapack/exception.hpp"
 #include <assert.h>
 #include <iostream>
 

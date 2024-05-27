@@ -12,6 +12,42 @@
 
 namespace datapack {
 
+class LoadException: public std::exception {
+public:
+    LoadException(const std::string& message):
+        message(message)
+    {}
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+
+class DumpException: public std::exception {
+public:
+    DumpException(const std::string& message):
+        message(message)
+    {}
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+
+class ObjectException: public std::exception {
+public:
+    ObjectException(const std::string& message):
+        message(message)
+    {}
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+
 namespace _object {
     using int_t = std::int64_t;
     using float_t = double;

@@ -22,8 +22,8 @@ add_library(datapack SHARED
     src/util/random.cpp
     src/format/binary.cpp
     src/format/json.cpp
+    src/definer.cpp
     src/object.cpp
-    src/schema.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -59,8 +59,8 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(example_binary example/binary.cpp)
     target_link_libraries(example_binary datapack example_common)
 
-    add_executable(example_schema example/schema.cpp)
-    target_link_libraries(example_schema datapack example_common)
+    add_executable(example_definer example/definer.cpp)
+    target_link_libraries(example_definer datapack example_common)
 
     add_executable(example_object example/object.cpp)
     target_link_libraries(example_object datapack example_common)

@@ -2,7 +2,7 @@
 
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
-#include "datapack/schema.hpp"
+#include "datapack/definer.hpp"
 
 namespace datapack {
 

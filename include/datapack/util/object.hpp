@@ -126,7 +126,7 @@ T read_object(ConstObject object) {
 }
 
 template <writeable T>
-Object write_binary(const T& value) {
+Object write_object(const T& value) {
     Object object;
     ObjectWriter(object).value(value);
     return object;

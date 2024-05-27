@@ -5,13 +5,10 @@
 int main() {
     Entity in = Entity::example();
 
-    std::vector<std::uint8_t> data;
-    datapack::BinaryWriter(data).value(in);
+    std::vector<std::uint8_t> data = datapack::write_binary(in);
+    Entity out = datapack::read_binary<Entity>(data);
 
-    Entity out;
-    datapack::BinaryReader(data).value(out);
-
-    datapack::DebugWriter(std::cout).value(in);
-    datapack::DebugWriter(std::cout).value(out);
+    std::cout << datapack::debug(in) << std::endl;
+    std::cout << datapack::debug(out) << std::endl;
     return 0;
 }

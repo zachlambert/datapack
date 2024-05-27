@@ -6,17 +6,11 @@
 int main() {
     Entity in = Entity::example();
 
-    datapack::Object object;
-    datapack::ObjectWriter(object).value(in);
+    datapack::Object object = datapack::write_object(in);
+    Entity out = datapack::read_object<Entity>(object);
 
-    Entity out;
-    datapack::ObjectReader(object).value(out);
-
-    std::cout << "IN:\n";
-    datapack::DebugWriter(std::cout).value(in);
-    std::cout << "OUT:\n";
-    datapack::DebugWriter(std::cout).value(in);
-
+    std::cout << "IN:\n" << datapack::debug(in) << std::endl;
+    std::cout << "OUT:\n" << datapack::debug(out) << std::endl;
     std::cout << "EQUAL ? " << (compare(in, out) ? "yes" : "no") << std::endl;
 
     return 0;

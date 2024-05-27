@@ -7,8 +7,7 @@ int main() {
     auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     srand(timestamp % std::numeric_limits<unsigned int>::max());
 
-    Entity value;
-    datapack::RandomReader().value(value);
-    datapack::DebugWriter(std::cout).value(value);
+    Entity value = datapack::random<Entity>();
+    std::cout << "RANDOM:\n" << datapack::debug(value) << std::endl;
     return 0;
 }

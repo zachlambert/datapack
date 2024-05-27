@@ -74,6 +74,9 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     add_executable(example_load_json example/load_json.cpp)
     target_link_libraries(example_load_json datapack example_common)
+
+    add_executable(example_dump_json example/dump_json.cpp)
+    target_link_libraries(example_dump_json datapack example_common)
 endif()
 
 

@@ -1,186 +1,7 @@
 #include "datapack/format/json.hpp"
 #include <assert.h>
-#include <iostream>
 
 namespace datapack {
-
-#if 0
-
-JsonParser::JsonParser(const std::string& source):
-    source(source),
-    pos(0)
-{
-    states.push(EXPECT_VALUE);
-}
-
-Token JsonParser::next() {
-    while (true) {
-        int& state = states.top();
-
-        if (pos == source.size()) {
-            if (!(state & EXPECT_END) || (state & IS_OBJECT) || (state & IS_ARRAY)) {
-                error("Not expecting the document end");
-            }
-            return token::DocumentEnd();
-        }
-
-        const char c = source[pos];
-        if (std::isspace(c)) {
-            pos++;
-            continue;
-        }
-
-        if (c == '{') {
-            if (!(state | EXPECT_VALUE)) {
-                error("Unexpected character '{'");
-            }
-            pos++;
-            states.push(IS_OBJECT | EXPECT_ELEMENT | EXPECT_END);
-            return token::ObjectBegin();
-        }
-        if (c == '[') {
-            if (!(state & EXPECT_VALUE)) {
-                error("Unexpected character '['");
-            }
-            pos++;
-            states.push(IS_ARRAY | EXPECT_ELEMENT | EXPECT_END);
-            return token::ArrayBegin();
-        }
-        if (c == '}') {
-            if (!(state & IS_OBJECT) || !(state & EXPECT_END)) {
-                error("Unexpected character '}'");
-            }
-            pos++;
-            states.pop();
-
-            int& new_state = states.top();
-            new_state &= ~EXPECT_VALUE;
-            new_state |= EXPECT_NEXT | EXPECT_END;
-            return token::ObjectEnd();
-        }
-        if (c == ']') {
-            if (!(state & IS_ARRAY) | !(state & EXPECT_END)) {
-                error("Unexpected character ']'");
-            }
-            pos++;
-            states.pop();
-
-            int& new_state = states.top();
-            new_state &= ~EXPECT_VALUE;
-            new_state |= EXPECT_NEXT | EXPECT_END;
-            return token::ArrayEnd();
-        }
-        if (c == ',') {
-            pos++;
-
-            if (!(state & EXPECT_NEXT)) {
-                error("Unexpected character ','");
-            }
-            state &= ~EXPECT_NEXT;
-            state |= EXPECT_ELEMENT;
-            continue;
-        }
-
-        if (c == '"' && (state & IS_OBJECT) && (state & EXPECT_ELEMENT)) {
-            pos++;
-            std::size_t begin = pos;
-            while (true) {
-                if (pos == source.size()) {
-                    error("Key missing terminating '\"'");
-                }
-                const char c = source[pos];
-                if (c == '"') {
-                    break;
-                }
-                pos++;
-            }
-            std::size_t end = pos;
-            pos++;
-
-            while (true) {
-                if (pos == source.size()) {
-                    error("Expected ':' following key");
-                }
-                const char c = source[pos];
-                pos++;
-                if (std::isspace(c)) {
-                    continue;
-                }
-                if (c == ':') {
-                    break;
-                }
-                error("Expected ':' following key");
-            }
-            state &= ~EXPECT_ELEMENT;
-            state |= EXPECT_VALUE;
-            return token::ObjectElement(std::string(source.substr(begin, end-begin)));
-        }
-
-        if ((state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
-            state &= ~EXPECT_ELEMENT;
-            state |= EXPECT_VALUE;
-            return token::ArrayElement();
-        }
-
-        if (!(state & EXPECT_VALUE)) {
-            error("Not expecting a value");
-        }
-
-        state &= ~EXPECT_VALUE;
-        state |= EXPECT_END | EXPECT_NEXT;
-
-        if (c == '"') {
-            pos++;
-            std::size_t begin = pos;
-            while (true) {
-                if (pos == source.size()) {
-                    error("String missing terminating '\"'");
-                }
-                if (source[pos] == '"') {
-                    break;
-                }
-                pos++;
-            }
-            std::size_t end = pos;
-            pos++;
-            return token::Primitive(std::string(source.substr(begin, end-begin)));
-        }
-
-        std::size_t begin = pos;
-        while (true) {
-            if (pos == source.size()) {
-                break;
-            }
-            const char c = source[pos];
-            if (std::isspace(c) || c == ',' || c == '}' || c == ']') {
-                break;
-            }
-            pos++;
-        }
-        std::size_t end = pos;
-
-        std::string_view value = source.substr(begin, end-begin);
-        if (value == "true") {
-            return Primitive(true);
-        }
-        if (value == "false") {
-            return Primitive(true);
-        }
-        if (value == "null") {
-            return Primitive(std::nullopt);
-        }
-        try {
-            double result = std::stod(std::string(value));
-            return result;
-        } catch (std::invalid_argument) {
-        } catch (std::out_of_range) {}
-
-        throw LoadException("Invalid value '" + std::string(value) + "'");
-    }
-    return std::nullopt;
-}
-
-#endif
 
 Object load_json(const std::string& json) {
     static constexpr int EXPECT_ELEMENT = 1 << 0;
@@ -391,7 +212,95 @@ Object load_json(const std::string& json) {
 
 std::string dump_json(ConstObject object) {
     std::string json = "";
-    // TODO
+
+    std::stack<ConstObject> nodes;
+    nodes.push(object);
+    bool start = true;
+    bool end = false;
+
+    while (!nodes.empty()) {
+        auto node = nodes.top();
+        if (!node) {
+            nodes.pop();
+            end = true;
+            continue;
+        }
+
+        if (end) {
+            end = false;
+            if (!start) {
+                json += "\n";
+                for (int i = 0; i < (nodes.size()-1); i++) {
+                    json += "    ";
+                }
+            }
+            start = false;
+            if (node.get_if<Object::map_t>()) {
+                json += "}";
+                nodes.pop();
+                nodes.push(node.next());
+                continue;
+            }
+            if (node.get_if<Object::list_t>()) {
+                json += "]";
+                nodes.pop();
+                nodes.push(node.next());
+                continue;
+            }
+            nodes.pop();
+            assert(nodes.empty());
+            continue;
+        }
+
+        if (!start) {
+            json += ",\n";
+        }
+        start = false;
+
+        for (int i = 0; i < (nodes.size()-1); i++) {
+            json += "    ";
+        }
+        if (!node.key().empty()) {
+            json += "\"" + node.key() + "\": ";
+        }
+
+        if (node.get_if<Object::map_t>()) {
+            json += "{\n";
+            nodes.push(node.child());
+            start = true;
+            continue;
+        }
+        if (node.get_if<Object::list_t>()) {
+            json += "[\n";
+            nodes.push(node.child());
+            start = true;
+            continue;
+        }
+
+        if (auto value = node.get_if<Object::int_t>()) {
+            json += std::to_string(*value);
+        }
+        else if (auto value = node.get_if<Object::float_t>()) {
+            json += std::to_string(*value);
+        }
+        else if (auto value = node.get_if<Object::str_t>()) {
+            json += "\"" + *value + "\"";
+        }
+        else if (auto value = node.get_if<Object::null_t>()) {
+            json += "null";
+        }
+        else if (auto value = node.get_if<Object::bool_t>()) {
+            json += (*value ? "true" : "false");
+        }
+        else if (auto value = node.get_if<Object::binary_t>()) {
+            json += "\"binary not implemented\"";
+            // throw DumpException("Binary not implemented for json yet");
+        }
+
+        nodes.pop();
+        nodes.push(node.next());
+    }
+
     return json;
 }
 

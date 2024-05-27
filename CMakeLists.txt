@@ -15,6 +15,7 @@ endif()
 # Library
 
 add_library(datapack SHARED
+    src/encode/base64.cpp
     src/util/debug.cpp
     src/util/object.cpp
     src/util/random.cpp
@@ -77,6 +78,9 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     add_executable(example_dump_json example/dump_json.cpp)
     target_link_libraries(example_dump_json datapack example_common)
+
+    add_executable(example_base64 example/base64.cpp)
+    target_link_libraries(example_base64 datapack example_common)
 endif()
 
 

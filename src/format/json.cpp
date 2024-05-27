@@ -1,5 +1,6 @@
 #include "datapack/format/json.hpp"
 #include <assert.h>
+#include <iostream> // TEMP
 
 namespace datapack {
 
@@ -32,6 +33,51 @@ Object load_json(const std::string& json) {
         const char c = json[pos];
         if (std::isspace(c)) {
             pos++;
+            continue;
+        }
+        assert(node);
+
+        if (c == '"' && (state & IS_OBJECT) && (state & EXPECT_ELEMENT)) {
+            pos++;
+            std::size_t begin = pos;
+            while (true) {
+                if (pos == json.size()) {
+                    throw LoadException("Key missing terminating '\"'");
+                }
+                const char c = json[pos];
+                if (c == '"') {
+                    break;
+                }
+                pos++;
+            }
+            std::size_t end = pos;
+            pos++;
+
+            while (true) {
+                if (pos == json.size()) {
+                    throw LoadException("Expected ':' following key");
+                }
+                const char c = json[pos];
+                pos++;
+                if (std::isspace(c)) {
+                    continue;
+                }
+                if (c == ':') {
+                    break;
+                }
+                throw LoadException("Expected ':' following key");
+            }
+            state &= ~EXPECT_ELEMENT;
+            state |= EXPECT_VALUE;
+            std::string key = json.substr(begin, end-begin);
+            node = node.insert(key, Object::null);
+            continue;
+        }
+
+        if ((state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
+            state &= ~EXPECT_ELEMENT;
+            state |= EXPECT_VALUE;
+            node = node.append(Object::null);
             continue;
         }
 
@@ -88,49 +134,6 @@ Object load_json(const std::string& json) {
             state &= ~EXPECT_NEXT;
             state |= EXPECT_ELEMENT;
             continue;
-        }
-
-        if (c == '"' && (state & IS_OBJECT) && (state & EXPECT_ELEMENT)) {
-            pos++;
-            std::size_t begin = pos;
-            while (true) {
-                if (pos == json.size()) {
-                    throw LoadException("Key missing terminating '\"'");
-                }
-                const char c = json[pos];
-                if (c == '"') {
-                    break;
-                }
-                pos++;
-            }
-            std::size_t end = pos;
-            pos++;
-
-            while (true) {
-                if (pos == json.size()) {
-                    throw LoadException("Expected ':' following key");
-                }
-                const char c = json[pos];
-                pos++;
-                if (std::isspace(c)) {
-                    continue;
-                }
-                if (c == ':') {
-                    break;
-                }
-                throw LoadException("Expected ':' following key");
-            }
-            state &= ~EXPECT_ELEMENT;
-            state |= EXPECT_VALUE;
-            std::string key = json.substr(begin, end-begin);
-            node = node.insert(key, Object::null);
-            continue;
-        }
-
-        if ((state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
-            state &= ~EXPECT_ELEMENT;
-            state |= EXPECT_VALUE;
-            node = node.append(Object::null);
         }
 
         if (!(state & EXPECT_VALUE)) {

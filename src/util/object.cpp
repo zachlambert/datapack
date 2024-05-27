@@ -260,7 +260,8 @@ std::size_t ObjectReader::binary_size(std::size_t expected_size) {
         return x->size();
     }
     if (auto x = node.get_if<Object::str_t>()) {
-        error("TODO: Handle base-64 encoded binary data");
+        // error("TODO: Handle base-64 encoded binary data");
+        return 0;
     }
     error("Incorrect value type (binary)");
     return 0;
@@ -271,7 +272,7 @@ void ObjectReader::binary_data(std::uint8_t* data) {
         std::memcpy(data, x->data(), x->size());
         return;
     }
-    error("Incorrect value type (binary)");
+    // error("Incorrect value type (binary)");
 }
 
 

@@ -189,9 +189,9 @@ bool compare(const Entity& a, const Entity& b, double float_threshold) {
     if (a.name != b.name) return false;
     if (a.enabled != b.enabled) return false;
 
-    if (a.pose.x != b.pose.x) return false;
-    if (a.pose.y != b.pose.y) return false;
-    if (a.pose.angle != b.pose.angle) return false;
+    if (std::abs(a.pose.x - b.pose.x) > float_threshold) return false;
+    if (std::abs(a.pose.y - b.pose.y) > float_threshold) return false;
+    if (std::abs(a.pose.angle - b.pose.angle) > float_threshold) return false;
 
     if (a.physics != b.physics) return false;
 
@@ -199,13 +199,15 @@ bool compare(const Entity& a, const Entity& b, double float_threshold) {
     if (auto a_circle = std::get_if<Circle>(&a.hitbox.value())) {
         auto b_circle = std::get_if<Circle>(&b.hitbox.value());
         if (!b_circle) return false;
-        if (a_circle->radius != b_circle->radius) return false;
+        if (std::abs(a_circle->radius - b_circle->radius) > float_threshold) return false;
     }
     else if (auto a_rect = std::get_if<Rect>(&a.hitbox.value())) {
         auto b_rect = std::get_if<Rect>(&b.hitbox.value());
         if (!b_rect) return false;
         if (a_rect->width != b_rect->width) return false;
         if (a_rect->height != b_rect->height) return false;
+        if (std::abs(a_rect->width - b_rect->width) > float_threshold) return false;
+        if (std::abs(a_rect->height - b_rect->height) > float_threshold) return false;
     }
 
     if (a.sprite.width != b.sprite.width) return false;

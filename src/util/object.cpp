@@ -1,4 +1,6 @@
 #include "datapack/util/object.hpp"
+#include "datapack/encode/base64.hpp"
+
 
 namespace datapack {
 
@@ -260,8 +262,7 @@ std::size_t ObjectReader::binary_size(std::size_t expected_size) {
         return x->size();
     }
     if (auto x = node.get_if<Object::str_t>()) {
-        // error("TODO: Handle base-64 encoded binary data");
-        return 0;
+        return base64_decoded_length(*x);
     }
     error("Incorrect value type (binary)");
     return 0;
@@ -272,7 +273,12 @@ void ObjectReader::binary_data(std::uint8_t* data) {
         std::memcpy(data, x->data(), x->size());
         return;
     }
-    // error("Incorrect value type (binary)");
+    if (auto x = node.get_if<Object::str_t>()) {
+        std::vector<std::uint8_t> decoded = base64_decode(*x);
+        std::memcpy(data, decoded.data(), decoded.size());
+        return;
+    }
+    error("Incorrect value type (binary)");
 }
 
 

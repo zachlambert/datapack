@@ -26,7 +26,7 @@ static std::uint8_t encode_symbol(std::uint8_t value) {
     if (value == 63) {
         return '/';
     }
-    throw std::runtime_error("Invalid value");
+    throw Base64Exception("Invalid value");
     return 0x00;
 }
 
@@ -46,7 +46,7 @@ static std::uint8_t decode_symbol(std::uint8_t symbol) {
     if (symbol == '/') {
         return 63;
     }
-    throw std::runtime_error("Invalid symbol");
+    throw Base64Exception("Invalid symbol");
     return 0x00;
 }
 
@@ -94,6 +94,45 @@ std::vector<std::uint8_t> base64_decode(const std::string& text) {
         }
     }
     return data;
+}
+
+std::size_t base64_encoded_length(const std::vector<std::uint8_t>& data) {
+    std::size_t blocks = data.size() / 3;
+    if (data.size() % 3 != 0) {
+        blocks += (3 - data.size() % 3);
+    }
+    return blocks * 4;
+}
+
+std::size_t base64_decoded_length(const std::string& text) {
+    if (text.empty()) {
+        return 0;
+    }
+
+    // Assume padding can be optional
+    std::size_t full_blocks = text.length() / 4;
+    if (text.length() % 4 == 0) {
+        full_blocks--;
+    }
+    std::size_t last_block_i = full_blocks * 4;
+    std::size_t length = full_blocks * 3;
+
+    // Match the last 4 characters / padding to determine how many bytes
+    // are encoded here
+    // x=== (not possible)
+    if (last_block_i + 1 >= text.size() || text[last_block_i + 1] == '=') {
+        throw Base64Exception("Invalid amount of padding");
+    }
+    // xx== (1 byte)
+    if (last_block_i + 2 >= text.size() || text[last_block_i + 2] == '=') {
+        return length + 1;
+    }
+    // xxx= (2 bytes)
+    if (last_block_i + 3 >= text.size() || text[last_block_i + 3] == '=') {
+        return length + 2;
+    }
+    // xxxx (3 bytes)
+    return length + 3;
 }
 
 } // namespace datapack

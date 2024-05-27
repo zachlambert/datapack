@@ -16,6 +16,7 @@ endif()
 
 add_library(datapack SHARED
     src/encode/base64.cpp
+    src/encode/string.cpp
     src/util/debug.cpp
     src/util/object.cpp
     src/util/random.cpp

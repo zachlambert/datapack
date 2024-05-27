@@ -1,6 +1,8 @@
 #include "datapack/format/json.hpp"
 #include <assert.h>
-#include <iostream> // TEMP
+#include "datapack/encode/base64.hpp"
+#include "datapack/encode/string.hpp"
+
 
 namespace datapack {
 
@@ -284,7 +286,7 @@ std::string dump_json(ConstObject object) {
             json += std::to_string(*value);
         }
         else if (auto value = node.get_if<Object::float_t>()) {
-            json += std::to_string(*value);
+            json += double_to_string(*value);
         }
         else if (auto value = node.get_if<Object::str_t>()) {
             json += "\"" + *value + "\"";
@@ -296,8 +298,7 @@ std::string dump_json(ConstObject object) {
             json += (*value ? "true" : "false");
         }
         else if (auto value = node.get_if<Object::binary_t>()) {
-            json += "\"binary not implemented\"";
-            // throw DumpException("Binary not implemented for json yet");
+            json += "\"" + base64_encode(*value) + "\"";
         }
 
         nodes.pop();

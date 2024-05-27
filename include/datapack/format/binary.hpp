@@ -119,4 +119,18 @@ private:
     std::size_t next_binary_size;
 };
 
+template <readable T>
+T read_binary(const std::vector<std::uint8_t>& data) {
+    T result;
+    BinaryReader(data).value(result);
+    return result;
+}
+
+template <writeable T>
+std::vector<std::uint8_t> write_binary(const T& value) {
+    std::vector<std::uint8_t> data;
+    BinaryWriter(data).value(value);
+    return data;
+}
+
 } // namespace datapack

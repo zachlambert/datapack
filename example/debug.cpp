@@ -3,6 +3,6 @@
 
 int main() {
     Entity value = Entity::example();
-    datapack::DebugWriter(std::cout).value(value);
+    std::cout << datapack::debug(value) << std::endl;
     return 0;
 }

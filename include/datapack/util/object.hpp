@@ -118,4 +118,18 @@ private:
     bool list_start;
 };
 
+template <readable T>
+T read_object(ConstObject object) {
+    T result;
+    ObjectReader(object).value(result);
+    return result;
+}
+
+template <writeable T>
+Object write_binary(const T& value) {
+    Object object;
+    ObjectWriter(object).value(value);
+    return object;
+}
+
 } // namespace datapack

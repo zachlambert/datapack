@@ -48,4 +48,11 @@ private:
     std::size_t next_binary_size;
 };
 
+template <readable T>
+T random() {
+    T result;
+    RandomReader().value(result);
+    return result;
+}
+
 } // namespace datapack

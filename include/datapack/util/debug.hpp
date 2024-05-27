@@ -50,4 +50,23 @@ private:
     int depth;
 };
 
+template <writeable T>
+class debug {
+public:
+    debug(const T& value):
+        value(value)
+    {}
+    std::ostream& operator()(std::ostream& os) const {
+        DebugWriter(os).value(value);
+        return os;
+    }
+private:
+    const T& value;
+};
+
 } // namespace datapack
+
+template <datapack::writeable T>
+std::ostream& operator<<(std::ostream& os, datapack::debug<T> manipulator) {
+    return manipulator(os);
+}

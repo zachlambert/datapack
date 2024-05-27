@@ -18,6 +18,7 @@ namespace _object {
     using bool_t = bool;
     using str_t = std::string;
     using null_t = std::nullopt_t;
+    static constexpr null_t null = std::nullopt;
     using binary_t = std::vector<std::uint8_t>;
     struct map_t {};
     struct list_t {};
@@ -61,6 +62,7 @@ public:
     using bool_t = _object::bool_t;
     using str_t = _object::str_t;
     using null_t = _object::null_t;
+    static constexpr null_t null = _object::null;
     using binary_t = _object::binary_t;
     using map_t = _object::map_t;
     using list_t = _object::list_t;

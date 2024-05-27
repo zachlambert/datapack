@@ -72,8 +72,8 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(example_object_reader example/object_reader.cpp)
     target_link_libraries(example_object_reader datapack example_common)
 
-    add_executable(example_json_writer example/json_writer.cpp)
-    target_link_libraries(example_json_writer datapack example_common)
+    add_executable(example_load_json example/load_json.cpp)
+    target_link_libraries(example_load_json datapack example_common)
 endif()
 
 

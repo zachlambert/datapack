@@ -9,6 +9,7 @@
 
 namespace datapack {
 
+#if 0
 class JsonWriter: public Writer {
 public:
     JsonWriter(std::string& result);
@@ -54,20 +55,15 @@ private:
     bool first_element;
     int depth;
 };
+#endif
 
 
-Object parse_json(const std::string& json);
-
-std::string write_json(ConstObject object) {
-    std::string result;
-    // TODO: Make object writeable
-    // JsonWriter(result).value(object);
-    return result;
-}
+Object load_json(const std::string& json);
+std::string dump_json(ConstObject object);
 
 template <readable T>
 T read_json(const std::string& json) {
-    Object object = parse_json(json);
+    Object object = load_json(json);
     T result;
     ObjectReader(object).value(result);
     return result;
@@ -75,9 +71,9 @@ T read_json(const std::string& json) {
 
 template <writeable T>
 std::string write_json(const T& value) {
-    std::string result;
-    JsonWriter(result).value(value);
-    return result;
+    Object object;
+    ObjectWriter(object).value(value);
+    return dump_json(object);
 }
 
 #if 0

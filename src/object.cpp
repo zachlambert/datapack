@@ -298,7 +298,6 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
 
 } // namespace datapack
 
-
 std::ostream& operator<<(std::ostream& os, datapack::ConstObject object) {
     using namespace datapack;
 

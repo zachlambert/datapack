@@ -5,6 +5,7 @@
 #include <vector>
 #include <variant>
 #include "datapack/writer.hpp"
+#include "datapack/constraint.hpp"
 
 
 namespace datapack {
@@ -100,6 +101,17 @@ public:
 
     template <defined T>
     void value(const char* key, const T& value) {
+        object_next(key);
+        define(*this, value);
+    }
+
+    template <defined T, is_constraint Constraint>
+    void value(const T& value, const Constraint&) {
+        define(*this, value);
+    }
+
+    template <defined T, is_constraint Constraint>
+    void value(const char* key, const T& value, const Constraint&) {
         object_next(key);
         define(*this, value);
     }

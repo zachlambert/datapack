@@ -257,7 +257,7 @@ void ObjectReader::variant_end() {
 }
 
 
-std::size_t ObjectReader::binary_size(std::size_t expected_size) {
+std::size_t ObjectReader::binary_size() {
     if (auto x = node.get_if<Object::binary_t>()) {
         return x->size();
     }

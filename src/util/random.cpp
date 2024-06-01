@@ -1,4 +1,5 @@
 #include "datapack/util/random.hpp"
+#include <iostream> // TEMP
 
 namespace datapack {
 
@@ -8,27 +9,57 @@ RandomReader::RandomReader():
 {}
 
 void RandomReader::value_i32(std::int32_t& value) {
+    if (auto c = constraint<RangeConstraint>()) {
+        value = std::int32_t(c->lower) + rand() % std::int32_t(c->upper - c->lower);
+        return;
+    }
     value = rand() % 100;
 }
 
 void RandomReader::value_i64(std::int64_t& value) {
-    value = rand() % 1000;
+    if (auto c = constraint<RangeConstraint>()) {
+        value = std::int64_t(c->lower) + rand() % std::int64_t(c->upper - c->lower);
+        return;
+    }
+    value = rand() % 100;
 }
 
 void RandomReader::value_u32(std::uint32_t& value) {
+    if (auto c = constraint<RangeConstraint>()) {
+        if (c->lower < 0 || c->upper < 0) {
+            error("Invalid range constraint");
+        }
+        value = std::uint32_t(c->lower) + rand() % std::uint32_t(c->upper - c->lower);
+        return;
+    }
     value = rand() & 100;
 }
 
 void RandomReader::value_u64(std::uint64_t& value) {
-    value = rand() & 1000;
+    if (auto c = constraint<RangeConstraint>()) {
+        if (c->lower < 0 || c->upper < 0) {
+            error("Invalid range constraint");
+        }
+        value = std::uint64_t(c->lower) + rand() % std::uint64_t(c->upper - c->lower);
+        return;
+    }
+    value = rand() & 100;
 }
 
 
 void RandomReader::value_f32(float& value) {
+    if (auto c = constraint<RangeConstraint>()) {
+        value = c->lower + ((float)rand() / (float)RAND_MAX) * (c->upper - c->lower);
+        return;
+    }
     value = (float)rand() / (float)RAND_MAX;
 }
 
 void RandomReader::value_f64(double& value) {
+    if (auto c = constraint<RangeConstraint>()) {
+        value = c->lower + ((double)rand() / (double)RAND_MAX) * (c->upper - c->lower);
+        return;
+    }
     value = (double)rand() / (double)RAND_MAX;
 }
 
@@ -36,7 +67,11 @@ void RandomReader::value_f64(double& value) {
 void RandomReader::value_string(std::string& value) {
     // Length: [4, 20]
     // Characters ~ { a, ..., z }
-    value.resize(4 + rand() % 17);
+    if (auto c = constraint<LengthConstraint>()) {
+        value.resize(c->length);
+    } else {
+        value.resize(4 + rand() % 17);
+    }
     for (auto& c: value) {
         c = 'a' + rand() % 26;
     }
@@ -63,13 +98,13 @@ void RandomReader::variant_end() {
 
 }
 
-std::size_t RandomReader::binary_size(std::size_t expected_size) {
-    if (expected_size == 0) {
-        next_binary_size = rand() % 256;
-    } else {
-        next_binary_size = expected_size;
+std::size_t RandomReader::binary_size() {
+    if (auto c = constraint<LengthConstraint>()){
+        next_binary_size = c->length * c->element_size;
+        return next_binary_size;
     }
-    return expected_size;
+    next_binary_size = rand() % 256;
+    return next_binary_size;
 }
 
 void RandomReader::binary_data(std::uint8_t* data) {
@@ -127,6 +162,10 @@ bool RandomReader::map_next(std::string& key) {
 
 
 void RandomReader::list_begin() {
+    if (auto c = constraint<LengthConstraint>()) {
+        container_counter = c->length;
+        return;
+    }
     container_counter = rand() % 10;
 }
 

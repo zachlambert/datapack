@@ -80,7 +80,8 @@ void visit(V& visitor, Pose& value) {
     visitor.object_begin();
     visitor.value("x", value.x);
     visitor.value("y", value.y);
-    visitor.value("angle", value.angle);
+    visitor.value("angle", value.angle,
+        datapack::RangeConstraint(-M_PI, M_PI));
     visitor.object_end();
 }
 DATAPACK_VISITOR_FUNCS_IMPL(Pose)
@@ -99,12 +100,13 @@ void visit(V& visitor, Sprite& value) {
     visitor.object_begin();
     visitor.value("width", value.width);
     visitor.value("height", value.height);
-    if constexpr(std::is_same_v<V, datapack::Reader>) {
-        visitor.value_binary("data", value.data, value.width * value.height);
-    }
-    if constexpr(std::is_same_v<V, datapack::Writer>) {
-        visitor.value_binary("data", value.data);
-    }
+    visitor.value(
+        "data", value.data,
+        datapack::LengthConstraint(
+            value.width * value.height,
+            sizeof(Sprite::Pixel))
+    );
+#if 0
     if constexpr(std::is_same_v<V, datapack::Definer>) {
         visitor.object_next("data");
         visitor.binary();
@@ -114,6 +116,7 @@ void visit(V& visitor, Sprite& value) {
         visitor.value("z", 0.0);
         visitor.object_end();
     }
+#endif
     visitor.object_end();
 }
 DATAPACK_VISITOR_FUNCS_IMPL(Sprite)

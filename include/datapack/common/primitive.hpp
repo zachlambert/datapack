@@ -101,4 +101,28 @@ inline void define(Definer& definer, bool value) {
     definer.value_primitive(value);
 }
 
+inline bool validate(const std::int32_t& value, const RangeConstraint& c) {
+    return c.validate(value);
+}
+
+inline bool validate(const std::int64_t& value, const RangeConstraint& c) {
+    return c.validate(value);
+}
+
+inline bool validate(const std::uint32_t& value, const RangeConstraint& c) {
+    return c.validate(value);
+}
+
+inline bool validate(const std::uint64_t& value, const RangeConstraint& c) {
+    return c.validate(value);
+}
+
+inline bool validate(const float& value, const RangeConstraint& c) {
+    return c.validate(value);
+}
+
+inline bool validate(const double& value, const RangeConstraint& c) {
+    return c.validate(value);
+}
+
 } // namespace datapack

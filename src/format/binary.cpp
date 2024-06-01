@@ -113,12 +113,9 @@ const char* BinaryReader::variant_begin(const std::vector<const char*>& labels) 
 }
 
 
-std::size_t BinaryReader::binary_size(std::size_t expected_size) {
+std::size_t BinaryReader::binary_size() {
     std::uint64_t size;
     value_number(size);
-    if (expected_size != 0 && size != expected_size) {
-        error("Binary size doesn't match expected value");
-    }
     next_binary_size = size;
     return size;
 }

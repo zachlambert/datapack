@@ -3,6 +3,7 @@
 #include <concepts>
 #include <string>
 #include <vector>
+#include "datapack/constraint.hpp"
 
 
 namespace datapack {
@@ -19,6 +20,9 @@ concept writeable_binary = requires(Writer& writer, const T& value) {
     { write_binary(writer, value) };
 };
 
+template <typename T>
+concept writeable_either = writeable<T> || writeable_binary<T>;
+
 class Writeable {
 public:
     virtual void write(Writer&) const = 0;
@@ -30,26 +34,44 @@ inline void write(Writer& writer, const Writeable& value) {
 
 class Writer {
 public:
-    template <writeable T>
+    Writer(bool is_binary = false):
+        is_binary(is_binary)
+    {}
+
+    template <writeable_either T>
     void value(T& value) {
-        write(*this, value);
+        if constexpr(writeable<T> && writeable_binary<T>) {
+            if (is_binary) {
+                write_binary(*this, value);
+            } else {
+                write(*this, value);
+            }
+        }
+        if constexpr(!writeable_binary<T>) {
+            write(*this, value);
+        }
+        if constexpr(!writeable<T>) {
+            write_binary(*this, value);
+        }
     }
 
-    template <writeable T>
+    template <writeable_either T>
     void value(const char* key, T& value) {
         object_next(key);
-        write(*this, value);
+        this->value(value);
     }
 
-    template <writeable_binary T>
-    void value_binary(const T& value) {
-        write_binary(*this, value);
+    template <writeable_either T, is_constraint Constraint>
+    void value(T& value, const Constraint&) {
+        // Ignore constraint
+        this->value(value);
     }
 
-    template <writeable_binary T>
-    void value_binary(const char* key, const T& value) {
+    template <writeable_either T, is_constraint Constraint>
+    void value(const char* key, T& value, const Constraint&) {
         object_next(key);
-        write_binary(*this, value);
+        // Ignore constraint
+        this->value(value);
     }
 
     virtual void value_i32(std::int32_t value) = 0;
@@ -85,6 +107,9 @@ public:
     virtual void list_begin() = 0;
     virtual void list_end() = 0;
     virtual void list_next() = 0;
+
+private:
+    const bool is_binary;
 };
 
 class WriteException: public std::exception {

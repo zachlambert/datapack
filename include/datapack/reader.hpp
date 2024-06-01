@@ -4,6 +4,8 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+#include <stack>
+#include "datapack/constraint.hpp"
 
 
 namespace datapack {
@@ -16,9 +18,12 @@ concept readable = requires(Reader& reader, T& value) {
 };
 
 template <typename T>
-concept readable_binary = requires(Reader& reader, T& value, std::size_t expected_size) {
-    { read_binary(reader, value, expected_size) };
+concept readable_binary = requires(Reader& reader, T& value) {
+    { read_binary(reader, value) };
 };
+
+template <typename T>
+concept readable_either = readable_binary<T> || readable<T>;
 
 class Readable {
 public:
@@ -29,28 +34,70 @@ inline void read(Reader& reader, Readable& value) {
     value.read(reader);
 }
 
+class ReadException: public std::exception {
+public:
+    ReadException(const std::string& message):
+        message(message)
+    {}
+
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+
 class Reader {
 public:
-    template <readable T>
+    Reader(bool is_binary=false, bool use_constraints=true):
+        is_binary(is_binary),
+        use_constraints(use_constraints),
+        constraint_(nullptr)
+    {}
+
+    template <readable_either T>
     void value(T& value) {
-        read(*this, value);
+        if constexpr(readable<T> && readable_binary<T>) {
+            if (is_binary) {
+                read_binary(*this, value);
+            } else {
+                read(*this, value);
+            }
+        }
+        if constexpr(!readable_binary<T>) {
+            read(*this, value);
+        }
+        if constexpr(!readable<T>) {
+            read_binary(*this, value);
+        }
     }
 
-    template <readable T>
+    template <readable_either T>
     void value(const char* key, T& value) {
         object_next(key);
-        read(*this, value);
+        this->value(value);
     }
 
-    template <readable_binary T>
-    void value_binary(T& value, std::size_t expected_size = 0) {
-        read_binary(*this, value, expected_size);
+    template <readable_either T, is_constraint Constraint>
+    requires is_constrained<T, Constraint>
+    void value(T& value, const Constraint& constraint) {
+        if (use_constraints) {
+            constraint_ = &constraint;
+        }
+        this->value(value);
+        if (use_constraints) {
+            if (!validate(value, constraint)) {
+                error("Constraint failed");
+            }
+            constraint_ = nullptr;
+        }
     }
 
-    template <readable_binary T>
-    void value_binary(const char* key, T& value, std::size_t expected_size = 0) {
+    template <readable_either T, is_constraint Constraint>
+    requires is_constrained<T, Constraint>
+    void value(const char* key, T& value, const Constraint& constraint) {
         object_next(key);
-        read_binary(*this, value, expected_size);
+        this->value(value, constraint);
     }
 
     virtual void value_i32(std::int32_t& value) = 0;
@@ -69,7 +116,7 @@ public:
     virtual const char* variant_begin(const std::vector<const char*>& labels) = 0;
     virtual void variant_end() = 0;
 
-    virtual std::size_t binary_size(std::size_t expected_size=0) = 0;
+    virtual std::size_t binary_size() = 0;
     virtual void binary_data(std::uint8_t* data) = 0;
 
     virtual void object_begin() = 0;
@@ -89,21 +136,18 @@ public:
     virtual bool list_next() = 0;
 
     void error(const std::string& error) {
-        throw std::runtime_error(error);
+        throw ReadException(error);
     }
-};
 
-class ReadException: public std::exception {
-public:
-    ReadException(const std::string& message):
-        message(message)
-    {}
+    template <typename T>
+    const T* constraint() {
+        return dynamic_cast<const T*>(constraint_);
+    }
 
 private:
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-    std::string message;
+    const bool is_binary;
+    const bool use_constraints;
+    const ConstraintBase* constraint_;
 };
 
 } // namespace datapack

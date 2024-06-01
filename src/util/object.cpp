@@ -246,6 +246,7 @@ bool ObjectReader::variant_match(const char* label) {
         return false;
     }
     error("Incorrect data type");
+    return false;
 }
 
 void ObjectReader::variant_end() {

@@ -82,6 +82,9 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     add_executable(example_base64 example/base64.cpp)
     target_link_libraries(example_base64 datapack example_common)
+
+    add_executable(example_benchmark_binary example/benchmark_binary.cpp)
+    target_link_libraries(example_benchmark_binary datapack example_common)
 endif()
 
 

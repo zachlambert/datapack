@@ -11,9 +11,12 @@ namespace datapack {
 
 class BinaryWriter : public Writer {
 public:
-    BinaryWriter(std::vector<std::uint8_t>& data):
+    BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary=true):
+        Writer(use_binary),
         data(data)
-    {}
+    {
+        data.clear();
+    }
 
     void value_i32(std::int32_t value) override { value_number(value); }
     void value_i64(std::int64_t value) override { value_number(value); }
@@ -63,7 +66,8 @@ private:
 
 class BinaryReader : public Reader {
 public:
-    BinaryReader(const std::vector<std::uint8_t>& data):
+    BinaryReader(const std::vector<std::uint8_t>& data, bool use_binary=true):
+        Reader(use_binary),
         data(data),
         pos(0),
         next_binary_size(0),

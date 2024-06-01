@@ -34,7 +34,7 @@ void define(Definer& definer, const std::vector<T>& value) {
 }
 
 template <typename T>
-requires std::is_trivial_v<T>
+requires std::is_trivially_copy_assignable_v<T>
 void read_binary(Reader& reader, std::vector<T>& value) {
     std::size_t size = reader.binary_size();
     if (size % sizeof(T) != 0) {
@@ -45,17 +45,19 @@ void read_binary(Reader& reader, std::vector<T>& value) {
 }
 
 template <typename T>
-requires std::is_trivial_v<T>
+requires std::is_trivially_copy_assignable_v<T>
 void write_binary(Writer& writer, const std::vector<T>& value) {
     writer.binary(value.size() * sizeof(T), (const std::uint8_t*)value.data());
 }
 
+#if 0
 template <typename T>
-requires std::is_trivial_v<T>
+requires std::is_trivially_copy_assignable_v<T>
 void define_binary(Definer& definer, const std::vector<T>& value) {
     definer.binary();
     definer.value(T());
 }
+#endif
 
 template <typename T>
 bool validate(const std::vector<T>& value, const LengthConstraint& constraint) {

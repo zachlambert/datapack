@@ -55,6 +55,7 @@ struct Sprite {
     std::vector<Pixel> data;
 };
 DATAPACK_VISITOR_FUNCS_DEF(Sprite)
+DATAPACK_VISITOR_FUNCS_DEF(Sprite::Pixel)
 
 struct Entity : public datapack::Visitor {
     int index;        // Primitives

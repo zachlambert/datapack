@@ -61,20 +61,19 @@ void visit(V& visitor, Sprite& value) {
             value.width * value.height,
             sizeof(Sprite::Pixel))
     );
-#if 0
-    if constexpr(std::is_same_v<V, datapack::Definer>) {
-        visitor.object_next("data");
-        visitor.binary();
-        visitor.object_begin();
-        visitor.value("x", 0.0);
-        visitor.value("y", 0.0);
-        visitor.value("z", 0.0);
-        visitor.object_end();
-    }
-#endif
     visitor.object_end();
 }
 DATAPACK_VISITOR_FUNCS_IMPL(Sprite)
+
+template <typename V>
+void visit(V& visitor, Sprite::Pixel& value) {
+    visitor.object_begin();
+    visitor.value("r", value.r);
+    visitor.value("g", value.g);
+    visitor.value("b", value.b);
+    visitor.object_end();
+}
+DATAPACK_VISITOR_FUNCS_IMPL(Sprite::Pixel)
 
 template <typename V>
 void Entity::visit(V& visitor) {

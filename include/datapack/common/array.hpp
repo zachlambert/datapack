@@ -39,7 +39,7 @@ void define(Definer& definer, const std::array<T, Size>& value) {
 #endif
 
 template <typename T, std::size_t N>
-requires std::is_trivial_v<T>
+requires std::is_trivially_copy_assignable_v<T>
 void read_binary(Reader& reader, std::array<T, N>& value) {
     std::size_t size = reader.binary_size();
     if (value.size() * sizeof(T) != size) {
@@ -49,7 +49,7 @@ void read_binary(Reader& reader, std::array<T, N>& value) {
 }
 
 template <typename T, std::size_t N>
-requires std::is_trivial_v<T>
+requires std::is_trivially_copy_assignable_v<T>
 void write_binary(Writer& writer, const std::array<T, N>& value) {
     writer.binary(value.size() * sizeof(T), (std::uint8_t*)value.data());
 }

@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 #include <stack>
+#include <type_traits>
 #include "datapack/constraint.hpp"
 
 

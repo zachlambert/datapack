@@ -22,58 +22,13 @@ void visit(V& visitor, Rect& value) {
 }
 DATAPACK_VISITOR_FUNCS_IMPL(Rect)
 
-std::vector<const char*> datapack::enum_details<Physics>::labels = {
+std::vector<const char*> datapack::enum_labels<Physics>::value = {
     "dynamic", "kinematic", "static"
 };
 
-const char* datapack::enum_details<Physics>::to_label(const Physics& value) {
-    switch (value){
-        case Physics::Dynamic:
-            return "dynamic";
-        case Physics::Kinematic:
-            return "kinematic";
-        case Physics::Static:
-            return "static";
-    }
-    return "";
-}
-
-std::optional<Physics> datapack::enum_details<Physics>::from_label(const char* label) {
-    if (std::strcmp(label, "dynamic") == 0) {
-        return Physics::Dynamic;
-    }
-    if (std::strcmp(label, "kinematic") == 0) {
-        return Physics::Kinematic;
-    }
-    if (std::strcmp(label, "static") == 0) {
-        return Physics::Static;
-    }
-    return std::nullopt;
-}
-
-std::vector<const char*> datapack::variant_details<Shape>::labels = {
+std::vector<const char*> datapack::variant_labels<Shape>::value = {
     "circle", "rect"
 };
-
-const char* datapack::variant_details<Shape>::to_label(const Shape& value) {
-    if (std::get_if<Circle>(&value)) {
-        return "circle";
-    }
-    if (std::get_if<Rect>(&value)) {
-        return "rect";
-    }
-    return "";
-}
-
-std::optional<Shape> datapack::variant_details<Shape>::from_label(const char* label) {
-    if (std::strcmp(label, "circle") == 0) {
-        return Circle();
-    }
-    if (std::strcmp(label, "rect") == 0) {
-        return Rect();
-    }
-    return std::nullopt;
-}
 
 template <typename V>
 void visit(V& visitor, Pose& value) {

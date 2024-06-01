@@ -8,17 +8,17 @@ namespace datapack {
 
 template <labelled_enum T>
 void read(Reader& reader, T& value) {
-    value = (T)reader.enumerate(enum_labels<T>());
+    value = (T)reader.enumerate(enum_labels_v<T>());
 }
 
 template <labelled_enum T>
 void write(Writer& writer, const T& value) {
-    writer.enumerate((int)value, enum_labels<T>());
+    writer.enumerate((int)value, enum_labels_v<T>());
 }
 
 template <labelled_enum T>
 void define(Definer& definer, const T& value) {
-    definer.enumerate(enum_labels<T>());
+    definer.enumerate(enum_labels_v<T>());
 }
 
 } // namespace datapack

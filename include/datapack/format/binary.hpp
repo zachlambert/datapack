@@ -65,7 +65,9 @@ class BinaryReader : public Reader {
 public:
     BinaryReader(const std::vector<std::uint8_t>& data):
         data(data),
-        pos(0)
+        pos(0),
+        next_binary_size(0),
+        next_variant_label(nullptr)
     {}
 
     void value_i32(std::int32_t& value) override { value_number(value); }
@@ -81,7 +83,8 @@ public:
 
     int enumerate(const std::vector<const char*>& labels) override;
     bool optional() override;
-    const char* variant_begin(const std::vector<const char*>& labels) override;
+    void variant_begin(const std::vector<const char*>& labels) override;
+    bool variant_match(const char* label) override;
     void variant_end() override {}
 
     std::size_t binary_size() override;
@@ -117,6 +120,7 @@ private:
     const std::vector<std::uint8_t>& data;
     std::size_t pos;
     std::size_t next_binary_size;
+    const char* next_variant_label;
 };
 
 template <readable T>

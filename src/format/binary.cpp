@@ -96,22 +96,19 @@ bool BinaryReader::optional() {
     return has_value;
 }
 
-const char* BinaryReader::variant_begin(const std::vector<const char*>& labels) {
+void BinaryReader::variant_begin(const std::vector<const char*>& labels) {
     std::size_t max_len = data.size() - pos;
     std::size_t len = strnlen((char*)&data[pos], max_len);
     if (len == max_len) {
         error("Unterminated string");
     }
-    for (const auto& label: labels) {
-        if (std::strncmp(label, (char*)&data[pos], max_len) == 0) {
-            pos += (len + 1);
-            return label;
-        }
-    }
-    error("Unknown variant type");
-    return "";
+    next_variant_label = (char*)&data[pos];
+    pos += (len + 1);
 }
 
+bool BinaryReader::variant_match(const char* label) {
+    return strcmp(label, next_variant_label) == 0;
+}
 
 std::size_t BinaryReader::binary_size() {
     std::uint64_t size;

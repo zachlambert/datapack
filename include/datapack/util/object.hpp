@@ -73,7 +73,8 @@ public:
 
     int enumerate(const std::vector<const char*>& labels) override;
     bool optional() override;
-    const char* variant_begin(const std::vector<const char*>& labels) override;
+    void variant_begin(const std::vector<const char*>& labels) override;
+    bool variant_match(const char* label) override;
     void variant_end() override;
 
     std::size_t binary_size() override;
@@ -116,6 +117,7 @@ private:
     ConstObject node;
     std::stack<ConstObject> nodes;
     bool list_start;
+    const char* next_variant_label;
 };
 
 template <readable T>

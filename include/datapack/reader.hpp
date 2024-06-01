@@ -49,9 +49,10 @@ private:
 
 class Reader {
 public:
-    Reader(bool is_binary=false, bool use_constraints=true):
+    Reader(bool is_binary=false, bool use_constraints=true, bool is_exhaustive=false):
         is_binary(is_binary),
         use_constraints(use_constraints),
+        is_exhaustive_(is_exhaustive),
         constraint_(nullptr)
     {}
 
@@ -113,7 +114,8 @@ public:
 
     virtual int enumerate(const std::vector<const char*>& labels) = 0;
     virtual bool optional() = 0;
-    virtual const char* variant_begin(const std::vector<const char*>& labels) = 0;
+    virtual void variant_begin(const std::vector<const char*>& labels) = 0;
+    virtual bool variant_match(const char* label) = 0;
     virtual void variant_end() = 0;
 
     virtual std::size_t binary_size() = 0;
@@ -139,14 +141,19 @@ public:
         throw ReadException(error);
     }
 
+    bool is_exhaustive() const {
+        return is_exhaustive_;
+    }
+
     template <typename T>
-    const T* constraint() {
+    const T* constraint() const {
         return dynamic_cast<const T*>(constraint_);
     }
 
 private:
     const bool is_binary;
     const bool use_constraints;
+    const bool is_exhaustive_;
     const ConstraintBase* constraint_;
 };
 

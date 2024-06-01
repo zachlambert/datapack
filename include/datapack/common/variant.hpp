@@ -7,16 +7,31 @@
 namespace datapack {
 
 template <labelled_variant T>
-void read(Reader& reader, T& value) {
-    const char* label = reader.variant_begin(variant_labels<T>());
-    auto value_opt = variant_from_label<T>(label);
-    if (!value_opt.has_value()) {
-        throw ReadException("Invalid variant label '" + std::string(label) + "'");
+void match_variant_next(Reader& reader, T& value, std::size_t index) {
+    if (!reader.is_exhaustive()) {
+        reader.error("No matching variant");
     }
-    value = value_opt.value();
-    std::visit([&](auto& value) {
-        reader.value(value);
-    }, value);
+}
+
+template <labelled_variant T, typename Next, typename... Args>
+void match_variant_next(Reader& reader, T& value, std::size_t index) {
+    Next next;
+    if (reader.variant_match(variant_labels<T>()[index])) {
+        reader.value(next);
+        value = next;
+        if (!reader.is_exhaustive()) {
+            return;
+        }
+    }
+    match_variant_next<T, Args...>(reader, value, index+1);
+}
+
+template <typename ...Args>
+requires labelled_variant<std::variant<Args...>>
+void read(Reader& reader, std::variant<Args...>& value) {
+    using T = std::variant<Args...>;
+    reader.variant_begin(variant_labels<T>());
+    match_variant_next<T, Args...>(reader, value, 0);
     reader.variant_end();
 }
 

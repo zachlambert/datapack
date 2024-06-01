@@ -1,11 +1,12 @@
 #include "datapack/util/random.hpp"
-#include <iostream> // TEMP
+#include <cstring>
 
 namespace datapack {
 
 RandomReader::RandomReader():
     container_counter(0),
-    next_binary_size(0)
+    next_binary_size(0),
+    next_variant_label(nullptr)
 {}
 
 void RandomReader::value_i32(std::int32_t& value) {
@@ -90,8 +91,15 @@ bool RandomReader::optional() {
     return rand() % 2 == 1;
 }
 
-const char* RandomReader::variant_begin(const std::vector<const char*>& labels) {
-    return labels[rand() % labels.size()];
+void RandomReader::variant_begin(const std::vector<const char*>& labels) {
+    next_variant_label = labels[rand() % labels.size()];
+}
+
+bool RandomReader::variant_match(const char* label) {
+    if (std::strcmp(label, next_variant_label) == 0) {
+        return true;
+    }
+    return false;
 }
 
 void RandomReader::variant_end() {

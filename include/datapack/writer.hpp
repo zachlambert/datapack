@@ -32,6 +32,7 @@ inline void write(Writer& writer, const Writeable& value) {
     value.write(writer);
 }
 
+
 class Writer {
 public:
     Writer(bool is_binary = false):

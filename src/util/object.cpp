@@ -150,7 +150,8 @@ void ObjectWriter::set_value(const Object::value_t& value) {
 
 ObjectReader::ObjectReader(ConstObject object):
     node(object),
-    list_start(false)
+    list_start(false),
+    next_variant_label(nullptr)
 {}
 
 
@@ -231,25 +232,20 @@ bool ObjectReader::optional() {
     return true;
 }
 
-const char* ObjectReader::variant_begin(const std::vector<const char*>& labels) {
+void ObjectReader::variant_begin(const std::vector<const char*>& labels) {
     object_begin();
     object_next("type");
-    std::string label;
-    value_string(label);
+}
 
-    const char* result = nullptr;
-    for (int i = 0; i < labels.size(); i++) {
-        if (label == labels[i]) {
-            result = labels[i];
-            break;
+bool ObjectReader::variant_match(const char* label) {
+    if (auto x = node.get_if<Object::str_t>()){
+        if (*x == label) {
+            object_next("value");
+            return true;
         }
+        return false;
     }
-    if (!result) {
-        error("Unknown variant label");
-    }
-
-    object_next("value");
-    return result;
+    error("Incorrect data type");
 }
 
 void ObjectReader::variant_end() {

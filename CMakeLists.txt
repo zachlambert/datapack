@@ -86,6 +86,9 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(example_benchmark_binary example/benchmark_binary.cpp)
     target_link_libraries(example_benchmark_binary datapack example_common)
 
+    add_executable(example_binary_equivalency example/binary_equivalency.cpp)
+    target_link_libraries(example_binary_equivalency datapack example_common)
+
     add_executable(example_binary_schema example/binary_schema.cpp)
     target_link_libraries(example_binary_schema datapack example_common)
 endif()

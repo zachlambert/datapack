@@ -49,15 +49,30 @@ void BinaryWriter::map_next(const std::string& key) {
 
 
 void BinaryWriter::list_begin() {
-
+    if (is_writeable_binary()) {
+        enforce_padding = true;
+        container_start = data.size();
+        container_size = 0;
+        value_number(container_size);
+    }
+    // else, do nothing
 }
 
 void BinaryWriter::list_end() {
-    value_bool(false);
+    if (enforce_padding) {
+        enforce_padding = false;
+        *((std::size_t*)&data[container_start]) = container_size;
+    } else {
+        value_bool(false);
+    }
 }
 
 void BinaryWriter::list_next() {
-    value_bool(true);
+    if (enforce_padding) {
+        container_size++;
+    } else {
+        value_bool(true);
+    }
 }
 
 

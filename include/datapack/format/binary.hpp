@@ -13,7 +13,14 @@ class BinaryWriter : public Writer {
 public:
     BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary=true):
         Writer(use_binary),
-        data(data)
+        pos(0),
+        data(data),
+        enforce_padding(false),
+        container_start(0),
+        container_size(0),
+        know_object_details(false),
+        object_size(0),
+        object_alignment(0)
     {
         data.clear();
     }
@@ -36,8 +43,19 @@ public:
 
     void binary(std::size_t size, const std::uint8_t* data) override;
 
-    void object_begin() override {}
-    void object_end() override {}
+    void object_begin() override {
+        if (enforce_padding && !know_object_details) {
+            object_size = 0;
+            object_alignment = 0;
+        }
+    }
+    void object_end() override {
+        if (enforce_padding) {
+            while (data.size() % object_alignment != 0) {
+                data.push_back(0x00);
+            }
+        }
+    }
     void object_next(const char* key) override {}
 
     void tuple_begin() override {}
@@ -55,12 +73,28 @@ public:
 private:
     template <typename T>
     void value_number(T value) {
+        if (enforce_padding) {
+            while (data.size() % sizeof(T) != 0) {
+                data.push_back(0x00);
+            }
+            if (!know_object_details) {
+                object_size += sizeof(T);
+                object_alignment = std::max(object_alignment, sizeof(T));
+            }
+        }
         std::size_t pos = data.size();
         data.resize(data.size() + sizeof(T));
         *((T*)&data[pos]) = value;
     }
 
+    std::size_t pos;
     std::vector<std::uint8_t>& data;
+    bool enforce_padding;
+    std::size_t container_start;
+    std::size_t container_size;
+    bool know_object_details;
+    std::size_t object_size;
+    std::size_t object_alignment;
 };
 
 

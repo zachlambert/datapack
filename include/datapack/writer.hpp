@@ -36,12 +36,14 @@ inline void write(Writer& writer, const Writeable& value) {
 class Writer {
 public:
     Writer(bool is_binary = false):
-        is_binary(is_binary)
+        is_binary(is_binary),
+        is_writeable_binary_(false)
     {}
 
     template <writeable_either T>
-    void value(T& value) {
+    void value(const T& value) {
         if constexpr(writeable<T> && writeable_binary<T>) {
+            is_writeable_binary_ = true;
             if (is_binary) {
                 write_binary(*this, value);
             } else {
@@ -52,12 +54,14 @@ public:
             write(*this, value);
         }
         if constexpr(!writeable<T>) {
+            is_writeable_binary_ = true;
             write_binary(*this, value);
         }
+        is_writeable_binary_ = false;
     }
 
     template <writeable_either T>
-    void value(const char* key, T& value) {
+    void value(const char* key, const T& value) {
         object_next(key);
         this->value(value);
     }
@@ -69,7 +73,7 @@ public:
     }
 
     template <writeable_either T, is_constraint Constraint>
-    void value(const char* key, T& value, const Constraint&) {
+    void value(const char* key, const T& value, const Constraint&) {
         object_next(key);
         // Ignore constraint
         this->value(value);
@@ -109,8 +113,13 @@ public:
     virtual void list_end() = 0;
     virtual void list_next() = 0;
 
+    bool is_writeable_binary() const {
+        return is_writeable_binary_;
+    }
+
 private:
     const bool is_binary;
+    bool is_writeable_binary_;
 };
 
 class WriteException: public std::exception {

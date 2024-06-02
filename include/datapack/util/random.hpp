@@ -25,8 +25,7 @@ public:
     bool variant_match(const char* label) override;
     void variant_end() override;
 
-    std::size_t binary_size(std::size_t stride) override;
-    void binary_data(std::uint8_t* data) override;
+    std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
 
     void object_begin() override;
     void object_end() override;
@@ -46,8 +45,8 @@ public:
 
 private:
     int container_counter;
-    std::size_t next_binary_size;
     const char* next_variant_label;
+    std::vector<std::uint8_t> data_temp;
 };
 
 template <readable T>

@@ -1,4 +1,5 @@
 #include "datapack/format/binary_schema.hpp"
+#include "datapack/format/binary.hpp"
 #include "datapack/util/object.hpp"
 #include <cstring>
 
@@ -30,9 +31,6 @@ static std::size_t get_tokens_end(const std::vector<BToken>& tokens, std::size_t
         else if (std::get_if<btoken::Optional>(&token)){
             continue;
         }
-        else if (std::get_if<btoken::Binary>(&token)){
-            continue;
-        }
         // Explicit container tokens, that increment or decrement depth
         // Where depth is decreased, fall through to the end of the loop
         // body to check if depth is zero
@@ -57,6 +55,13 @@ static std::size_t get_tokens_end(const std::vector<BToken>& tokens, std::size_t
         else if (std::get_if<btoken::VariantEnd>(&token)){
             depth--;
         }
+        else if (std::get_if<btoken::BinaryBegin>(&token)){
+            depth++;
+            continue;
+        }
+        else if (std::get_if<btoken::BinaryEnd>(&token)){
+            depth--;
+        }
         // Remaining tokens are values
         // Either these are in a container and depth remains unchanged
         // at a non-zero value, so continues, or they are the only value
@@ -73,6 +78,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
 {
     Object object;
     ObjectWriter writer(object);
+    BinaryReader reader(data);
 
     enum class StateType {
         None,
@@ -98,7 +104,6 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
     states.push(State(StateType::None, 0, 0));
 
     std::size_t token_pos = 0;
-    std::size_t data_pos;
     while (true) {
         if (token_pos == schema.tokens.size()) {
             break;
@@ -106,89 +111,49 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
 
         auto& state = states.top();
         if (state.type == StateType::Map) {
-            if (data_pos >= data.size()) {
-                throw LoadException("Data too short");
-            }
-            std::uint8_t flag = data[data_pos];
-            data_pos++;
-            if (flag >= 0x02) {
-                throw LoadException("Unexpected byte for bool");
-            }
-            bool has_next = flag;
-
-            if (has_next) {
-                const std::size_t max_len = data.size() - data_pos;
-                std::size_t key_len = strnlen((char*)&data[data_pos], max_len);
-                if (key_len == max_len) {
-                    throw LoadException("Unterminated string");
-                }
-                writer.map_next((char*)&data[data_pos]);
-                data_pos += (key_len + 1);
-                token_pos = state.value_tokens_begin;
-                // Fall-through to processing value below
-            } else {
+            std::string key;
+            if (!reader.map_next(key)) {
+                writer.map_end();
                 token_pos = state.value_tokens_end;
                 states.pop();
-                writer.map_end();
                 continue;
             }
+            writer.map_next(key);
+            token_pos = state.value_tokens_begin;
         }
         else if (state.type == StateType::List) {
-            if (data_pos >= data.size()) {
-                throw LoadException("Data too short");
-            }
-            std::uint8_t flag = data[data_pos];
-            data_pos++;
-            if (flag >= 0x02) {
-                throw LoadException("Unexpected byte for bool");
-            }
-            bool has_next = flag;
-
-            if (has_next) {
-                writer.list_next();
-                token_pos = state.value_tokens_begin;
-                // Fall-through to processing value below
-            } else {
+            if (!reader.list_next()) {
+                writer.list_end();
                 token_pos = state.value_tokens_end;
                 states.pop();
-                writer.list_end();
                 continue;
             }
+            writer.list_next();
+            token_pos = state.value_tokens_begin;
         }
         else if (state.type == StateType::Optional) {
             bool has_value = false;
-
             if (!state.done) {
-                state.done = true;
-
-                if (data_pos >= data.size()) {
-                    throw LoadException("Data too short");
-                }
-                std::uint8_t flag = data[data_pos];
-                data_pos++;
-                if (flag >= 0x02) {
-                    throw LoadException("Unexpected byte for bool");
-                }
-                has_value = flag;
+                has_value = reader.optional();
                 writer.optional(has_value);
             }
-
             if (has_value) {
-                token_pos = state.value_tokens_begin;
-                // Fall-through to processing value below
-            } else {
                 token_pos = state.value_tokens_end;
                 states.pop();
                 continue;
             }
+            token_pos = state.value_tokens_begin;
         }
         else if (state.type == StateType::Variant) {
             if (state.done) {
+                reader.variant_end();
+                writer.variant_end();
                 token_pos = state.value_tokens_end;
                 states.pop();
                 continue;
             }
             state.done = true;
+            token_pos = state.value_tokens_begin;
             // Fall-through to processing value below
         }
         else if (state.type == StateType::Binary) {
@@ -202,51 +167,47 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
         }
 
         const auto& token = schema.tokens[token_pos];
+        token_pos++;
+
         if (std::get_if<btoken::ObjectBegin>(&token)) {
             states.push(State(StateType::None, 0, 0));
+            reader.object_begin();
             writer.object_begin();
-            token_pos++;
             continue;
         }
         if (std::get_if<btoken::ObjectEnd>(&token)) {
             states.pop();
+            reader.object_end();
             writer.object_end();
-            token_pos++;
             continue;
         }
-        if (std::get_if<btoken::ObjectNext>(&token)) {
-            const std::size_t max_len = data.size() - data_pos;
-            std::size_t key_len = strnlen((char*)&data[data_pos], max_len);
-            if (key_len == max_len) {
-                throw LoadException("Unterminated string");
-            }
-            writer.object_next((char*)&data[data_pos]);
-            data_pos += (key_len + 1);
-            token_pos++;
+        if (auto value = std::get_if<btoken::ObjectNext>(&token)) {
+            reader.object_next(value->key.c_str());
+            writer.object_next(value->key.c_str());
             continue;
         }
 
         if (std::get_if<btoken::TupleBegin>(&token)) {
             states.push(State(StateType::None, 0, 0));
+            reader.tuple_begin();
             writer.tuple_begin();
-            token_pos++;
             continue;
         }
         if (std::get_if<btoken::TupleEnd>(&token)) {
             states.pop();
+            reader.tuple_end();
             writer.tuple_end();
-            token_pos++;
             continue;
         }
         if (std::get_if<btoken::TupleNext>(&token)) {
+            reader.tuple_next();
             writer.tuple_next();
-            token_pos++;
             continue;
         }
 
         if (std::get_if<btoken::Map>(&token)) {
+            reader.map_begin();
             writer.map_begin();
-            token_pos++;
             states.push(State(
                 StateType::Map,
                 token_pos,
@@ -255,8 +216,8 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             continue;
         }
         if (std::get_if<btoken::List>(&token)) {
+            reader.list_begin();
             writer.list_begin();
-            token_pos++;
             states.push(State(
                 StateType::List,
                 token_pos,
@@ -267,7 +228,6 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
 
         if (std::get_if<btoken::Optional>(&token)) {
             // Call writer.optional() elsewhere
-            token_pos++;
             states.push(State(
                 StateType::Optional,
                 token_pos,
@@ -276,43 +236,56 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             continue;
         }
         if (auto variant = std::get_if<btoken::VariantBegin>(&token)) {
-            const std::size_t max_len = data.size() - data_pos;
-            const char* variant_label = (char*)&data[data_pos];
-            std::size_t label_len = strnlen(variant_label, max_len);
-            if (label_len == max_len) {
-                throw LoadException("Unterminated string");
-            }
-
             std::vector<const char*> labels_cstr;
             for (const auto& label: variant->labels) {
                 labels_cstr.push_back(label.c_str());
             }
 
-            writer.variant_begin(variant_label, labels_cstr);
-            data_pos += (label_len + 1);
+            reader.variant_begin(labels_cstr);
 
-            std::size_t variant_end = get_tokens_end(schema.tokens, token_pos);
-            // Note: value_tokens_begin = token_pos unused below
-            states.push(State(StateType::Variant, token_pos, variant_end));
-            token_pos++;
-
+            bool found_match = false;
+            std::size_t variant_start;
             // Move token_pos forward to the corresponding variant value
             while (true) {
                 const auto& token = schema.tokens[token_pos];
                 token_pos++;
                 if (auto value = std::get_if<btoken::VariantNext>(&token)) {
-                    if (value->type == variant_label) {
-                        break;
+                    if (reader.variant_match(value->type.c_str())) {
+                        if (found_match) {
+                            throw LoadException("Repeated variant labels");
+                        }
+                        found_match = true;
+                        variant_start = token_pos;
+                        writer.variant_begin(value->type.c_str(), labels_cstr);
                     }
                     token_pos = get_tokens_end(schema.tokens, token_pos);
                 }
                 else if (auto value = std::get_if<btoken::VariantEnd>(&token)) {
-                    throw LoadException("No matching variant");
+                    break;
                 }
                 throw LoadException("Invalid binary schema");
             }
-            // token_pos now at the correct value
+            if (!found_match) {
+                throw LoadException("No matching variant");
+            }
+
+            states.push(State(StateType::Variant, variant_start, token_pos));
             continue;
+        }
+        if (auto binary = std::get_if<btoken::Binary>(&token)) {
+            std::size_t size = reader.binary_size(binary->stride);
+            token_pos++;
+            if (binary->stride == 0) {
+                std::vector<std::uint8_t> temp(size);
+                reader.binary_data(temp.data());
+                writer.binary(size, temp.data(), 0);
+            } else {
+
+            }
+        }
+
+        if (auto value = std::get_if<std::int32_t>(&token)) {
+
         }
     }
 

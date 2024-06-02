@@ -29,7 +29,7 @@ public:
     void variant_begin(const char* label, const std::vector<const char*>& labels) override;
     void variant_end() override;
 
-    void binary(std::size_t size, const std::uint8_t* data, std::size_t stride) override;
+    void binary_data(const std::uint8_t* data, std::size_t size) override;
 
     void object_begin() override;
     void object_end() override;
@@ -53,6 +53,7 @@ private:
     Object& object;
     std::stack<Object> nodes;
     std::string next_key;
+    std::size_t next_stride;
 };
 
 
@@ -77,8 +78,7 @@ public:
     bool variant_match(const char* label) override;
     void variant_end() override;
 
-    std::size_t binary_size(std::size_t stride) override;
-    void binary_data(std::uint8_t* data) override;
+    std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
 
     void object_begin() override;
     void object_end() override;
@@ -118,6 +118,7 @@ private:
     std::stack<ConstObject> nodes;
     bool list_start;
     const char* next_variant_label;
+    std::vector<std::uint8_t> data_temp;
 };
 
 template <readable T>

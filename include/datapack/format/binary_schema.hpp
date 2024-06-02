@@ -33,12 +33,13 @@ struct VariantNext {
     VariantNext(const std::string& type): type(type) {}
 };
 
-struct Binary {
+struct BinaryBegin {
     const std::size_t stride;
-    Binary(std::size_t stride):
+    BinaryBegin(std::size_t stride):
         stride(stride)
     {}
 };
+struct BinaryEnd {};
 
 struct ObjectBegin {};
 struct ObjectEnd {};
@@ -71,7 +72,8 @@ using BToken = std::variant<
     btoken::VariantBegin,
     btoken::VariantEnd,
     btoken::VariantNext,
-    btoken::Binary,
+    btoken::BinaryBegin,
+    btoken::BinaryEnd,
     btoken::ObjectBegin,
     btoken::ObjectEnd,
     btoken::ObjectNext,
@@ -155,15 +157,19 @@ public:
     }
 
 
-    std::size_t binary_size(std::size_t stride) override {
-        tokens.push_back(btoken::Binary(stride));
-        return 0;
+    std::tuple<const std::uint8_t*, std::size_t> binary_data() override {
+        error("BinarySchemaBuilder::binary_data should not be called");
+        return std::make_tuple(nullptr, 0);
     }
 
-    void binary_data(std::uint8_t* data) override {
-        // Do nothing
+    std::size_t binary_begin(std::size_t stride) override {
+        tokens.push_back(btoken::BinaryBegin(stride));
+        return 1;
     }
 
+    void binary_end() override {
+        tokens.push_back(btoken::BinaryEnd());
+    }
 
     void object_begin() override {
         tokens.push_back(btoken::ObjectBegin());

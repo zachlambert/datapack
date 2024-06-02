@@ -35,7 +35,7 @@ public:
     void variant_begin(const char* label, const std::vector<const char*>& labels) override;
     void variant_end() override {}
 
-    void binary(std::size_t size, const std::uint8_t* data, std::size_t stride) override;
+    void binary_data(const std::uint8_t* data, std::size_t size) override;
 
     void object_begin() override {}
     void object_end() override {}
@@ -72,8 +72,7 @@ public:
         Reader(use_binary),
         data(data),
         pos(0),
-        next_binary_size(0),
-        next_variant_label(nullptr)
+        in_binary(false)
     {}
 
     void value_i32(std::int32_t& value) override { value_number(value); }
@@ -93,8 +92,9 @@ public:
     bool variant_match(const char* label) override;
     void variant_end() override {}
 
-    std::size_t binary_size(std::size_t stride) override;
-    void binary_data(std::uint8_t* data) override;
+    std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
+    std::size_t binary_begin(std::size_t stride) override;
+    void binary_end() override;
 
     void object_begin() override {}
     void object_end() override {}
@@ -125,8 +125,7 @@ private:
 
     const std::vector<std::uint8_t>& data;
     std::size_t pos;
-    std::size_t next_binary_size;
-    const char* next_variant_label;
+    bool in_binary;
 };
 
 template <readable T>

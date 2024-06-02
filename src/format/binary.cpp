@@ -27,15 +27,11 @@ void BinaryWriter::variant_begin(const char* label, const std::vector<const char
     value_string(label);
 }
 
-void BinaryWriter::binary(std::size_t size, const std::uint8_t* binary_data, std::size_t stride) {
-    std::size_t binary_size = (stride == 0 ? size : size * stride);
-    value_number(std::uint64_t(binary_size));
-    if (stride != 0) {
-        value_number(std::uint64_t(size));
-    }
+void BinaryWriter::binary_data(const std::uint8_t* binary_data, std::size_t size) {
+    value_number(std::uint64_t(size));
     std::size_t pos = data.size();
-    data.resize(pos + binary_size);
-    std::memcpy(&data[pos], binary_data, binary_size);
+    data.resize(pos + size);
+    std::memcpy(&data[pos], binary_data, size);
 }
 
 void BinaryWriter::map_begin() {
@@ -101,43 +97,47 @@ bool BinaryReader::optional() {
 }
 
 void BinaryReader::variant_begin(const std::vector<const char*>& labels) {
+    // Nothing required
+}
+
+bool BinaryReader::variant_match(const char* label) {
+    const char* label_value = (const char*)&data[pos];
     std::size_t max_len = data.size() - pos;
     std::size_t len = strnlen((char*)&data[pos], max_len);
     if (len == max_len) {
         error("Unterminated string");
     }
-    next_variant_label = (char*)&data[pos];
-    pos += (len + 1);
+    if (strncmp(label, label_value, max_len) == 0) {
+        pos += (len + 1);
+        return true;
+    }
+    return false;
 }
 
-bool BinaryReader::variant_match(const char* label) {
-    return strcmp(label, next_variant_label) == 0;
-}
-
-std::size_t BinaryReader::binary_size(std::size_t stride) {
-    std::uint64_t size;
+std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
+    std::size_t size;
     value_number(size);
-    next_binary_size = size;
-    if (stride == 0) {
-        return size;
-    }
-    std::uint64_t container_size;
-    value_number(container_size);
-    if (container_size * stride != size) {
-        throw ReadException("Invalid binary size");
-    }
-    return container_size;
-}
-
-void BinaryReader::binary_data(std::uint8_t* output_data) {
-    std::size_t size = next_binary_size;
     if (pos + size > data.size()) {
         error("Input data is too short");
     }
-    std::memcpy(output_data, &data[pos], size);
+    const std::uint8_t* output_data = &data[pos];
     pos += size;
+    return std::make_tuple(output_data, size);
 }
 
+std::size_t BinaryReader::binary_begin(std::size_t stride) {
+    std::size_t size;
+    value_number(size);
+    if (size % stride == 0) {
+        error("Invalid binary size");
+    }
+    in_binary = true;
+    return size / stride;
+}
+
+void BinaryReader::binary_end() {
+    in_binary = false;
+}
 
 void BinaryReader::map_begin() {
     // Do nothing

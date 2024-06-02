@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstring>
 #include "datapack/visitor.hpp"
 
 
@@ -8,59 +9,54 @@ namespace datapack {
 
 template <readable T, std::size_t Size>
 void read(Reader& reader, std::array<T, Size>& value) {
-    reader.tuple_begin();
+    reader.list_begin();
     for (auto& element: value) {
-        reader.tuple_next();
+        if (!reader.list_next()) {
+            reader.error("Incorrect list length");
+        }
         reader.value(element);
     }
-    reader.tuple_end();
+    if (reader.list_next()) {
+        reader.error("Incorrect list length");
+    }
+    reader.list_end();
 }
 
 template <writeable T, std::size_t Size>
 void write(Writer& writer, const std::array<T, Size>& value) {
-    writer.tuple_begin();
+    writer.list_begin();
     for (const auto& element: value) {
-        writer.tuple_next();
+        writer.list_next();
         writer.value(element);
     }
-    writer.tuple_end();
+    writer.list_end();
 }
-
-#if 0
-template <defined T, std::size_t Size>
-void define(Definer& definer, const std::array<T, Size>& value) {
-    definer.tuple_begin();
-    for (const auto& element: value) {
-        definer.tuple_next();
-        definer.value(element);
-    }
-    definer.tuple_end();
-}
-#endif
 
 template <typename T, std::size_t N>
 requires std::is_trivially_copy_assignable_v<T>
 void read_binary(Reader& reader, std::array<T, N>& value) {
-    std::size_t size = reader.binary_size();
-    if (value.size() * sizeof(T) != size) {
-        reader.error("Incorrect binary size " + std::to_string(size) + ", vsize " + std::to_string(value.size()) + ", dsize " + std::to_string(sizeof(T)));
+    if (reader.is_exhaustive()) {
+        std::size_t length = reader.binary_begin(sizeof(T));
+        if (length != value.size()) {
+            reader.error("Incorrect binary size");
+        }
+        for (auto& element: value) {
+            reader.value(element);
+        }
+        reader.binary_end();
+        return;
     }
-    reader.binary_data((std::uint8_t*)value.data());
+    auto [data, size] = reader.binary_data();
+    if (value.size() * sizeof(T) != size) {
+        reader.error("Incorrect binary size");
+    }
+    std::memcpy(value.data(), data, size);
 }
 
 template <typename T, std::size_t N>
 requires std::is_trivially_copy_assignable_v<T>
 void write_binary(Writer& writer, const std::array<T, N>& value) {
-    writer.binary(value.size() * sizeof(T), (std::uint8_t*)value.data());
+    writer.binary_data((const std::uint8_t*)value.data(), value.size() * sizeof(T));
 }
-
-#if 0
-template <typename T, std::size_t N>
-requires std::is_trivial_v<T>
-void define_binary(Definer& definer, const std::array<T, N>& value) {
-    definer.binary(value.size() * sizeof(T));
-    definer.value(T());
-}
-#endif
 
 } // namespace datapack

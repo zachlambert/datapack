@@ -5,7 +5,8 @@
 namespace datapack {
 
 ObjectWriter::ObjectWriter(Object& object):
-    object(object)
+    object(object),
+    next_stride(0)
 {}
 
 
@@ -66,18 +67,12 @@ void ObjectWriter::variant_end() {
 }
 
 
-void ObjectWriter::binary(std::size_t size, const std::uint8_t* data, std::size_t stride) {
-    std::size_t binary_size = (stride == 0 ? size : size * stride);
-    std::vector<std::uint8_t> vec;
-    if (stride != 0) {
-        vec.resize(sizeof(std::int64_t));
-        *(std::uint64_t*)vec.data() = size;
-    }
-    std::size_t data_start = vec.size();
-    vec.resize(data_start + binary_size);
-    std::memcpy(vec.data() + data_start, data, binary_size);
+void ObjectWriter::binary_data(const std::uint8_t* data, std::size_t size) {
+    std::vector<std::uint8_t> vec(size);
+    std::memcpy(vec.data(), data, size);
     set_value(vec);
 }
+
 
 void ObjectWriter::object_begin() {
     set_value(Object::map_t());
@@ -260,42 +255,17 @@ void ObjectReader::variant_end() {
     object_end();
 }
 
-
-std::size_t ObjectReader::binary_size(std::size_t stride) {
-    std::size_t binary_size;
+std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data() {
     if (auto x = node.get_if<Object::binary_t>()) {
-        binary_size = x->size();
-    }
-    else if (auto x = node.get_if<Object::str_t>()) {
-        binary_size = base64_decoded_length(*x);
-    }
-    else {
-        error("Incorrect value type (binary)");
-    }
-
-    if (stride == 0) {
-        return binary_size;
-    } else {
-        if (binary_size % stride != 0) {
-            throw ReadException("Invalid binary size");
-        }
-        return binary_size / stride;
-    }
-}
-
-void ObjectReader::binary_data(std::uint8_t* data) {
-    if (auto x = node.get_if<Object::binary_t>()) {
-        std::memcpy(data, x->data(), x->size());
-        return;
+        return std::make_tuple(x->data(), x->size());
     }
     if (auto x = node.get_if<Object::str_t>()) {
-        std::vector<std::uint8_t> decoded = base64_decode(*x);
-        std::memcpy(data, decoded.data(), decoded.size());
-        return;
+        data_temp = base64_decode(*x);
+        return std::make_tuple(data_temp.data(), data_temp.size());
     }
     error("Incorrect value type (binary)");
+    return std::make_tuple(nullptr, 0);
 }
-
 
 void ObjectReader::object_begin() {
     if (!node.get_if<Object::map_t>()) {

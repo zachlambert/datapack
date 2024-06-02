@@ -6,6 +6,7 @@
 #include <vector>
 #include <stack>
 #include <type_traits>
+#include <tuple>
 #include "datapack/constraint.hpp"
 
 
@@ -124,8 +125,16 @@ public:
     virtual bool variant_match(const char* label) = 0;
     virtual void variant_end() = 0;
 
-    virtual std::size_t binary_size(std::size_t stride = 0) = 0;
-    virtual void binary_data(std::uint8_t* data) = 0;
+    virtual std::tuple<const std::uint8_t*, std::size_t> binary_data() = 0;
+
+    // BinaryReader and BinarySchemaBuilder only
+    virtual std::size_t binary_begin(std::size_t stride) {
+        error("Not supported");
+        return 0;
+    }
+    virtual void binary_end() {
+        error ("Not supported");
+    }
 
     virtual void object_begin() = 0;
     virtual void object_end() = 0;

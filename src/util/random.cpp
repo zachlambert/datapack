@@ -5,7 +5,6 @@ namespace datapack {
 
 RandomReader::RandomReader():
     container_counter(0),
-    next_binary_size(0),
     next_variant_label(nullptr)
 {}
 
@@ -106,23 +105,14 @@ void RandomReader::variant_end() {
 
 }
 
-std::size_t RandomReader::binary_size(std::size_t stride) {
-    std::size_t size;
-    if (auto c = constraint<LengthConstraint>()){
-        size = c->length;
-    } else {
-        size = rand() % 256;
+std::tuple<const std::uint8_t*, std::size_t> RandomReader::binary_data() {
+    std::size_t size = rand() % 256;
+    data_temp.resize(size);
+    for (std::size_t i = 0; i < size; i++) {
+        data_temp[i] = rand() % 256;
     }
-    next_binary_size = (stride == 0 ? size : size * stride);
-    return next_binary_size;
+    return std::make_tuple(data_temp.data(), data_temp.size());
 }
-
-void RandomReader::binary_data(std::uint8_t* data) {
-    for (std::size_t i = 0; i < next_binary_size; i++) {
-        data[i] = rand() % 256;
-    }
-}
-
 
 void RandomReader::object_begin() {
     // Do nothing

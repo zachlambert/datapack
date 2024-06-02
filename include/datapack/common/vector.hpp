@@ -33,14 +33,9 @@ requires std::is_trivially_copy_assignable_v<T>
 void read_binary(Reader& reader, std::vector<T>& value) {
     if constexpr(readable<T>) {
         if (reader.is_exhaustive()) {
-            std::size_t size = reader.binary_begin();
-            if (size % sizeof(T) != 0) {
-                reader.error("Invalid binary size");
-            }
-            value.resize(size / sizeof(T));
-            for (auto& element: value) {
-                reader.value(element);
-            }
+            reader.binary_begin(sizeof(T));
+            T dummy;
+            reader.value(dummy);
             reader.binary_end();
             return;
         }

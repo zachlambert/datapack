@@ -13,7 +13,6 @@ class BinaryWriter : public Writer {
 public:
     BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary=true):
         Writer(use_binary),
-        pos(0),
         data(data)
     {
         data.clear();
@@ -39,7 +38,9 @@ public:
 
     void object_begin() override {}
     void object_end() override {}
-    void object_next(const char* key) override {}
+    void object_next(const char* key) override {
+        printf("%s -> %zu\n", key, data.size());
+    }
 
     void tuple_begin() override {}
     void tuple_end() override {}
@@ -61,7 +62,6 @@ private:
         *((T*)&data[pos]) = value;
     }
 
-    std::size_t pos;
     std::vector<std::uint8_t>& data;
 };
 
@@ -93,7 +93,7 @@ public:
     void variant_end() override {}
 
     std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
-    std::size_t binary_begin() override;
+    std::size_t binary_begin(std::size_t stride) override;
     void binary_end() override;
 
     void object_begin() override;

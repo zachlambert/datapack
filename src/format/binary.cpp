@@ -125,9 +125,9 @@ std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
     return std::make_tuple(output_data, size);
 }
 
-std::size_t BinaryReader::binary_begin() {
-    std::size_t size;
-    value_number(size);
+std::size_t BinaryReader::binary_begin(std::size_t stride) {
+    std::uint64_t size;
+    value_number<std::uint64_t>(size);
     is_binary = true;
     return size;
 }
@@ -147,8 +147,10 @@ void BinaryReader::object_begin() {
 void BinaryReader::object_end() {
     if (is_binary) {
         const auto& top = binary_blocks.top();
-        while ((pos - top.start) % top.padding != 0) {
-            pos++;
+        if (top.padding > 0) { // Shouldn't be zero ...
+            while ((pos - top.start) % top.padding != 0) {
+                pos++;
+            }
         }
         std::size_t size = pos - top.start;
         binary_blocks.pop();

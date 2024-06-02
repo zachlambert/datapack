@@ -34,7 +34,12 @@ struct VariantNext {
 };
 
 struct BinaryData {};
-struct BinaryBegin {};
+struct BinaryBegin {
+    const std::size_t stride;
+    BinaryBegin(std::size_t stride):
+        stride(stride)
+    {}
+};
 struct BinaryEnd {};
 
 struct ObjectBegin {};
@@ -88,7 +93,7 @@ struct BinarySchema {
 class BinarySchemaBuilder: public Reader {
 public:
     BinarySchemaBuilder(BinarySchema& schema):
-        Reader(true, true, true),
+        Reader(true, false, true),
         tokens(schema.tokens),
         first_element(false)
     {
@@ -159,9 +164,9 @@ public:
         return std::make_tuple(nullptr, 0);
     }
 
-    std::size_t binary_begin() override {
-        tokens.push_back(btoken::BinaryBegin());
-        return 1;
+    std::size_t binary_begin(std::size_t stride) override {
+        tokens.push_back(btoken::BinaryBegin(stride));
+        return stride; // stride * (fixed_size == 0 ? 1 : fixed_size);
     }
 
     void binary_end() override {

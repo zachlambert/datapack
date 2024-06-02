@@ -9,7 +9,7 @@ namespace datapack {
 static std::size_t get_tokens_end(const std::vector<BToken>& tokens, std::size_t begin) {
     std::size_t pos = begin;
     std::size_t depth = 0;
-    while (true){
+    while (true) {
         if (depth == 0 && pos != begin) {
             break;
         }
@@ -143,7 +143,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
                 writer.optional(has_value);
                 state.remaining = 0;
             }
-            if (has_value) {
+            if (!has_value) {
                 token_pos = state.value_tokens_end;
                 states.pop();
                 continue;
@@ -169,9 +169,12 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
                 if (!std::get_if<btoken::BinaryEnd>(&schema.tokens[token_pos])) {
                     throw LoadException("Invalid binary schema");
                 }
+                reader.binary_end();
+                writer.list_end();
                 token_pos++;
                 continue;
             }
+            writer.list_next();
             state.remaining--;
             token_pos = state.value_tokens_begin;
             // Fall-through to processing value below
@@ -273,6 +276,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
                         writer.variant_begin(value->type.c_str(), labels_cstr);
                     }
                     token_pos = get_tokens_end(schema.tokens, token_pos);
+                    continue;
                 }
                 else if (auto value = std::get_if<btoken::VariantEnd>(&token)) {
                     break;
@@ -287,21 +291,77 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             continue;
         }
         if (auto binary = std::get_if<btoken::BinaryBegin>(&token)) {
-            std::size_t size = reader.binary_begin();
-
+            if (binary->stride == 0) {
+                throw LoadException("Invalid binary schema");
+            }
+            std::size_t size = reader.binary_begin(binary->stride);
+            std::size_t length = size / binary->stride;
             std::size_t value_end = get_tokens_end(schema.tokens, token_pos);
 
+            writer.list_begin();
             states.push(State(
                 StateType::Binary,
                 token_pos,
                 value_end,
-                size
+                length
             ));
             continue;
         }
 
-        if (auto value = std::get_if<std::int32_t>(&token)) {
-
+        if (std::get_if<std::int32_t>(&token)) {
+            std::int32_t value;
+            reader.value_i32(value);
+            writer.value_i32(value);
+        }
+        else if (std::get_if<std::int64_t>(&token)) {
+            std::int64_t value;
+            reader.value_i64(value);
+            writer.value_i64(value);
+        }
+        else if (std::get_if<std::uint32_t>(&token)) {
+            std::uint32_t value;
+            reader.value_u32(value);
+            writer.value_u32(value);
+        }
+        else if (std::get_if<std::uint64_t>(&token)) {
+            std::uint64_t value;
+            reader.value_u64(value);
+            writer.value_u64(value);
+        }
+        else if (std::get_if<float>(&token)) {
+            float value;
+            reader.value_f32(value);
+            writer.value_f32(value);
+        }
+        else if (std::get_if<double>(&token)) {
+            double value;
+            reader.value_f64(value);
+            writer.value_f64(value);
+        }
+        else if (std::get_if<bool>(&token)) {
+            bool value;
+            reader.value_bool(value);
+            writer.value_bool(value);
+        }
+        else if (std::get_if<std::string>(&token)) {
+            std::string value;
+            reader.value_string(value);
+            writer.value_string(value);
+        }
+        else if (auto value = std::get_if<btoken::Enumerate>(&token)) {
+            std::vector<const char*> labels_cstr;
+            for (const auto& label: value->labels) {
+                labels_cstr.push_back(label.c_str());
+            }
+            int enum_value = reader.enumerate(labels_cstr);
+            writer.enumerate(enum_value, labels_cstr);
+        }
+        else if (std::get_if<btoken::BinaryData>(&token)) {
+            auto [data, size] = reader.binary_data();
+            writer.binary_data(data, size);
+        }
+        else {
+            throw LoadException("Shouldn't be here");
         }
     }
 

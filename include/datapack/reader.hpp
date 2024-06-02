@@ -123,7 +123,7 @@ public:
     virtual std::tuple<const std::uint8_t*, std::size_t> binary_data() = 0;
 
     // BinaryReader and BinarySchemaBuilder only
-    virtual std::size_t binary_begin() {
+    virtual std::size_t binary_begin(std::size_t stride) {
         error("Not supported");
         return 0;
     }

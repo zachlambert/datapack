@@ -68,11 +68,11 @@ private:
 
 class BinaryReader : public Reader {
 public:
-    BinaryReader(const std::vector<std::uint8_t>& data, bool use_binary=true):
-        Reader(use_binary),
+    BinaryReader(const std::vector<std::uint8_t>& data, bool is_exhaustive=false):
+        Reader(true, true, is_exhaustive),
         data(data),
         pos(0),
-        in_binary(false)
+        is_binary(false)
     {}
 
     void value_i32(std::int32_t& value) override { value_number(value); }
@@ -93,28 +93,42 @@ public:
     void variant_end() override {}
 
     std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
-    std::size_t binary_begin(std::size_t stride) override;
+    std::size_t binary_begin() override;
     void binary_end() override;
 
-    void object_begin() override {}
-    void object_end() override {}
+    void object_begin() override;
+    void object_end() override;
     void object_next(const char* key) override {}
 
-    void tuple_begin() override {}
-    void tuple_end() override {}
+    void tuple_begin() override {
+        object_begin();
+    }
+    void tuple_end() override {
+        object_end();
+    }
     void tuple_next() override {}
 
-    void map_begin() override;
-    void map_end() override;
+    void map_begin() override {}
+    void map_end() override {}
     bool map_next(std::string& key) override;
 
-    void list_begin() override;
-    void list_end() override;
+    void list_begin() override {}
+    void list_end() override {}
     bool list_next() override;
 
 private:
     template <typename T>
     void value_number(T& value) {
+        if (is_binary && !binary_blocks.empty()) {
+            binary_blocks.top().padding = std::max(binary_blocks.top().padding, sizeof(T));
+            while (pos % sizeof(T) != 0) {
+                pos++;
+            }
+        }
+        // Note: If is_binary && binary_blocks.empty(), this means
+        // the only element in the binary data is T, which guarantees
+        // that the stride/padding is satisfied
+
         if (pos + sizeof(T) > data.size()) {
             error("Input data is too short");
             return;
@@ -125,7 +139,16 @@ private:
 
     const std::vector<std::uint8_t>& data;
     std::size_t pos;
-    bool in_binary;
+    struct BinaryBlock {
+        const std::size_t start;
+        std::size_t padding;
+        BinaryBlock(std::size_t start):
+            start(start),
+            padding(0)
+        {}
+    };
+    bool is_binary;
+    std::stack<BinaryBlock> binary_blocks;
 };
 
 template <readable T>

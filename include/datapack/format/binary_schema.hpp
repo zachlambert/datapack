@@ -33,12 +33,7 @@ struct VariantNext {
     VariantNext(const std::string& type): type(type) {}
 };
 
-struct BinaryBegin {
-    const std::size_t stride;
-    BinaryBegin(std::size_t stride):
-        stride(stride)
-    {}
-};
+struct BinaryBegin {};
 struct BinaryEnd {};
 
 struct ObjectBegin {};
@@ -162,8 +157,8 @@ public:
         return std::make_tuple(nullptr, 0);
     }
 
-    std::size_t binary_begin(std::size_t stride) override {
-        tokens.push_back(btoken::BinaryBegin(stride));
+    std::size_t binary_begin() override {
+        tokens.push_back(btoken::BinaryBegin());
         return 1;
     }
 

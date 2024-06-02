@@ -63,11 +63,6 @@ public:
         if constexpr(readable<T> && readable_binary<T>) {
             if (is_binary) {
                 read_binary(*this, value);
-                if (is_exhaustive_) {
-                    // Exhaustive readers also want to know the content
-                    // of the binary data
-                    read(*this, value);
-                }
             } else {
                 read(*this, value);
             }
@@ -128,7 +123,7 @@ public:
     virtual std::tuple<const std::uint8_t*, std::size_t> binary_data() = 0;
 
     // BinaryReader and BinarySchemaBuilder only
-    virtual std::size_t binary_begin(std::size_t stride) {
+    virtual std::size_t binary_begin() {
         error("Not supported");
         return 0;
     }

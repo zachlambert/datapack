@@ -125,26 +125,37 @@ std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
     return std::make_tuple(output_data, size);
 }
 
-std::size_t BinaryReader::binary_begin(std::size_t stride) {
+std::size_t BinaryReader::binary_begin() {
     std::size_t size;
     value_number(size);
-    if (size % stride == 0) {
-        error("Invalid binary size");
-    }
-    in_binary = true;
-    return size / stride;
+    is_binary = true;
+    return size;
 }
 
 void BinaryReader::binary_end() {
-    in_binary = false;
+    if (!is_binary) {
+        error("Reader usage error");
+    }
+    is_binary = false;
 }
 
-void BinaryReader::map_begin() {
-    // Do nothing
+void BinaryReader::object_begin() {
+    if (is_binary) {
+        binary_blocks.push(BinaryBlock(pos));
+    }
 }
-
-void BinaryReader::map_end() {
-    // Do nothing
+void BinaryReader::object_end() {
+    if (is_binary) {
+        const auto& top = binary_blocks.top();
+        while ((pos - top.start) % top.padding != 0) {
+            pos++;
+        }
+        std::size_t size = pos - top.start;
+        binary_blocks.pop();
+        if (!binary_blocks.empty()) {
+            binary_blocks.top().padding = std::max(binary_blocks.top().padding, size);
+        }
+    }
 }
 
 bool BinaryReader::map_next(std::string& key) {
@@ -155,15 +166,6 @@ bool BinaryReader::map_next(std::string& key) {
     }
     value_string(key);
     return true;
-}
-
-
-void BinaryReader::list_begin() {
-    // Do nothing
-}
-
-void BinaryReader::list_end() {
-    // Do nothing
 }
 
 bool BinaryReader::list_next() {

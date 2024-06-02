@@ -31,17 +31,26 @@ void write(Writer& writer, const std::vector<T>& value) {
 template <typename T>
 requires std::is_trivially_copy_assignable_v<T>
 void read_binary(Reader& reader, std::vector<T>& value) {
-    if (reader.is_exhaustive()) {
-        std::size_t length = reader.binary_begin(sizeof(T));
-        value.resize(length);
-        for (auto& element: value) {
-            reader.value(element);
+    if constexpr(readable<T>) {
+        if (reader.is_exhaustive()) {
+            std::size_t size = reader.binary_begin();
+            if (size % sizeof(T) != 0) {
+                reader.error("Invalid binary size");
+            }
+            value.resize(size / sizeof(T));
+            for (auto& element: value) {
+                reader.value(element);
+            }
+            reader.binary_end();
+            return;
         }
-        reader.binary_end();
-    } else {
-        auto [data, size] = reader.binary_data();
-        std::memcpy(value.data(), data, size);
     }
+    auto [data, size] = reader.binary_data();
+    if (size % sizeof(T) != 0) {
+        reader.error("Invalid binary size");
+    }
+    value.resize(size / sizeof(T));
+    std::memcpy(value.data(), data, size);
 }
 
 template <typename T>

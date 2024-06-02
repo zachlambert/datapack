@@ -35,32 +35,32 @@ void write(datapack::Writer& writer, const Point& value) {
     writer.value("z", value.z);
     writer.object_end();
 }
+void read(datapack::Reader& reader, Point& value) {
+    reader.object_begin();
+    reader.value("x", value.x);
+    reader.value("y", value.y);
+    reader.value("z", value.z);
+    reader.object_end();
+}
 
-void print_binary(const std::vector<std::uint8_t>& bytes) {
-    for (std::size_t i = 0; i < bytes.size(); i++) {
-        printf("%02x ", bytes[i]);
-        if ((i + 1) % 8 == 0) {
-            std::cout << std::endl;
-        }
-    }
-    if (bytes.size() % 8 != 0) {
-        std::cout << std::endl;
+void print_points(const std::vector<Point>& points) {
+    for (std::size_t i = 0; i < points.size(); i++) {
+        const auto& p = points[i];
+        printf("%f, %f, %f\n", p.x, p.y, p.z);
     }
 }
 
-bool compare(const std::vector<std::uint8_t>& a, const std::vector<std::uint8_t>& b) {
+bool compare(const std::vector<Point>& a, const std::vector<Point>& b) {
     if (a.size() != b.size()) return false;
     for (std::size_t i = 0; i < a.size(); i++) {
-        if (a[i] != b[i]) return false;
+        if (a[i].x != b[i].x) return false;
+        if (a[i].y != b[i].y) return false;
+        if (a[i].z != b[i].z) return false;
     }
     return true;
 }
 
 int main() {
-    Point arr_test[2];
-    std::cout << "Point size: " << sizeof(Point) << std::endl;
-    std::cout << "Point stride: " << (std::uint8_t*)&arr_test[1] - (std::uint8_t*)&arr_test[0] << std::endl;
-
     std::vector<Point> points;
     for (std::size_t i = 0; i < 3; i++) {
         Point point;
@@ -70,21 +70,17 @@ int main() {
         points.push_back(point);
     }
 
-    std::vector<std::uint8_t> a, b;
-    datapack::BinaryWriter(a, true).value(points);
-    datapack::BinaryWriter(b, false).value(points);
+    auto data = datapack::write_binary(points);
 
-    std::cout << "Writing raw binary data:\n";
-    print_binary(a);
-    std::cout << "Writing element-by-element:\n";
-    print_binary(b);
+    std::vector<Point> a, b;
 
-    // Reduce a and b to the data only, they will in that "a" stores the
-    // size in bytes, "b" stores the size in elements
-    for (std::size_t i = 0; i < 8; i++) {
-        a.erase(a.begin());
-        b.erase(b.begin());
-    }
+    std::cout << "Reading raw binary data:\n";
+    datapack::BinaryReader(data, false).value(a);
+    print_points(a);
+
+    std::cout << "Reading element-by-element:\n";
+    datapack::BinaryReader(data, true).value(b);
+    print_points(b);
 
     std::cout << "Equal ? " << (compare(a, b) ? "yes" : "no") << std::endl;
 }

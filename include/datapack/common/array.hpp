@@ -35,16 +35,18 @@ void write(Writer& writer, const std::array<T, Size>& value) {
 template <typename T, std::size_t N>
 requires std::is_trivially_copy_assignable_v<T>
 void read_binary(Reader& reader, std::array<T, N>& value) {
-    if (reader.is_exhaustive()) {
-        std::size_t length = reader.binary_begin(sizeof(T));
-        if (length != value.size()) {
-            reader.error("Incorrect binary size");
+    if constexpr(readable<T>) {
+        if (reader.is_exhaustive()) {
+            std::size_t size = reader.binary_begin();
+            if (size != sizeof(T) * value.size()) {
+                reader.error("Incorrect binary size");
+            }
+            for (auto& element: value) {
+                reader.value(element);
+            }
+            reader.binary_end();
+            return;
         }
-        for (auto& element: value) {
-            reader.value(element);
-        }
-        reader.binary_end();
-        return;
     }
     auto [data, size] = reader.binary_data();
     if (value.size() * sizeof(T) != size) {

@@ -36,14 +36,12 @@ inline void write(Writer& writer, const Writeable& value) {
 class Writer {
 public:
     Writer(bool is_binary = false):
-        is_binary(is_binary),
-        is_writeable_binary_(false)
+        is_binary(is_binary)
     {}
 
     template <writeable_either T>
     void value(const T& value) {
         if constexpr(writeable<T> && writeable_binary<T>) {
-            is_writeable_binary_ = true;
             if (is_binary) {
                 write_binary(*this, value);
             } else {
@@ -54,10 +52,8 @@ public:
             write(*this, value);
         }
         if constexpr(!writeable<T>) {
-            is_writeable_binary_ = true;
             write_binary(*this, value);
         }
-        is_writeable_binary_ = false;
     }
 
     template <writeable_either T>
@@ -113,13 +109,8 @@ public:
     virtual void list_end() = 0;
     virtual void list_next() = 0;
 
-    bool is_writeable_binary() const {
-        return is_writeable_binary_;
-    }
-
 private:
     const bool is_binary;
-    bool is_writeable_binary_;
 };
 
 class WriteException: public std::exception {

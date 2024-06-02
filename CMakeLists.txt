@@ -21,6 +21,7 @@ add_library(datapack SHARED
     src/util/object.cpp
     src/util/random.cpp
     src/format/binary.cpp
+    src/format/binary_schema.cpp
     src/format/json.cpp
     src/definer.cpp
     src/object.cpp

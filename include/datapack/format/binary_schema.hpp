@@ -33,6 +33,7 @@ struct VariantNext {
     VariantNext(const std::string& type): type(type) {}
 };
 
+struct BinaryData {};
 struct BinaryBegin {};
 struct BinaryEnd {};
 
@@ -67,6 +68,7 @@ using BToken = std::variant<
     btoken::VariantBegin,
     btoken::VariantEnd,
     btoken::VariantNext,
+    btoken::BinaryData,
     btoken::BinaryBegin,
     btoken::BinaryEnd,
     btoken::ObjectBegin,
@@ -153,7 +155,7 @@ public:
 
 
     std::tuple<const std::uint8_t*, std::size_t> binary_data() override {
-        error("BinarySchemaBuilder::binary_data should not be called");
+        tokens.push_back(btoken::BinaryData());
         return std::make_tuple(nullptr, 0);
     }
 
@@ -234,7 +236,7 @@ private:
 };
 
 template <readable T>
-BinarySchema binary_schema() {
+BinarySchema create_binary_schema() {
     T dummy;
     BinarySchema schema;
     BinarySchemaBuilder builder(schema);

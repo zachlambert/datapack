@@ -92,16 +92,21 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
         const StateType type;
         const std::size_t value_tokens_begin;
         const std::size_t value_tokens_end;
-        bool done; // Used for optional, variant, binary
-        State(StateType type, std::size_t value_tokens_begin, std::size_t value_tokens_end):
+        int remaining;
+        State(
+            StateType type,
+            std::size_t value_tokens_begin,
+            std::size_t value_tokens_end,
+            int remaining
+        ):
             type(type),
             value_tokens_begin(value_tokens_begin),
             value_tokens_end(value_tokens_end),
-            done(false)
+            remaining(remaining)
         {}
     };
     std::stack<State> states;
-    states.push(State(StateType::None, 0, 0));
+    states.push(State(StateType::None, 0, 0, 0));
 
     std::size_t token_pos = 0;
     while (true) {
@@ -133,9 +138,10 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
         }
         else if (state.type == StateType::Optional) {
             bool has_value = false;
-            if (!state.done) {
+            if (state.remaining) {
                 has_value = reader.optional();
                 writer.optional(has_value);
+                state.remaining = 0;
             }
             if (has_value) {
                 token_pos = state.value_tokens_end;
@@ -145,24 +151,29 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             token_pos = state.value_tokens_begin;
         }
         else if (state.type == StateType::Variant) {
-            if (state.done) {
+            if (!state.remaining) {
                 reader.variant_end();
                 writer.variant_end();
                 token_pos = state.value_tokens_end;
                 states.pop();
                 continue;
             }
-            state.done = true;
+            state.remaining = 0;
             token_pos = state.value_tokens_begin;
             // Fall-through to processing value below
         }
         else if (state.type == StateType::Binary) {
-            if (state.done) {
+            if (state.remaining == 0) {
                 token_pos = state.value_tokens_end;
                 states.pop();
+                if (!std::get_if<btoken::BinaryEnd>(&schema.tokens[token_pos])) {
+                    throw LoadException("Invalid binary schema");
+                }
+                token_pos++;
                 continue;
             }
-            state.done = true;
+            state.remaining--;
+            token_pos = state.value_tokens_begin;
             // Fall-through to processing value below
         }
 
@@ -170,7 +181,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
         token_pos++;
 
         if (std::get_if<btoken::ObjectBegin>(&token)) {
-            states.push(State(StateType::None, 0, 0));
+            states.push(State(StateType::None, 0, 0, 0));
             reader.object_begin();
             writer.object_begin();
             continue;
@@ -188,7 +199,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
         }
 
         if (std::get_if<btoken::TupleBegin>(&token)) {
-            states.push(State(StateType::None, 0, 0));
+            states.push(State(StateType::None, 0, 0, 0));
             reader.tuple_begin();
             writer.tuple_begin();
             continue;
@@ -211,7 +222,8 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             states.push(State(
                 StateType::Map,
                 token_pos,
-                get_tokens_end(schema.tokens, token_pos)
+                get_tokens_end(schema.tokens, token_pos),
+                0
             ));
             continue;
         }
@@ -221,7 +233,8 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             states.push(State(
                 StateType::List,
                 token_pos,
-                get_tokens_end(schema.tokens, token_pos)
+                get_tokens_end(schema.tokens, token_pos),
+                0
             ));
             continue;
         }
@@ -231,7 +244,8 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             states.push(State(
                 StateType::Optional,
                 token_pos,
-                get_tokens_end(schema.tokens, token_pos)
+                get_tokens_end(schema.tokens, token_pos),
+                1
             ));
             continue;
         }
@@ -269,19 +283,21 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
                 throw LoadException("No matching variant");
             }
 
-            states.push(State(StateType::Variant, variant_start, token_pos));
+            states.push(State(StateType::Variant, variant_start, token_pos, 1));
             continue;
         }
-        if (auto binary = std::get_if<btoken::Binary>(&token)) {
-            std::size_t size = reader.binary_size(binary->stride);
-            token_pos++;
-            if (binary->stride == 0) {
-                std::vector<std::uint8_t> temp(size);
-                reader.binary_data(temp.data());
-                writer.binary(size, temp.data(), 0);
-            } else {
+        if (auto binary = std::get_if<btoken::BinaryBegin>(&token)) {
+            std::size_t size = reader.binary_begin();
 
-            }
+            std::size_t value_end = get_tokens_end(schema.tokens, token_pos);
+
+            states.push(State(
+                StateType::Binary,
+                token_pos,
+                value_end,
+                size
+            ));
+            continue;
         }
 
         if (auto value = std::get_if<std::int32_t>(&token)) {

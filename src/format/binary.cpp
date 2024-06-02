@@ -27,8 +27,12 @@ void BinaryWriter::variant_begin(const char* label, const std::vector<const char
     value_string(label);
 }
 
-void BinaryWriter::binary(std::size_t binary_size, const std::uint8_t* binary_data) {
-    value_number((std::uint64_t)binary_size);
+void BinaryWriter::binary(std::size_t size, const std::uint8_t* binary_data, std::size_t stride) {
+    std::size_t binary_size = (stride == 0 ? size : size * stride);
+    value_number(std::uint64_t(binary_size));
+    if (stride != 0) {
+        value_number(std::uint64_t(size));
+    }
     std::size_t pos = data.size();
     data.resize(pos + binary_size);
     std::memcpy(&data[pos], binary_data, binary_size);
@@ -125,11 +129,19 @@ bool BinaryReader::variant_match(const char* label) {
     return strcmp(label, next_variant_label) == 0;
 }
 
-std::size_t BinaryReader::binary_size() {
+std::size_t BinaryReader::binary_size(std::size_t stride) {
     std::uint64_t size;
     value_number(size);
     next_binary_size = size;
-    return size;
+    if (stride == 0) {
+        return size;
+    }
+    std::uint64_t container_size;
+    value_number(container_size);
+    if (container_size * stride != size) {
+        throw ReadException("Invalid binary size");
+    }
+    return container_size;
 }
 
 void BinaryReader::binary_data(std::uint8_t* output_data) {

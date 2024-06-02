@@ -33,7 +33,12 @@ struct VariantNext {
     VariantNext(const std::string& type): type(type) {}
 };
 
-struct Binary {};
+struct Binary {
+    const std::size_t stride;
+    Binary(std::size_t stride):
+        stride(stride)
+    {}
+};
 
 struct ObjectBegin {};
 struct ObjectEnd {};
@@ -91,111 +96,111 @@ public:
         tokens.clear();
     }
 
-    void value_i32(std::int32_t& value) {
+    void value_i32(std::int32_t& value) override {
         tokens.push_back(value);
     }
 
-    void value_i64(std::int64_t& value) {
+    void value_i64(std::int64_t& value) override {
         tokens.push_back(value);
     }
 
-    void value_u32(std::uint32_t& value) {
+    void value_u32(std::uint32_t& value) override {
         tokens.push_back(value);
     }
 
-    void value_u64(std::uint64_t& value) {
-        tokens.push_back(value);
-    }
-
-
-    void value_f32(float& value) {
-        tokens.push_back(value);
-    }
-
-    void value_f64(double& value) {
+    void value_u64(std::uint64_t& value) override {
         tokens.push_back(value);
     }
 
 
-    void value_string(std::string& value) {
+    void value_f32(float& value) override {
         tokens.push_back(value);
     }
 
-    void value_bool(bool& value) {
+    void value_f64(double& value) override {
         tokens.push_back(value);
     }
 
 
-    int enumerate(const std::vector<const char*>& labels) {
+    void value_string(std::string& value) override {
+        tokens.push_back(value);
+    }
+
+    void value_bool(bool& value) override {
+        tokens.push_back(value);
+    }
+
+
+    int enumerate(const std::vector<const char*>& labels) override {
         tokens.push_back(btoken::Enumerate(labels));
         return 0;
     }
 
-    bool optional() {
+    bool optional() override {
         tokens.push_back(btoken::Optional());
         return true;
     }
 
-    void variant_begin(const std::vector<const char*>& labels) {
+    void variant_begin(const std::vector<const char*>& labels) override {
         tokens.push_back(btoken::VariantBegin(labels));
     }
 
-    bool variant_match(const char* label) {
+    bool variant_match(const char* label) override {
         tokens.push_back(btoken::VariantNext(label));
         return true;
     }
 
-    void variant_end() {
+    void variant_end() override {
         tokens.push_back(btoken::VariantEnd());
     }
 
 
-    std::size_t binary_size() {
-        tokens.push_back(btoken::Binary());
+    std::size_t binary_size(std::size_t stride) override {
+        tokens.push_back(btoken::Binary(stride));
         return 0;
     }
 
-    void binary_data(std::uint8_t* data) {
+    void binary_data(std::uint8_t* data) override {
         // Do nothing
     }
 
 
-    void object_begin() {
+    void object_begin() override {
         tokens.push_back(btoken::ObjectBegin());
     }
 
-    void object_end() {
+    void object_end() override {
         tokens.push_back(btoken::ObjectEnd());
     }
 
-    void object_next(const char* key) {
+    void object_next(const char* key) override {
         tokens.push_back(btoken::ObjectNext(key));
     }
 
 
-    void tuple_begin() {
+    void tuple_begin() override {
         tokens.push_back(btoken::TupleBegin());
     }
 
-    void tuple_end() {
+    void tuple_end() override {
         tokens.push_back(btoken::TupleEnd());
     }
 
-    void tuple_next() {
+    void tuple_next() override {
         tokens.push_back(btoken::TupleNext());
     }
 
 
-    void map_begin() {
+    void map_begin() override {
         tokens.push_back(btoken::Map());
         first_element = true;
     }
 
-    void map_end() {
+    void map_end() override {
         // Do nothing
     }
 
-    bool map_next(std::string& key) {
+    bool map_next(std::string& key) override {
         if (first_element) {
             first_element = false;
             return true;
@@ -204,16 +209,16 @@ public:
     }
 
 
-    void list_begin() {
+    void list_begin() override {
         tokens.push_back(btoken::List());
         first_element = true;
     }
 
-    void list_end() {
+    void list_end() override {
         // Do nothing
     }
 
-    bool list_next() {
+    bool list_next() override {
         if (first_element) {
             first_element = false;
             return true;

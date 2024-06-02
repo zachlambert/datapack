@@ -66,9 +66,16 @@ void ObjectWriter::variant_end() {
 }
 
 
-void ObjectWriter::binary(std::size_t size, const std::uint8_t* data) {
-    std::vector<std::uint8_t> vec(size);
-    std::memcpy(vec.data(), data, size);
+void ObjectWriter::binary(std::size_t size, const std::uint8_t* data, std::size_t stride) {
+    std::size_t binary_size = (stride == 0 ? size : size * stride);
+    std::vector<std::uint8_t> vec;
+    if (stride != 0) {
+        vec.resize(sizeof(std::int64_t));
+        *(std::uint64_t*)vec.data() = size;
+    }
+    std::size_t data_start = vec.size();
+    vec.resize(data_start + binary_size);
+    std::memcpy(vec.data() + data_start, data, binary_size);
     set_value(vec);
 }
 
@@ -254,15 +261,26 @@ void ObjectReader::variant_end() {
 }
 
 
-std::size_t ObjectReader::binary_size() {
+std::size_t ObjectReader::binary_size(std::size_t stride) {
+    std::size_t binary_size;
     if (auto x = node.get_if<Object::binary_t>()) {
-        return x->size();
+        binary_size = x->size();
     }
-    if (auto x = node.get_if<Object::str_t>()) {
-        return base64_decoded_length(*x);
+    else if (auto x = node.get_if<Object::str_t>()) {
+        binary_size = base64_decoded_length(*x);
     }
-    error("Incorrect value type (binary)");
-    return 0;
+    else {
+        error("Incorrect value type (binary)");
+    }
+
+    if (stride == 0) {
+        return binary_size;
+    } else {
+        if (binary_size % stride != 0) {
+            throw ReadException("Invalid binary size");
+        }
+        return binary_size / stride;
+    }
 }
 
 void ObjectReader::binary_data(std::uint8_t* data) {

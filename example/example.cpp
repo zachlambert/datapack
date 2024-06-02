@@ -57,9 +57,7 @@ void visit(V& visitor, Sprite& value) {
     visitor.value("height", value.height);
     visitor.value(
         "data", value.data,
-        datapack::LengthConstraint(
-            value.width * value.height,
-            sizeof(Sprite::Pixel))
+        datapack::LengthConstraint(value.width * value.height)
     );
     visitor.object_end();
 }

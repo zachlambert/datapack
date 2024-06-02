@@ -60,8 +60,8 @@ void DebugWriter::variant_end() {
 
 }
 
-void DebugWriter::binary(std::size_t size, const std::uint8_t* data) {
-    os << "(binary, size=" << size << ")\n";
+void DebugWriter::binary(std::size_t size, const std::uint8_t* data, std::size_t stride) {
+    os << "(binary, size=" << size << ", stride=" << stride << ")\n";
 }
 
 

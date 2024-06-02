@@ -124,7 +124,7 @@ public:
     virtual bool variant_match(const char* label) = 0;
     virtual void variant_end() = 0;
 
-    virtual std::size_t binary_size() = 0;
+    virtual std::size_t binary_size(std::size_t stride = 0) = 0;
     virtual void binary_data(std::uint8_t* data) = 0;
 
     virtual void object_begin() = 0;

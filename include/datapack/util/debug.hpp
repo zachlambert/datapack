@@ -25,7 +25,7 @@ public:
     void variant_begin(const char* label, const std::vector<const char*>& labels) override;
     void variant_end() override;
 
-    void binary(std::size_t size, const std::uint8_t* data) override;
+    void binary(std::size_t size, const std::uint8_t* data, std::size_t stride) override;
 
     void object_begin() override;
     void object_end() override;

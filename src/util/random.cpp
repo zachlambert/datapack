@@ -106,12 +106,14 @@ void RandomReader::variant_end() {
 
 }
 
-std::size_t RandomReader::binary_size() {
+std::size_t RandomReader::binary_size(std::size_t stride) {
+    std::size_t size;
     if (auto c = constraint<LengthConstraint>()){
-        next_binary_size = c->length * c->element_size;
-        return next_binary_size;
+        size = c->length;
+    } else {
+        size = rand() % 256;
     }
-    next_binary_size = rand() % 256;
+    next_binary_size = (stride == 0 ? size : size * stride);
     return next_binary_size;
 }
 

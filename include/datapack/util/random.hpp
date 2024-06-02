@@ -25,7 +25,7 @@ public:
     bool variant_match(const char* label) override;
     void variant_end() override;
 
-    std::size_t binary_size() override;
+    std::size_t binary_size(std::size_t stride) override;
     void binary_data(std::uint8_t* data) override;
 
     void object_begin() override;

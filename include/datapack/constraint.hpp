@@ -36,10 +36,8 @@ struct RangeConstraint: public ConstraintBase {
 
 struct LengthConstraint: public ConstraintBase {
     const std::size_t length;
-    const std::size_t element_size;
-    LengthConstraint(std::size_t length, std::size_t element_size):
-        length(length),
-        element_size(element_size)
+    LengthConstraint(std::size_t length):
+        length(length)
     {}
 };
 

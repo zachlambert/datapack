@@ -62,6 +62,11 @@ public:
         if constexpr(readable<T> && readable_binary<T>) {
             if (is_binary) {
                 read_binary(*this, value);
+                if (is_exhaustive_) {
+                    // Exhaustive readers also want to know the content
+                    // of the binary data
+                    read(*this, value);
+                }
             } else {
                 read(*this, value);
             }

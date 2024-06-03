@@ -23,15 +23,15 @@ concept writeable_binary = requires(Writer& writer, const T& value) {
 template <typename T>
 concept writeable_either = writeable<T> || writeable_binary<T>;
 
-class Writeable {
-public:
-    virtual void write(Writer&) const = 0;
+template <typename T>
+concept writeable_class = requires(Writer& writer, const T& value) {
+    { value.write(writer) };
 };
 
-inline void write(Writer& writer, const Writeable& value) {
+template <writeable_class T>
+inline void write(Writer& writer, const T& value) {
     value.write(writer);
 }
-
 
 class Writer {
 public:

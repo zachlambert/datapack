@@ -1,4 +1,4 @@
-#include "datapack/format/binary_schema.hpp"
+#include "datapack/schema.hpp"
 #include "datapack/format/binary.hpp"
 #include "datapack/util/object.hpp"
 #include <cstring>
@@ -6,7 +6,7 @@
 
 namespace datapack {
 
-static std::size_t get_tokens_end(const std::vector<BToken>& tokens, std::size_t begin) {
+static std::size_t get_tokens_end(const std::vector<Token>& tokens, std::size_t begin) {
     std::size_t pos = begin;
     std::size_t depth = 0;
     while (true) {
@@ -22,44 +22,44 @@ static std::size_t get_tokens_end(const std::vector<BToken>& tokens, std::size_t
         // All these tokens are preceded by another value
         // so skip to the next token, such that the loop doesn't exit
         // if the depth is still zero
-        if (std::get_if<btoken::Map>(&token)){
+        if (std::get_if<token::Map>(&token)){
             continue;
         }
-        else if (std::get_if<btoken::List>(&token)){
+        else if (std::get_if<token::List>(&token)){
             continue;
         }
-        else if (std::get_if<btoken::Optional>(&token)){
+        else if (std::get_if<token::Optional>(&token)){
             continue;
         }
         // Explicit container tokens, that increment or decrement depth
         // Where depth is decreased, fall through to the end of the loop
         // body to check if depth is zero
-        else if (std::get_if<btoken::ObjectBegin>(&token)){
+        else if (std::get_if<token::ObjectBegin>(&token)){
             depth++;
             continue;
         }
-        else if (std::get_if<btoken::ObjectEnd>(&token)){
+        else if (std::get_if<token::ObjectEnd>(&token)){
             depth--;
         }
-        else if (std::get_if<btoken::TupleBegin>(&token)){
+        else if (std::get_if<token::TupleBegin>(&token)){
             depth++;
             continue;
         }
-        else if (std::get_if<btoken::TupleEnd>(&token)){
+        else if (std::get_if<token::TupleEnd>(&token)){
             depth--;
         }
-        else if (std::get_if<btoken::VariantBegin>(&token)){
+        else if (std::get_if<token::VariantBegin>(&token)){
             depth++;
             continue;
         }
-        else if (std::get_if<btoken::VariantEnd>(&token)){
+        else if (std::get_if<token::VariantEnd>(&token)){
             depth--;
         }
-        else if (std::get_if<btoken::BinaryBegin>(&token)){
+        else if (std::get_if<token::BinaryBegin>(&token)){
             depth++;
             continue;
         }
-        else if (std::get_if<btoken::BinaryEnd>(&token)){
+        else if (std::get_if<token::BinaryEnd>(&token)){
             depth--;
         }
         // Remaining tokens are values
@@ -74,12 +74,7 @@ static std::size_t get_tokens_end(const std::vector<BToken>& tokens, std::size_t
     return pos;
 }
 
-Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& data)
-{
-    Object object;
-    ObjectWriter writer(object);
-    BinaryReader reader(data);
-
+void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
     enum class StateType {
         None,
         Map,
@@ -166,7 +161,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             if (state.remaining == 0) {
                 token_pos = state.value_tokens_end;
                 states.pop();
-                if (!std::get_if<btoken::BinaryEnd>(&schema.tokens[token_pos])) {
+                if (!std::get_if<token::BinaryEnd>(&schema.tokens[token_pos])) {
                     throw LoadException("Invalid binary schema");
                 }
                 reader.binary_end();
@@ -183,43 +178,43 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
         const auto& token = schema.tokens[token_pos];
         token_pos++;
 
-        if (std::get_if<btoken::ObjectBegin>(&token)) {
+        if (std::get_if<token::ObjectBegin>(&token)) {
             states.push(State(StateType::None, 0, 0, 0));
             reader.object_begin();
             writer.object_begin();
             continue;
         }
-        if (std::get_if<btoken::ObjectEnd>(&token)) {
+        if (std::get_if<token::ObjectEnd>(&token)) {
             states.pop();
             reader.object_end();
             writer.object_end();
             continue;
         }
-        if (auto value = std::get_if<btoken::ObjectNext>(&token)) {
+        if (auto value = std::get_if<token::ObjectNext>(&token)) {
             reader.object_next(value->key.c_str());
             writer.object_next(value->key.c_str());
             continue;
         }
 
-        if (std::get_if<btoken::TupleBegin>(&token)) {
+        if (std::get_if<token::TupleBegin>(&token)) {
             states.push(State(StateType::None, 0, 0, 0));
             reader.tuple_begin();
             writer.tuple_begin();
             continue;
         }
-        if (std::get_if<btoken::TupleEnd>(&token)) {
+        if (std::get_if<token::TupleEnd>(&token)) {
             states.pop();
             reader.tuple_end();
             writer.tuple_end();
             continue;
         }
-        if (std::get_if<btoken::TupleNext>(&token)) {
+        if (std::get_if<token::TupleNext>(&token)) {
             reader.tuple_next();
             writer.tuple_next();
             continue;
         }
 
-        if (std::get_if<btoken::Map>(&token)) {
+        if (std::get_if<token::Map>(&token)) {
             reader.map_begin();
             writer.map_begin();
             states.push(State(
@@ -230,7 +225,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             ));
             continue;
         }
-        if (std::get_if<btoken::List>(&token)) {
+        if (std::get_if<token::List>(&token)) {
             reader.list_begin();
             writer.list_begin();
             states.push(State(
@@ -242,7 +237,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             continue;
         }
 
-        if (std::get_if<btoken::Optional>(&token)) {
+        if (std::get_if<token::Optional>(&token)) {
             // Call writer.optional() elsewhere
             states.push(State(
                 StateType::Optional,
@@ -252,7 +247,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             ));
             continue;
         }
-        if (auto variant = std::get_if<btoken::VariantBegin>(&token)) {
+        if (auto variant = std::get_if<token::VariantBegin>(&token)) {
             std::vector<const char*> labels_cstr;
             for (const auto& label: variant->labels) {
                 labels_cstr.push_back(label.c_str());
@@ -266,7 +261,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             while (true) {
                 const auto& token = schema.tokens[token_pos];
                 token_pos++;
-                if (auto value = std::get_if<btoken::VariantNext>(&token)) {
+                if (auto value = std::get_if<token::VariantNext>(&token)) {
                     if (reader.variant_match(value->type.c_str())) {
                         if (found_match) {
                             throw LoadException("Repeated variant labels");
@@ -278,7 +273,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
                     token_pos = get_tokens_end(schema.tokens, token_pos);
                     continue;
                 }
-                else if (auto value = std::get_if<btoken::VariantEnd>(&token)) {
+                else if (auto value = std::get_if<token::VariantEnd>(&token)) {
                     break;
                 }
                 throw LoadException("Invalid binary schema");
@@ -290,7 +285,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             states.push(State(StateType::Variant, variant_start, token_pos, 1));
             continue;
         }
-        if (auto binary = std::get_if<btoken::BinaryBegin>(&token)) {
+        if (auto binary = std::get_if<token::BinaryBegin>(&token)) {
             if (binary->stride == 0) {
                 throw LoadException("Invalid binary schema");
             }
@@ -348,7 +343,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             reader.value_string(value);
             writer.value_string(value);
         }
-        else if (auto value = std::get_if<btoken::Enumerate>(&token)) {
+        else if (auto value = std::get_if<token::Enumerate>(&token)) {
             std::vector<const char*> labels_cstr;
             for (const auto& label: value->labels) {
                 labels_cstr.push_back(label.c_str());
@@ -356,7 +351,7 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             int enum_value = reader.enumerate(labels_cstr);
             writer.enumerate(enum_value, labels_cstr);
         }
-        else if (std::get_if<btoken::BinaryData>(&token)) {
+        else if (std::get_if<token::BinaryData>(&token)) {
             auto [data, size] = reader.binary_data();
             writer.binary_data(data, size);
         }
@@ -364,8 +359,6 @@ Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& 
             throw LoadException("Shouldn't be here");
         }
     }
-
-    return object;
 }
 
 } // namespace datapack

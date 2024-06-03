@@ -1,4 +1,4 @@
-#include <datapack/format/binary_schema.hpp>
+#include <datapack/schema.hpp>
 #include <datapack/format/binary.hpp>
 #include <datapack/util/object.hpp>
 #include "example.hpp"
@@ -7,8 +7,8 @@ int main() {
     Entity entity = Entity::example();
     auto data = datapack::write_binary(entity);
 
-    auto schema = datapack::create_binary_schema<Entity>();
-    auto object_loaded = datapack::load_binary(schema, data);
+    auto schema = datapack::create_schema<Entity>();
+    auto object_loaded = datapack::read_object(schema, data);
     std::cout << "Loaded via schema:\n------\n";
     std::cout << object_loaded << "\n------" << std::endl;
 

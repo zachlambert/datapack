@@ -1,12 +1,13 @@
 #pragma once
 
 #include "datapack/reader.hpp"
+#include "datapack/writer.hpp"
 #include "datapack/object.hpp"
 
 
 namespace datapack {
 
-namespace btoken {
+namespace token {
 
 struct Optional {};
 struct Enumerate {
@@ -59,7 +60,7 @@ struct List {};
 
 } // namespace dtoken
 
-using BToken = std::variant<
+using Token = std::variant<
     std::int32_t,
     std::int64_t,
     std::uint32_t,
@@ -68,31 +69,31 @@ using BToken = std::variant<
     double,
     std::string,
     bool,
-    btoken::Optional,
-    btoken::Enumerate,
-    btoken::VariantBegin,
-    btoken::VariantEnd,
-    btoken::VariantNext,
-    btoken::BinaryData,
-    btoken::BinaryBegin,
-    btoken::BinaryEnd,
-    btoken::ObjectBegin,
-    btoken::ObjectEnd,
-    btoken::ObjectNext,
-    btoken::TupleBegin,
-    btoken::TupleEnd,
-    btoken::TupleNext,
-    btoken::Map,
-    btoken::List
+    token::Optional,
+    token::Enumerate,
+    token::VariantBegin,
+    token::VariantEnd,
+    token::VariantNext,
+    token::BinaryData,
+    token::BinaryBegin,
+    token::BinaryEnd,
+    token::ObjectBegin,
+    token::ObjectEnd,
+    token::ObjectNext,
+    token::TupleBegin,
+    token::TupleEnd,
+    token::TupleNext,
+    token::Map,
+    token::List
 >;
 
-struct BinarySchema {
-    std::vector<BToken> tokens;
+struct Schema {
+    std::vector<Token> tokens;
 };
 
-class BinarySchemaBuilder: public Reader {
+class SchemaBuilder: public Reader {
 public:
-    BinarySchemaBuilder(BinarySchema& schema):
+    SchemaBuilder(Schema& schema):
         Reader(true, false, true),
         tokens(schema.tokens),
         first_element(false)
@@ -136,71 +137,71 @@ public:
 
 
     int enumerate(const std::vector<const char*>& labels) override {
-        tokens.push_back(btoken::Enumerate(labels));
+        tokens.push_back(token::Enumerate(labels));
         return 0;
     }
 
     bool optional() override {
-        tokens.push_back(btoken::Optional());
+        tokens.push_back(token::Optional());
         return true;
     }
 
     void variant_begin(const std::vector<const char*>& labels) override {
-        tokens.push_back(btoken::VariantBegin(labels));
+        tokens.push_back(token::VariantBegin(labels));
     }
 
     bool variant_match(const char* label) override {
-        tokens.push_back(btoken::VariantNext(label));
+        tokens.push_back(token::VariantNext(label));
         return true;
     }
 
     void variant_end() override {
-        tokens.push_back(btoken::VariantEnd());
+        tokens.push_back(token::VariantEnd());
     }
 
 
     std::tuple<const std::uint8_t*, std::size_t> binary_data() override {
-        tokens.push_back(btoken::BinaryData());
+        tokens.push_back(token::BinaryData());
         return std::make_tuple(nullptr, 0);
     }
 
     std::size_t binary_begin(std::size_t stride) override {
-        tokens.push_back(btoken::BinaryBegin(stride));
+        tokens.push_back(token::BinaryBegin(stride));
         return stride; // stride * (fixed_size == 0 ? 1 : fixed_size);
     }
 
     void binary_end() override {
-        tokens.push_back(btoken::BinaryEnd());
+        tokens.push_back(token::BinaryEnd());
     }
 
     void object_begin() override {
-        tokens.push_back(btoken::ObjectBegin());
+        tokens.push_back(token::ObjectBegin());
     }
 
     void object_end() override {
-        tokens.push_back(btoken::ObjectEnd());
+        tokens.push_back(token::ObjectEnd());
     }
 
     void object_next(const char* key) override {
-        tokens.push_back(btoken::ObjectNext(key));
+        tokens.push_back(token::ObjectNext(key));
     }
 
 
     void tuple_begin() override {
-        tokens.push_back(btoken::TupleBegin());
+        tokens.push_back(token::TupleBegin());
     }
 
     void tuple_end() override {
-        tokens.push_back(btoken::TupleEnd());
+        tokens.push_back(token::TupleEnd());
     }
 
     void tuple_next() override {
-        tokens.push_back(btoken::TupleNext());
+        tokens.push_back(token::TupleNext());
     }
 
 
     void map_begin() override {
-        tokens.push_back(btoken::Map());
+        tokens.push_back(token::Map());
         first_element = true;
     }
 
@@ -218,7 +219,7 @@ public:
 
 
     void list_begin() override {
-        tokens.push_back(btoken::List());
+        tokens.push_back(token::List());
         first_element = true;
     }
 
@@ -236,19 +237,19 @@ public:
 
 
 private:
-    std::vector<BToken>& tokens;
+    std::vector<Token>& tokens;
     bool first_element;
 };
 
 template <readable T>
-BinarySchema create_binary_schema() {
+Schema create_schema() {
     T dummy;
-    BinarySchema schema;
-    BinarySchemaBuilder builder(schema);
+    Schema schema;
+    SchemaBuilder builder(schema);
     builder.value(dummy);
     return schema;
 }
 
-Object load_binary(const BinarySchema& schema, const std::vector<std::uint8_t>& data);
+void use_schema(const Schema& schema, Reader& reader, Writer& writer);
 
 };

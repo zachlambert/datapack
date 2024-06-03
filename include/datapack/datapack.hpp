@@ -2,15 +2,8 @@
 
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
-#include "datapack/definer.hpp"
 
-namespace datapack {
-
-class Visitor: public Readable, public Writeable {};
-
-} // namespace datapack
-
-#define DATAPACK_VISITOR_FUNCS_DEF(T) \
+#define DATAPACK(T) \
 template <typename V> \
 void visit(V& visitor, T& value); \
 inline void read(datapack::Reader& reader, T& value) { \
@@ -20,23 +13,23 @@ inline void write(datapack::Writer& writer, const T& value) { \
     visit(writer, const_cast<T&>(value)); \
 }
 
-#define DATAPACK_VISITOR_FUNCS_IMPL(T) \
+#define DATAPACK_IMPL(T) \
 template void visit<datapack::Reader>(datapack::Reader&, T&); \
 template void visit<datapack::Writer>(datapack::Writer&, T&); \
 static_assert(datapack::readable<T>); \
 static_assert(datapack::writeable<T>);
 
-#define DATAPACK_VISITOR_METHODS_DEF(T) \
+#define DATAPACK_METHODS(T) \
 template <typename V> \
 void visit(V& visitor); \
-void read(datapack::Reader& reader) override { \
+void read(datapack::Reader& reader) { \
     visit(reader); \
 } \
-void write(datapack::Writer& writer) const override { \
+void write(datapack::Writer& writer) const { \
     const_cast<T*>(this)->visit(writer); \
 }
 
-#define DATAPACK_VISITOR_METHODS_IMPL(T) \
+#define DATAPACK_METHODS_IMPL(T) \
 template void T::visit(datapack::Reader&); \
 template void T::visit(datapack::Writer&); \
 static_assert(datapack::readable<T>); \

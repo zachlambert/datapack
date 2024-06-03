@@ -1,7 +1,7 @@
 #pragma once
 
 #include "datapack/labelled_enum.hpp"
-#include "datapack/visitor.hpp"
+#include "datapack/datapack.hpp"
 
 
 namespace datapack {
@@ -14,11 +14,6 @@ void read(Reader& reader, T& value) {
 template <labelled_enum T>
 void write(Writer& writer, const T& value) {
     writer.enumerate((int)value, enum_labels_v<T>());
-}
-
-template <labelled_enum T>
-void define(Definer& definer, const T& value) {
-    definer.enumerate(enum_labels_v<T>());
 }
 
 } // namespace datapack

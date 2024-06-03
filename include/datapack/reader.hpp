@@ -27,12 +27,13 @@ concept readable_binary = requires(Reader& reader, T& value) {
 template <typename T>
 concept readable_either = readable_binary<T> || readable<T>;
 
-class Readable {
-public:
-    virtual void read(Reader&) = 0;
+template <typename T>
+concept readable_class = requires(Reader& reader, T& value) {
+    { value.read(reader) };
 };
 
-inline void read(Reader& reader, Readable& value) {
+template <readable_class T>
+inline void read(Reader& reader, T& value) {
     value.read(reader);
 }
 

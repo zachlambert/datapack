@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_map>
-#include "datapack/visitor.hpp"
+#include "datapack/datapack.hpp"
 
 
 namespace datapack {
@@ -57,23 +57,6 @@ void write(Writer& writer, const std::unordered_map<K, V>& value) {
             writer.tuple_end();
         }
         writer.list_end();
-    }
-}
-
-template <defined K, defined V>
-void define(Definer& definer, const std::unordered_map<K, V>& value) {
-    if constexpr(std::is_same_v<K, std::string>) {
-        definer.map();
-        definer.value(V());
-    }
-    if constexpr(!std::is_same_v<K, std::string>) {
-        definer.list();
-        definer.tuple_begin();
-        definer.tuple_next();
-        definer.value(K());
-        definer.tuple_next();
-        definer.value(V());
-        definer.tuple_end();
     }
 }
 

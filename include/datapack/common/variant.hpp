@@ -1,7 +1,7 @@
 #pragma once
 
 #include "datapack/labelled_variant.hpp"
-#include "datapack/visitor.hpp"
+#include "datapack/datapack.hpp"
 
 
 namespace datapack {
@@ -43,18 +43,5 @@ void write(Writer& writer, const T& value) {
     }, value);
     writer.variant_end();
 }
-
-template <labelled_variant T>
-void define(Definer& definer, const T& value) {
-    definer.variant_begin();
-    for (const auto& label: variant_labels_v<T>()) {
-        definer.variant_next(label);
-        std::visit([&](const auto& value){
-            definer.value(value);
-        }, variant_from_label<T>(label).value());
-    }
-    definer.variant_end();
-}
-
 
 } // namespace datapack

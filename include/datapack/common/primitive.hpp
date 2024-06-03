@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datapack/visitor.hpp"
+#include "datapack/datapack.hpp"
 
 
 namespace datapack {
@@ -67,38 +67,6 @@ inline void write(Writer& writer, std::string value) {
 
 inline void write(Writer& writer, bool value) {
     writer.value_bool(value);
-}
-
-inline void define(Definer& definer, std::int32_t value) {
-    definer.value_primitive(value);
-}
-
-inline void define(Definer& definer, std::int64_t value) {
-    definer.value_primitive(value);
-}
-
-inline void define(Definer& definer, std::uint32_t value) {
-    definer.value_primitive(value);
-}
-
-inline void define(Definer& definer, std::uint64_t value) {
-    definer.value_primitive(value);
-}
-
-inline void define(Definer& definer, float value) {
-    definer.value_primitive(value);
-}
-
-inline void define(Definer& definer, double value) {
-    definer.value_primitive(value);
-}
-
-inline void define(Definer& definer, std::string value) {
-    definer.value_primitive(value);
-}
-
-inline void define(Definer& definer, bool value) {
-    definer.value_primitive(value);
 }
 
 inline bool validate(const std::int32_t& value, const RangeConstraint& c) {

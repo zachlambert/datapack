@@ -1,5 +1,6 @@
 #include "datapack/util/object.hpp"
 #include "datapack/encode/base64.hpp"
+#include "datapack/format/binary.hpp"
 
 
 namespace datapack {
@@ -378,6 +379,14 @@ bool ObjectReader::list_next() {
     }
     list_start = false;
     return bool(node);
+}
+
+Object read_object(const Schema& schema, const std::vector<std::uint8_t>& data) {
+    Object object;
+    ObjectWriter writer(object);
+    BinaryReader reader(data);
+    use_schema(schema, reader, writer);
+    return object;
 }
 
 } // namespace datapack

@@ -21,9 +21,8 @@ add_library(datapack SHARED
     src/util/object.cpp
     src/util/random.cpp
     src/format/binary.cpp
-    src/format/binary_schema.cpp
     src/format/json.cpp
-    src/definer.cpp
+    src/schema.cpp
     src/object.cpp
 )
 target_include_directories(datapack PUBLIC
@@ -90,8 +89,8 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(example_binary_equivalency example/binary_equivalency.cpp)
     target_link_libraries(example_binary_equivalency datapack example_common)
 
-    add_executable(example_binary_schema example/binary_schema.cpp)
-    target_link_libraries(example_binary_schema datapack example_common)
+    add_executable(example_schema example/schema.cpp)
+    target_link_libraries(example_schema datapack example_common)
 endif()
 
 

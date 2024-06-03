@@ -5,6 +5,7 @@
 #include "datapack/object.hpp"
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
+#include "datapack/schema.hpp"
 
 
 namespace datapack {
@@ -134,5 +135,7 @@ Object write_object(const T& value) {
     ObjectWriter(object).value(value);
     return object;
 }
+
+Object read_object(const Schema& schema, const std::vector<std::uint8_t>& data);
 
 } // namespace datapack

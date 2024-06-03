@@ -1,7 +1,7 @@
 #pragma once
 
 #include <optional>
-#include "datapack/visitor.hpp"
+#include "datapack/datapack.hpp"
 
 
 namespace datapack {
@@ -23,12 +23,5 @@ void write(Writer& writer, const std::optional<T>& value) {
         writer.value(value.value());
     }
 }
-
-template <defined T>
-void define(Definer& definer, const std::optional<T>& value) {
-    definer.optional();
-    definer.value(T());
-}
-
 
 } // namespace datapack

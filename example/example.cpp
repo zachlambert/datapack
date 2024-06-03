@@ -11,7 +11,7 @@ void visit(V& visitor, Circle& value) {
     visitor.value("radius", value.radius);
     visitor.object_end();
 }
-DATAPACK_VISITOR_FUNCS_IMPL(Circle)
+DATAPACK_IMPL(Circle)
 
 template <typename V>
 void visit(V& visitor, Rect& value) {
@@ -20,7 +20,7 @@ void visit(V& visitor, Rect& value) {
     visitor.value("height", value.height);
     visitor.object_end();
 }
-DATAPACK_VISITOR_FUNCS_IMPL(Rect)
+DATAPACK_IMPL(Rect)
 
 std::vector<const char*> datapack::enum_labels<Physics>::value = {
     "dynamic", "kinematic", "static"
@@ -39,7 +39,7 @@ void visit(V& visitor, Pose& value) {
         datapack::RangeConstraint(-M_PI, M_PI));
     visitor.object_end();
 }
-DATAPACK_VISITOR_FUNCS_IMPL(Pose)
+DATAPACK_IMPL(Pose)
 
 template <typename V>
 void visit(V& visitor, Item& value) {
@@ -48,7 +48,7 @@ void visit(V& visitor, Item& value) {
     visitor.value("name", value.name);
     visitor.object_end();
 }
-DATAPACK_VISITOR_FUNCS_IMPL(Item)
+DATAPACK_IMPL(Item)
 
 template <typename V>
 void visit(V& visitor, Sprite& value) {
@@ -61,7 +61,7 @@ void visit(V& visitor, Sprite& value) {
     );
     visitor.object_end();
 }
-DATAPACK_VISITOR_FUNCS_IMPL(Sprite)
+DATAPACK_IMPL(Sprite)
 
 template <typename V>
 void visit(V& visitor, Sprite::Pixel& value) {
@@ -71,7 +71,7 @@ void visit(V& visitor, Sprite::Pixel& value) {
     visitor.value("b", value.b);
     visitor.object_end();
 }
-DATAPACK_VISITOR_FUNCS_IMPL(Sprite::Pixel)
+DATAPACK_IMPL(Sprite::Pixel)
 
 template <typename V>
 void Entity::visit(V& visitor) {
@@ -89,7 +89,7 @@ void Entity::visit(V& visitor) {
     visitor.value("flags", flags);
     visitor.object_end();
 }
-DATAPACK_VISITOR_METHODS_IMPL(Entity)
+DATAPACK_METHODS_IMPL(Entity)
 
 Entity Entity::example() {
     Entity result;

@@ -4,7 +4,7 @@
 #include <optional>
 #include <unordered_map>
 
-#include <datapack/visitor.hpp>
+#include <datapack/datapack.hpp>
 #include <datapack/reader.hpp>
 #include <datapack/writer.hpp>
 #include <datapack/labelled_enum.hpp>
@@ -13,13 +13,13 @@
 struct Circle {
     double radius;
 };
-DATAPACK_VISITOR_FUNCS_DEF(Circle)
+DATAPACK(Circle)
 
 struct Rect {
     double width;
     double height;
 };
-DATAPACK_VISITOR_FUNCS_DEF(Rect);
+DATAPACK(Rect);
 
 enum class Physics {
     Dynamic,
@@ -36,13 +36,13 @@ struct Pose {
     double y;
     double angle;
 };
-DATAPACK_VISITOR_FUNCS_DEF(Pose)
+DATAPACK(Pose)
 
 struct Item {
     std::size_t count;
     std::string name;
 };
-DATAPACK_VISITOR_FUNCS_DEF(Item)
+DATAPACK(Item)
 
 struct Sprite {
     struct Pixel {
@@ -54,10 +54,10 @@ struct Sprite {
     std::size_t height;
     std::vector<Pixel> data;
 };
-DATAPACK_VISITOR_FUNCS_DEF(Sprite)
-DATAPACK_VISITOR_FUNCS_DEF(Sprite::Pixel)
+DATAPACK(Sprite)
+DATAPACK(Sprite::Pixel)
 
-struct Entity : public datapack::Visitor {
+struct Entity {
     int index;        // Primitives
     std::string name;
     bool enabled;
@@ -72,7 +72,7 @@ struct Entity : public datapack::Visitor {
 
     static Entity example();
 
-    DATAPACK_VISITOR_METHODS_DEF(Entity)
+    DATAPACK_METHODS(Entity);
 };
 
 bool compare(const Entity& a, const Entity& b, double float_threshold = 1e-12);

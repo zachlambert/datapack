@@ -35,13 +35,6 @@ struct VariantNext {
 };
 
 struct BinaryData {};
-struct BinaryBegin {
-    const std::size_t stride;
-    BinaryBegin(std::size_t stride):
-        stride(stride)
-    {}
-};
-struct BinaryEnd {};
 
 struct ObjectBegin {};
 struct ObjectEnd {};
@@ -56,7 +49,12 @@ struct TupleNext {};
 
 struct Map {};
 
-struct List {};
+struct List {
+    const bool is_array;
+    List(bool is_array = false):
+        is_array(is_array)
+    {}
+};
 
 } // namespace dtoken
 
@@ -75,8 +73,6 @@ using Token = std::variant<
     token::VariantEnd,
     token::VariantNext,
     token::BinaryData,
-    token::BinaryBegin,
-    token::BinaryEnd,
     token::ObjectBegin,
     token::ObjectEnd,
     token::ObjectNext,
@@ -165,15 +161,6 @@ public:
         return std::make_tuple(nullptr, 0);
     }
 
-    std::size_t binary_begin(std::size_t stride) override {
-        tokens.push_back(token::BinaryBegin(stride));
-        return stride; // stride * (fixed_size == 0 ? 1 : fixed_size);
-    }
-
-    void binary_end() override {
-        tokens.push_back(token::BinaryEnd());
-    }
-
     void object_begin() override {
         tokens.push_back(token::ObjectBegin());
     }
@@ -218,8 +205,8 @@ public:
     }
 
 
-    void list_begin() override {
-        tokens.push_back(token::List());
+    void list_begin(bool is_array) override {
+        tokens.push_back(token::List(is_array));
         first_element = true;
     }
 

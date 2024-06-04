@@ -114,7 +114,7 @@ void ObjectWriter::map_next(const std::string& key) {
 }
 
 
-void ObjectWriter::list_begin() {
+void ObjectWriter::list_begin(bool is_array) {
     set_value(Object::list_t());
 }
 
@@ -358,7 +358,7 @@ bool ObjectReader::map_next(std::string& key) {
 }
 
 
-void ObjectReader::list_begin() {
+void ObjectReader::list_begin(bool is_array) {
     if (!node.get_if<Object::list_t>()) {
         error("Incorrect value type");
     }

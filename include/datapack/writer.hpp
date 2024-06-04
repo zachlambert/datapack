@@ -35,25 +35,13 @@ inline void write(Writer& writer, const T& value) {
 
 class Writer {
 public:
-    Writer(bool is_binary = false):
-        is_binary(is_binary)
+    Writer(bool use_binary_arrays = false):
+        use_binary_arrays_(use_binary_arrays)
     {}
 
     template <writeable_either T>
     void value(const T& value) {
-        if constexpr(writeable<T> && writeable_binary<T>) {
-            if (is_binary) {
-                write_binary(*this, value);
-            } else {
-                write(*this, value);
-            }
-        }
-        if constexpr(!writeable_binary<T>) {
-            write(*this, value);
-        }
-        if constexpr(!writeable<T>) {
-            write_binary(*this, value);
-        }
+        write(*this, value);
     }
 
     template <writeable_either T>
@@ -105,12 +93,16 @@ public:
     virtual void map_end() = 0;
     virtual void map_next(const std::string& key) = 0;
 
-    virtual void list_begin() = 0;
+    virtual void list_begin(bool is_array = false) = 0;
     virtual void list_end() = 0;
     virtual void list_next() = 0;
 
+    bool use_binary_arrays() const {
+        return use_binary_arrays_;
+    }
+
 private:
-    const bool is_binary;
+    const bool use_binary_arrays_;
 };
 
 class WriteException: public std::exception {

@@ -7,53 +7,51 @@
 
 namespace datapack {
 
-template <readable T, std::size_t Size>
-void read(Reader& reader, std::array<T, Size>& value) {
-    reader.list_begin();
-    for (auto& element: value) {
-        if (!reader.list_next()) {
-            reader.error("Incorrect list length");
-        }
-        reader.value(element);
-    }
-    if (reader.list_next()) {
-        reader.error("Incorrect list length");
-    }
-    reader.list_end();
-}
-
-template <writeable T, std::size_t Size>
-void write(Writer& writer, const std::array<T, Size>& value) {
-    writer.list_begin();
-    for (const auto& element: value) {
-        writer.list_next();
-        writer.value(element);
-    }
-    writer.list_end();
-}
-
 template <typename T, std::size_t N>
-requires std::is_trivially_copy_assignable_v<T>
-void read_binary(Reader& reader, std::array<T, N>& value) {
-    if constexpr(readable<T>) {
-        if (reader.is_exhaustive()) {
-            reader.binary_begin(sizeof(T));
-            T dummy;
-            reader.value(dummy);
-            reader.binary_end();
+requires (readable<T> || std::is_trivially_copyable_v<T>)
+void read(Reader& reader, std::array<T, N>& value) {
+    if constexpr (readable<T>) {
+        if (!std::is_trivially_copyable_v<T> || !reader.use_binary_arrays()) {
+            reader.list_begin(std::is_trivially_copyable_v<T>);
+            std::size_t i = 0;
+            while (reader.list_next()) {
+                if (i >= N) {
+                    reader.error("Incorrect list length");
+                    return;
+                }
+                reader.value(value[i]);
+                i++;
+            }
+            reader.list_end();
+            if (i != N) {
+                reader.error("Incorrect list length");
+            }
             return;
         }
     }
+    // Either !readable or (trivially_copyable_v && use_binary_arrays)
     auto [data, size] = reader.binary_data();
-    if (value.size() * sizeof(T) != size) {
-        reader.error("Incorrect binary size");
+    if (size != N * sizeof(T)) {
+        reader.error("Invalid binary size");
+        return;
     }
-    std::memcpy(value.data(), data, size);
+    std::memcpy((std::uint8_t*)value.data(), data, size);
 }
 
 template <typename T, std::size_t N>
-requires std::is_trivially_copy_assignable_v<T>
-void write_binary(Writer& writer, const std::array<T, N>& value) {
+requires (writeable<T> || std::is_trivially_copyable_v<T>)
+void write(Writer& writer, const std::array<T, N>& value) {
+    if constexpr(writeable<T>) {
+        if (!std::is_trivially_copyable_v<T> || !writer.use_binary_arrays()) {
+            writer.list_begin(std::is_trivially_copyable_v<T>);
+            for (const auto& element: value) {
+                writer.list_next();
+                writer.value(element);
+            }
+            writer.list_end();
+            return;
+        }
+    }
     writer.binary_data((const std::uint8_t*)value.data(), value.size() * sizeof(T));
 }
 

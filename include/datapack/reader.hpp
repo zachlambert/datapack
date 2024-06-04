@@ -20,14 +20,6 @@ concept readable = requires(Reader& reader, T& value) {
 };
 
 template <typename T>
-concept readable_binary = requires(Reader& reader, T& value) {
-    { read_binary(reader, value) };
-};
-
-template <typename T>
-concept readable_either = readable_binary<T> || readable<T>;
-
-template <typename T>
 concept readable_class = requires(Reader& reader, T& value) {
     { value.read(reader) };
 };
@@ -52,37 +44,27 @@ private:
 
 class Reader {
 public:
-    Reader(bool is_binary=false, bool use_constraints=true, bool is_exhaustive=false):
-        is_binary(is_binary),
+    Reader(bool use_binary_arrays=false, bool use_constraints=true, bool is_exhaustive=false):
+        use_binary_arrays_(use_binary_arrays),
         use_constraints(use_constraints),
         is_exhaustive_(is_exhaustive),
         constraint_(nullptr)
     {}
 
-    template <readable_either T>
+    template <readable T>
     void value(T& value) {
-        if constexpr(readable<T> && readable_binary<T>) {
-            if (is_binary) {
-                read_binary(*this, value);
-            } else {
-                read(*this, value);
-            }
-        }
-        if constexpr(!readable_binary<T>) {
-            read(*this, value);
-        }
-        if constexpr(!readable<T>) {
-            read_binary(*this, value);
-        }
+        printf("Calling read\n");
+        read(*this, value);
     }
 
-    template <readable_either T>
+    template <readable T>
     void value(const char* key, T& value) {
         object_next(key);
+        printf("Done object next\n");
         this->value(value);
     }
 
-    template <readable_either T, is_constraint Constraint>
+    template <readable T, is_constraint Constraint>
     requires is_constrained<T, Constraint>
     void value(T& value, const Constraint& constraint) {
         if (use_constraints) {
@@ -97,7 +79,7 @@ public:
         }
     }
 
-    template <readable_either T, is_constraint Constraint>
+    template <readable T, is_constraint Constraint>
     requires is_constrained<T, Constraint>
     void value(const char* key, T& value, const Constraint& constraint) {
         object_next(key);
@@ -123,15 +105,6 @@ public:
 
     virtual std::tuple<const std::uint8_t*, std::size_t> binary_data() = 0;
 
-    // BinaryReader and BinarySchemaBuilder only
-    virtual std::size_t binary_begin(std::size_t stride) {
-        error("Not supported");
-        return 0;
-    }
-    virtual void binary_end() {
-        error ("Not supported");
-    }
-
     virtual void object_begin() = 0;
     virtual void object_end() = 0;
     virtual void object_next(const char* key) = 0;
@@ -144,12 +117,16 @@ public:
     virtual void map_end() = 0;
     virtual bool map_next(std::string& key) = 0;
 
-    virtual void list_begin() = 0;
+    virtual void list_begin(bool is_array = false) = 0;
     virtual void list_end() = 0;
     virtual bool list_next() = 0;
 
     void error(const std::string& error) {
         throw ReadException(error);
+    }
+
+    bool use_binary_arrays() const {
+        return use_binary_arrays_;
     }
 
     bool is_exhaustive() const {
@@ -162,7 +139,7 @@ public:
     }
 
 private:
-    const bool is_binary;
+    const bool use_binary_arrays_;
     const bool use_constraints;
     const bool is_exhaustive_;
     const ConstraintBase* constraint_;

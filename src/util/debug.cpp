@@ -115,8 +115,12 @@ void DebugWriter::map_next(const std::string& key) {
 }
 
 
-void DebugWriter::list_begin() {
-    os << "(list) [\n";
+void DebugWriter::list_begin(bool is_array) {
+    if (is_array) {
+        os << "(array) [\n";
+    } else {
+        os << "(list) [\n";
+    }
     depth++;
 }
 

@@ -27,11 +27,33 @@ void BinaryWriter::variant_begin(const char* label, const std::vector<const char
     value_string(label);
 }
 
-void BinaryWriter::binary_data(const std::uint8_t* binary_data, std::size_t size) {
+void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t size) {
     value_number(std::uint64_t(size));
     std::size_t pos = data.size();
     data.resize(pos + size);
-    std::memcpy(&data[pos], binary_data, size);
+    std::memcpy(&data[pos], input_data, size);
+}
+
+void BinaryWriter::object_begin() {
+    if (is_array_) {
+        binary_blocks.push(BinaryBlock(data.size()));
+    }
+}
+
+void BinaryWriter::object_end() {
+    if (is_array_) {
+        const auto& top = binary_blocks.top();
+        while ((data.size() - top.start) % top.padding != 0) {
+            data.push_back(0x00);
+        }
+        std::size_t size = data.size() - top.start;
+        binary_blocks.pop();
+        if (!binary_blocks.empty()) {
+            binary_blocks.top().padding = std::max(binary_blocks.top().padding, size);
+        } else {
+            binary_size += size;
+        }
+    }
 }
 
 void BinaryWriter::map_begin() {
@@ -48,18 +70,29 @@ void BinaryWriter::map_next(const std::string& key) {
 }
 
 
-void BinaryWriter::list_begin() {
-    // Do nothing
+void BinaryWriter::list_begin(bool is_array) {
+    if (is_array) {
+        value_number<std::uint64_t>(0); // Placeholder
+        is_array_ = true;
+        binary_size = 0;
+    }
 }
 
 void BinaryWriter::list_end() {
-    value_bool(false);
+    if (is_array_) {
+        is_array_ = false;
+        std::size_t start = data.size() - binary_size - sizeof(std::uint64_t);
+        *((std::uint64_t*)&data[start]) = binary_size;
+    } else {
+        value_bool(false);
+    }
 }
 
 void BinaryWriter::list_next() {
-    value_bool(true);
+    if (!is_array_) {
+        value_bool(true);
+    }
 }
-
 
 void BinaryReader::value_string(std::string& value) {
     std::size_t max_len = data.size() - pos;
@@ -125,37 +158,24 @@ std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
     return std::make_tuple(output_data, size);
 }
 
-std::size_t BinaryReader::binary_begin(std::size_t stride) {
-    std::uint64_t size;
-    value_number<std::uint64_t>(size);
-    is_binary = true;
-    return size;
-}
-
-void BinaryReader::binary_end() {
-    if (!is_binary) {
-        error("Reader usage error");
-    }
-    is_binary = false;
-}
-
 void BinaryReader::object_begin() {
-    if (is_binary) {
+    if (is_array_) {
         binary_blocks.push(BinaryBlock(pos));
     }
 }
+
 void BinaryReader::object_end() {
-    if (is_binary) {
+    if (is_array_) {
         const auto& top = binary_blocks.top();
-        if (top.padding > 0) { // Shouldn't be zero ...
-            while ((pos - top.start) % top.padding != 0) {
-                pos++;
-            }
+        while ((pos - top.start) % top.padding != 0) {
+            pos++;
         }
         std::size_t size = pos - top.start;
         binary_blocks.pop();
         if (!binary_blocks.empty()) {
             binary_blocks.top().padding = std::max(binary_blocks.top().padding, size);
+        } else {
+            binary_remaining -= size;
         }
     }
 }
@@ -170,7 +190,25 @@ bool BinaryReader::map_next(std::string& key) {
     return true;
 }
 
+void BinaryReader::list_begin(bool is_array) {
+    if (is_array) {
+        std::uint64_t size;
+        value_number<std::uint64_t>(size);
+        is_array_ = true;
+        binary_remaining = size;
+    }
+}
+
+void BinaryReader::list_end() {
+    if (is_array_) {
+        is_array_ = false;
+    }
+}
+
 bool BinaryReader::list_next() {
+    if (is_array_) {
+        return binary_remaining > 0;
+    }
     bool has_next;
     value_bool(has_next);
     return has_next;

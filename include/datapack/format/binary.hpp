@@ -11,9 +11,11 @@ namespace datapack {
 
 class BinaryWriter : public Writer {
 public:
-    BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary=true):
-        Writer(use_binary),
-        data(data)
+    BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary_arrays=true):
+        Writer(use_binary_arrays),
+        data(data),
+        is_array_(false),
+        binary_size(0)
     {
         data.clear();
     }
@@ -36,43 +38,65 @@ public:
 
     void binary_data(const std::uint8_t* data, std::size_t size) override;
 
-    void object_begin() override {}
-    void object_end() override {}
-    void object_next(const char* key) override {
-        printf("%s -> %zu\n", key, data.size());
-    }
+    void object_begin() override;
+    void object_end() override;
+    void object_next(const char* key) override {}
 
-    void tuple_begin() override {}
-    void tuple_end() override {}
+    void tuple_begin() override { object_begin(); }
+    void tuple_end() override { object_end(); }
     void tuple_next() override {}
 
     void map_begin() override;
     void map_end() override;
     void map_next(const std::string& key) override;
 
-    void list_begin() override;
+    void list_begin(bool is_array) override;
     void list_end() override;
     void list_next() override;
 
 private:
     template <typename T>
     void value_number(T value) {
+        if (is_array_) {
+            if (!binary_blocks.empty()) {
+                binary_blocks.top().padding = std::max(binary_blocks.top().padding, sizeof(T));
+                while (data.size() % sizeof(T) != 0) {
+                    data.push_back(0x00);
+                }
+            } else {
+                binary_size += sizeof(T);
+            }
+        }
+
         std::size_t pos = data.size();
         data.resize(data.size() + sizeof(T));
         *((T*)&data[pos]) = value;
     }
 
     std::vector<std::uint8_t>& data;
+
+    struct BinaryBlock {
+        const std::size_t start;
+        std::size_t padding;
+        BinaryBlock(std::size_t start):
+            start(start),
+            padding(0)
+        {}
+    };
+    bool is_array_;
+    std::size_t binary_size;
+    std::stack<BinaryBlock> binary_blocks;
 };
 
 
 class BinaryReader : public Reader {
 public:
-    BinaryReader(const std::vector<std::uint8_t>& data, bool is_exhaustive=false):
-        Reader(true, true, is_exhaustive),
+    BinaryReader(const std::vector<std::uint8_t>& data, bool use_binary_arrays=true):
+        Reader(use_binary_arrays, true, false),
         data(data),
         pos(0),
-        is_binary(false)
+        is_array_(false),
+        binary_remaining(0)
     {}
 
     void value_i32(std::int32_t& value) override { value_number(value); }
@@ -93,8 +117,6 @@ public:
     void variant_end() override {}
 
     std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
-    std::size_t binary_begin(std::size_t stride) override;
-    void binary_end() override;
 
     void object_begin() override;
     void object_end() override;
@@ -112,22 +134,23 @@ public:
     void map_end() override {}
     bool map_next(std::string& key) override;
 
-    void list_begin() override {}
-    void list_end() override {}
+    void list_begin(bool is_array) override;
+    void list_end() override;
     bool list_next() override;
 
 private:
     template <typename T>
     void value_number(T& value) {
-        if (is_binary && !binary_blocks.empty()) {
-            binary_blocks.top().padding = std::max(binary_blocks.top().padding, sizeof(T));
-            while (pos % sizeof(T) != 0) {
-                pos++;
+        if (is_array_) {
+            if (!binary_blocks.empty()) {
+                binary_blocks.top().padding = std::max(binary_blocks.top().padding, sizeof(T));
+                while (pos % sizeof(T) != 0) {
+                    pos++;
+                }
+            } else {
+                binary_remaining -= sizeof(T);
             }
         }
-        // Note: If is_binary && binary_blocks.empty(), this means
-        // the only element in the binary data is T, which guarantees
-        // that the stride/padding is satisfied
 
         if (pos + sizeof(T) > data.size()) {
             error("Input data is too short");
@@ -139,6 +162,7 @@ private:
 
     const std::vector<std::uint8_t>& data;
     std::size_t pos;
+
     struct BinaryBlock {
         const std::size_t start;
         std::size_t padding;
@@ -147,7 +171,8 @@ private:
             padding(0)
         {}
     };
-    bool is_binary;
+    bool is_array_;
+    std::int64_t binary_remaining;
     std::stack<BinaryBlock> binary_blocks;
 };
 

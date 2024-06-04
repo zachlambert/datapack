@@ -39,7 +39,7 @@ public:
     void map_end() override;
     void map_next(const std::string& key) override;
 
-    void list_begin() override;
+    void list_begin(bool is_array) override;
     void list_end() override;
     void list_next() override;
 

@@ -161,7 +161,7 @@ bool RandomReader::map_next(std::string& key) {
 }
 
 
-void RandomReader::list_begin() {
+void RandomReader::list_begin(bool is_array) {
     if (auto c = constraint<LengthConstraint>()) {
         container_counter = c->length;
         return;

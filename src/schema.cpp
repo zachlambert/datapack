@@ -55,13 +55,6 @@ static std::size_t get_tokens_end(const std::vector<Token>& tokens, std::size_t 
         else if (std::get_if<token::VariantEnd>(&token)){
             depth--;
         }
-        else if (std::get_if<token::BinaryBegin>(&token)){
-            depth++;
-            continue;
-        }
-        else if (std::get_if<token::BinaryEnd>(&token)){
-            depth--;
-        }
         // Remaining tokens are values
         // Either these are in a container and depth remains unchanged
         // at a non-zero value, so continues, or they are the only value
@@ -79,9 +72,9 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         None,
         Map,
         List,
+        Array,
         Optional,
-        Variant,
-        Binary
+        Variant
     };
     struct State {
         const StateType type;
@@ -157,14 +150,11 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             token_pos = state.value_tokens_begin;
             // Fall-through to processing value below
         }
-        else if (state.type == StateType::Binary) {
+        else if (state.type == StateType::Array) {
             if (state.remaining == 0) {
                 token_pos = state.value_tokens_end;
                 states.pop();
-                if (!std::get_if<token::BinaryEnd>(&schema.tokens[token_pos])) {
-                    throw LoadException("Invalid binary schema");
-                }
-                reader.binary_end();
+                reader.list_end();
                 writer.list_end();
                 token_pos++;
                 continue;
@@ -225,9 +215,10 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             ));
             continue;
         }
-        if (std::get_if<token::List>(&token)) {
-            reader.list_begin();
-            writer.list_begin();
+        if (auto value = std::get_if<token::List>(&token)) {
+            reader.list_begin(value->is_array);
+            writer.list_begin(value->is_array);
+
             states.push(State(
                 StateType::List,
                 token_pos,
@@ -283,23 +274,6 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             }
 
             states.push(State(StateType::Variant, variant_start, token_pos, 1));
-            continue;
-        }
-        if (auto binary = std::get_if<token::BinaryBegin>(&token)) {
-            if (binary->stride == 0) {
-                throw LoadException("Invalid binary schema");
-            }
-            std::size_t size = reader.binary_begin(binary->stride);
-            std::size_t length = size / binary->stride;
-            std::size_t value_end = get_tokens_end(schema.tokens, token_pos);
-
-            writer.list_begin();
-            states.push(State(
-                StateType::Binary,
-                token_pos,
-                value_end,
-                length
-            ));
             continue;
         }
 

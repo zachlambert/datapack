@@ -34,6 +34,9 @@ target_include_directories(datapack PUBLIC
 # Additional targets
 
 if (BUILD_ADDITIONAL_TARGETS)
+    add_subdirectory(examples)
+    add_subdirectory(demo)
+
     FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
     include(GoogleTest)
     set(INSTALL_GTEST OFF)
@@ -41,53 +44,7 @@ if (BUILD_ADDITIONAL_TARGETS)
     FetchContent_MakeAvailable(googletest)
 
     enable_testing()
-
-    # TODO
-endif()
-
-if (BUILD_ADDITIONAL_TARGETS)
-    add_library(example_common example/example.cpp)
-    target_include_directories(example_common PUBLIC example)
-    target_link_libraries(example_common datapack)
-
-    add_executable(example_debug example/debug.cpp)
-    target_link_libraries(example_debug datapack example_common)
-
-    add_executable(example_random example/random.cpp)
-    target_link_libraries(example_random datapack example_common)
-
-    add_executable(example_binary example/binary.cpp)
-    target_link_libraries(example_binary datapack example_common)
-
-    add_executable(example_object example/object.cpp)
-    target_link_libraries(example_object datapack example_common)
-
-    add_executable(example_object_compare example/object_compare.cpp)
-    target_link_libraries(example_object_compare datapack example_common)
-
-    add_executable(example_object_writer example/object_writer.cpp)
-    target_link_libraries(example_object_writer datapack example_common)
-
-    add_executable(example_object_reader example/object_reader.cpp)
-    target_link_libraries(example_object_reader datapack example_common)
-
-    add_executable(example_load_json example/load_json.cpp)
-    target_link_libraries(example_load_json datapack example_common)
-
-    add_executable(example_dump_json example/dump_json.cpp)
-    target_link_libraries(example_dump_json datapack example_common)
-
-    add_executable(example_base64 example/base64.cpp)
-    target_link_libraries(example_base64 datapack example_common)
-
-    add_executable(example_benchmark_binary example/benchmark_binary.cpp)
-    target_link_libraries(example_benchmark_binary datapack example_common)
-
-    add_executable(example_binary_equivalency example/binary_equivalency.cpp)
-    target_link_libraries(example_binary_equivalency datapack example_common)
-
-    add_executable(example_schema example/schema.cpp)
-    target_link_libraries(example_schema datapack example_common)
+    # TODO: Add tests
 endif()
 
 

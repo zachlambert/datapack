@@ -1,4 +1,4 @@
-#include "example.hpp"
+#include "datapack/examples/entity.hpp"
 
 #include <cstring>
 #include <cmath>

@@ -1,7 +1,7 @@
 #include <chrono>
 #include <functional>
 #include <datapack/format/binary.hpp>
-#include "example.hpp"
+#include <datapack/examples/entity.hpp>
 #include <assert.h>
 #include <cstring>
 

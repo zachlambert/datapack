@@ -1,7 +1,7 @@
 #include <datapack/schema.hpp>
 #include <datapack/format/binary.hpp>
 #include <datapack/util/object.hpp>
-#include "example.hpp"
+#include <datapack/examples/entity.hpp>
 
 int main() {
     Entity entity = Entity::example();

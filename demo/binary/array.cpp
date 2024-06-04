@@ -50,6 +50,14 @@ void print_points(const std::vector<Point>& points) {
     }
 }
 
+void print_binary(const std::vector<std::uint8_t>& data) {
+    for (std::size_t i = 0; i < data.size(); i++) {
+        printf("%02x ", data[i]);
+        if ((i + 1) % 8 == 0) printf("\n");
+    }
+    if (data.size() % 8 != 0) printf("\n");
+}
+
 bool compare(const std::vector<Point>& a, const std::vector<Point>& b) {
     if (a.size() != b.size()) return false;
     for (std::size_t i = 0; i < a.size(); i++) {
@@ -60,7 +68,15 @@ bool compare(const std::vector<Point>& a, const std::vector<Point>& b) {
     return true;
 }
 
-int main() {
+bool compare(const std::vector<std::uint8_t>& a, const std::vector<std::uint8_t>& b) {
+    if (a.size() != b.size()) return false;
+    for (std::size_t i = 0; i < a.size(); i++) {
+        if (a[i] != b[i]) return false;
+    }
+    return true;
+}
+
+void test1() {
     std::vector<Point> points;
     for (std::size_t i = 0; i < 3; i++) {
         Point point;
@@ -69,18 +85,86 @@ int main() {
         point.z = double(rand()) / RAND_MAX;
         points.push_back(point);
     }
-
     auto data = datapack::write_binary(points);
 
-    std::vector<Point> a, b;
+    // Reading
+    {
+        std::vector<Point> a, b;
 
-    std::cout << "Reading raw binary data:\n";
-    datapack::BinaryReader(data, false).value(a);
-    print_points(a);
+        std::cout << "Reading arrays element-by-element:\n";
+        datapack::BinaryReader(data, false).value(a);
+        print_points(a);
 
-    std::cout << "Reading element-by-element:\n";
-    datapack::BinaryReader(data, true).value(b);
-    print_points(b);
+        std::cout << "Reading arrays as binary:\n";
+        datapack::BinaryReader(data, true).value(b);
+        print_points(b);
 
-    std::cout << "Equal ? " << (compare(a, b) ? "yes" : "no") << std::endl;
+        std::cout << "Equal ? " << (compare(a, b) ? "yes" : "no") << std::endl;
+    }
+
+    // Writing
+    {
+        std::vector<std::uint8_t> a, b;
+
+        std::cout << "Writing arrays element-by-element:\n";
+        datapack::BinaryWriter(a, false).value(points);
+        print_binary(a);
+
+        std::cout << "Writing arrays as binary:\n";
+        datapack::BinaryWriter(b, true).value(points);
+        print_binary(b);
+
+        std::cout << "Equal ? " << (compare(a, b) ? "yes" : "no") << std::endl;
+    }
+}
+
+void test2() {
+    std::vector<std::vector<double>> points;
+    for (std::size_t i = 0; i < 3; i++) {
+        std::vector<double> point;
+        point.push_back(double(rand()) / RAND_MAX);
+        point.push_back(double(rand()) / RAND_MAX);
+        point.push_back(double(rand()) / RAND_MAX);
+        points.push_back(point);
+    }
+    auto data = datapack::write_binary(points);
+
+    // Reading
+    {
+        std::vector<Point> a, b;
+
+        // std::cout << "Reading arrays element-by-element:\n";
+        // datapack::BinaryReader(data, false).value(a);
+        // print_points(a);
+
+        std::cout << "Reading arrays as binary:\n";
+        datapack::BinaryReader(data, true).value(b);
+        print_points(b);
+
+        std::cout << "Equal ? " << (compare(a, b) ? "yes" : "no") << std::endl;
+    }
+
+    // Writing
+    {
+        std::vector<std::uint8_t> a, b;
+
+        // std::cout << "Writing arrays element-by-element:\n";
+        // datapack::BinaryWriter(a, false).value(points);
+        // print_binary(a);
+
+        std::cout << "Writing arrays as binary:\n";
+        datapack::BinaryWriter(b, true).value(points);
+        print_binary(b);
+
+        std::cout << "Equal ? " << (compare(a, b) ? "yes" : "no") << std::endl;
+    }
+}
+
+int main() {
+    std::cout << "TEST 1 ===============\n";
+    test1();
+    std::cout << "TEST 2 ===============\n";
+    // TODO: Fix test2
+    // test2();
+    return 0;
 }

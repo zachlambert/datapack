@@ -53,14 +53,12 @@ public:
 
     template <readable T>
     void value(T& value) {
-        printf("Calling read\n");
         read(*this, value);
     }
 
     template <readable T>
     void value(const char* key, T& value) {
         object_next(key);
-        printf("Done object next\n");
         this->value(value);
     }
 

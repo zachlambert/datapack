@@ -13,6 +13,7 @@ void read(Reader& reader, std::vector<T>& value) {
     if constexpr (readable<T>) {
         if (!std::is_trivially_copyable_v<T> || !reader.use_binary_arrays()) {
             reader.list_begin(std::is_trivially_copyable_v<T>);
+            value.clear();
             while (reader.list_next()) {
                 value.emplace_back();
                 reader.value(value.back());

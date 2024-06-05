@@ -1,5 +1,7 @@
 #include <datapack/format/binary.hpp>
 #include <datapack/common.hpp>
+#include <datapack/examples/entity.hpp>
+#include <datapack/util/debug.hpp>
 
 // Packing structure
 // [0-4] x (float)

@@ -65,7 +65,7 @@ inline void write(Writer& writer, std::string value) {
     writer.value_string(value);
 }
 
-inline void write(Writer& writer, bool value) {
+inline void write(Writer& writer, const bool& value) {
     writer.value_bool(value);
 }
 

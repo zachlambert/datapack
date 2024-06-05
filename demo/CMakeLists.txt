@@ -18,6 +18,7 @@ create_demo(object reader)
 create_demo(object writer)
 
 create_demo(schema schema)
+create_demo(schema serialize)
 
 create_demo(util debug)
 create_demo(util random)

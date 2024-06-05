@@ -46,11 +46,10 @@ const char* variant_to_label(const T& value) {
     return variant_labels_v<T>()[value.index()];
 }
 
+} // namespace datapack
+
 #define DATAPACK_LABELLED_VARIANT(T) \
 template <> \
-struct datapack::variant_labels<T> { \
+struct variant_labels<T> { \
     static std::vector<const char*> value; \
-}; \
-static_assert(datapack::labelled_variant<T>);
-
-} // namespace datapack
+};

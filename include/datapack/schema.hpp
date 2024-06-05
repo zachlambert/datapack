@@ -3,6 +3,8 @@
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
 #include "datapack/object.hpp"
+#include "datapack/datapack.hpp"
+#include "datapack/labelled_variant.hpp"
 
 
 namespace datapack {
@@ -12,6 +14,7 @@ namespace token {
 struct Optional {};
 struct Enumerate {
     std::vector<std::string> labels;
+    Enumerate() {}
     Enumerate(const std::vector<std::string>& labels): labels(labels) {}
     Enumerate(const std::vector<const char*>& labels) {
         for (const char* str: labels) {
@@ -21,6 +24,7 @@ struct Enumerate {
 };
 struct VariantBegin {
     std::vector<std::string> labels;
+    VariantBegin() {}
     VariantBegin(const std::vector<std::string>& labels): labels(labels) {}
     VariantBegin(const std::vector<const char*>& labels) {
         for (const char* str: labels) {
@@ -30,7 +34,8 @@ struct VariantBegin {
 };
 struct VariantEnd {};
 struct VariantNext {
-    const std::string type;
+    std::string type;
+    VariantNext() {}
     VariantNext(const std::string& type): type(type) {}
 };
 
@@ -39,7 +44,8 @@ struct BinaryData {};
 struct ObjectBegin {};
 struct ObjectEnd {};
 struct ObjectNext {
-    const std::string key;
+    std::string key;
+    ObjectNext() {}
     ObjectNext(const std::string& key): key(key) {}
 };
 
@@ -50,7 +56,7 @@ struct TupleNext {};
 struct Map {};
 
 struct List {
-    const bool is_array;
+    bool is_array;
     List(bool is_array = false):
         is_array(is_array)
     {}
@@ -90,7 +96,7 @@ struct Schema {
 class SchemaBuilder: public Reader {
 public:
     SchemaBuilder(Schema& schema):
-        Reader(true, false, true),
+        Reader(false, false, true),
         tokens(schema.tokens),
         first_element(false)
     {
@@ -239,4 +245,22 @@ Schema create_schema() {
 
 void use_schema(const Schema& schema, Reader& reader, Writer& writer);
 
-};
+DATAPACK(token::Enumerate)
+DATAPACK(token::VariantBegin)
+DATAPACK(token::VariantNext)
+DATAPACK(token::ObjectNext)
+DATAPACK(token::List)
+DATAPACK_LABELLED_VARIANT(Token)
+DATAPACK(Schema)
+
+DATAPACK_EMPTY(token::Optional)
+DATAPACK_EMPTY(token::VariantEnd)
+DATAPACK_EMPTY(token::BinaryData)
+DATAPACK_EMPTY(token::ObjectBegin)
+DATAPACK_EMPTY(token::ObjectEnd)
+DATAPACK_EMPTY(token::TupleBegin)
+DATAPACK_EMPTY(token::TupleEnd)
+DATAPACK_EMPTY(token::TupleNext)
+DATAPACK_EMPTY(token::Map)
+
+} // namespace datpack

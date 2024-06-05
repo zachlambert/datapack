@@ -26,10 +26,14 @@ enum class Physics {
     Kinematic,
     Static
 };
+namespace datapack {
 DATAPACK_LABELLED_ENUM(Physics)
+}
 
 using Shape = std::variant<Circle, Rect>;
+namespace datapack {
 DATAPACK_LABELLED_VARIANT(Shape)
+}
 
 struct Pose {
     double x;

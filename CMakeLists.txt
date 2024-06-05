@@ -12,6 +12,8 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)
 endif()
 
+add_compile_options(-fconcepts-diagnostics-depth=2)
+
 # Library
 
 add_library(datapack SHARED

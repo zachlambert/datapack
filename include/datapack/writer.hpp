@@ -21,9 +21,6 @@ concept writeable_binary = requires(Writer& writer, const T& value) {
 };
 
 template <typename T>
-concept writeable_either = writeable<T> || writeable_binary<T>;
-
-template <typename T>
 concept writeable_class = requires(Writer& writer, const T& value) {
     { value.write(writer) };
 };
@@ -39,24 +36,24 @@ public:
         use_binary_arrays_(use_binary_arrays)
     {}
 
-    template <writeable_either T>
+    template <writeable T>
     void value(const T& value) {
         write(*this, value);
     }
 
-    template <writeable_either T>
+    template <writeable T>
     void value(const char* key, const T& value) {
         object_next(key);
         this->value(value);
     }
 
-    template <writeable_either T, is_constraint Constraint>
+    template <writeable T, is_constraint Constraint>
     void value(T& value, const Constraint&) {
         // Ignore constraint
         this->value(value);
     }
 
-    template <writeable_either T, is_constraint Constraint>
+    template <writeable T, is_constraint Constraint>
     void value(const char* key, const T& value, const Constraint&) {
         object_next(key);
         // Ignore constraint

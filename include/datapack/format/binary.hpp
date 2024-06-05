@@ -59,8 +59,9 @@ private:
     void value_number(T value) {
         if (is_array_) {
             if (!binary_blocks.empty()) {
-                binary_blocks.top().padding = std::max(binary_blocks.top().padding, sizeof(T));
-                while (data.size() % sizeof(T) != 0) {
+                auto& top = binary_blocks.top();
+                top.padding = std::max(top.padding, sizeof(T));
+                while ((data.size() - top.start) % sizeof(T) != 0) {
                     data.push_back(0x00);
                 }
             } else {
@@ -143,8 +144,9 @@ private:
     void value_number(T& value) {
         if (is_array_) {
             if (!binary_blocks.empty()) {
-                binary_blocks.top().padding = std::max(binary_blocks.top().padding, sizeof(T));
-                while (pos % sizeof(T) != 0) {
+                auto& top = binary_blocks.top();
+                top.padding = std::max(top.padding, sizeof(T));
+                while ((pos - top.start) % sizeof(T) != 0) {
                     pos++;
                 }
             } else {

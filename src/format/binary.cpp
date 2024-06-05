@@ -71,6 +71,10 @@ void BinaryWriter::map_next(const std::string& key) {
 
 
 void BinaryWriter::list_begin(bool is_array) {
+    if (is_array_) {
+        object_begin();
+        return;
+    }
     if (is_array) {
         value_number<std::uint64_t>(0); // Placeholder
         is_array_ = true;
@@ -80,12 +84,16 @@ void BinaryWriter::list_begin(bool is_array) {
 
 void BinaryWriter::list_end() {
     if (is_array_) {
+        if (!binary_blocks.empty()) {
+            object_end();
+            return;
+        }
         is_array_ = false;
         std::size_t start = data.size() - binary_size - sizeof(std::uint64_t);
         *((std::uint64_t*)&data[start]) = binary_size;
-    } else {
-        value_bool(false);
+        return;
     }
+    value_bool(false);
 }
 
 void BinaryWriter::list_next() {
@@ -191,6 +199,10 @@ bool BinaryReader::map_next(std::string& key) {
 }
 
 void BinaryReader::list_begin(bool is_array) {
+    if (is_array_) {
+        object_begin();
+        return;
+    }
     if (is_array) {
         std::uint64_t size;
         value_number<std::uint64_t>(size);
@@ -201,12 +213,19 @@ void BinaryReader::list_begin(bool is_array) {
 
 void BinaryReader::list_end() {
     if (is_array_) {
-        is_array_ = false;
+        if (!binary_blocks.empty()) {
+            object_end();
+        } else {
+            is_array_ = false;
+        }
     }
 }
 
 bool BinaryReader::list_next() {
     if (is_array_) {
+        if (!binary_blocks.empty()) {
+            return false; // Unused
+        }
         return binary_remaining > 0;
     }
     bool has_next;

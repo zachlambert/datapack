@@ -14,18 +14,12 @@ void read(Reader& reader, std::array<T, N>& value) {
         if (!std::is_trivially_copyable_v<T> || !reader.use_binary_arrays()) {
             reader.list_begin(std::is_trivially_copyable_v<T>);
             std::size_t i = 0;
-            while (reader.list_next()) {
-                if (i >= N) {
-                    reader.error("Incorrect list length");
-                    return;
-                }
-                reader.value(value[i]);
+            for (auto& element: value) {
                 i++;
+                reader.list_next();
+                reader.value(element);
             }
             reader.list_end();
-            if (i != N) {
-                reader.error("Incorrect list length");
-            }
             return;
         }
     }

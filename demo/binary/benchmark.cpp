@@ -2,6 +2,7 @@
 #include <functional>
 #include <datapack/format/binary.hpp>
 #include <datapack/examples/entity.hpp>
+#include <datapack/util/random.hpp>
 #include <assert.h>
 #include <cstring>
 
@@ -41,7 +42,7 @@ void write_direct(const Entity& value, std::vector<std::uint8_t>& data) {
     *((double*)&data[pos] + 2) = value.pose.angle;
     pos = data.size();
 
-    data.push_back((std::uint8_t)value.physics);
+    data.push_back((int)value.physics);
     pos = data.size();
 
     data.push_back(value.hitbox.has_value());
@@ -84,11 +85,24 @@ void write_direct(const Entity& value, std::vector<std::uint8_t>& data) {
         pos = data.size();
     }
 
-    data.resize(pos + sizeof(std::size_t));
-    *((std::size_t*)&data[pos]) = value.items.size() * sizeof(Item);
+    for (const auto& item: value.items) {
+        data.push_back(0x01);
+        pos = data.size();
+
+        data.resize(pos + sizeof(std::size_t));
+        *((std::size_t*)&data[pos]) = item.count;
+        pos = data.size();
+
+        data.resize(pos + item.name.size() + 1);
+        strcpy((char*)&data[pos], item.name.c_str());
+        pos = data.size();
+    }
+    data.push_back(0x00);
     pos = data.size();
-    data.resize(pos + value.items.size() * sizeof(Item));
-    std::memcpy(&data[pos], value.items.data(), value.items.size() * sizeof(Item));
+
+    // Ignore size of assigned items, is fixed
+    data.resize(pos + sizeof(std::size_t));
+    *((std::size_t*)&data[pos]) = sizeof(value.assigned_items);
     pos = data.size();
 
     data.resize(pos + sizeof(value.assigned_items));
@@ -122,8 +136,6 @@ void write_direct(const Entity& value, std::vector<std::uint8_t>& data) {
 }
 
 void read_direct(Entity& value, const std::vector<std::uint8_t>& data) {
-    // TODO: Fix
-#if 0
     std::size_t pos = 0;
 
     value.index = *((int*)&data[pos]);
@@ -140,8 +152,8 @@ void read_direct(Entity& value, const std::vector<std::uint8_t>& data) {
     value.pose.angle = *((double*)&data[pos] + 2);
     pos += 3 * sizeof(double);
 
-    value.physics = (Physics)data[pos];
-    pos++;
+    value.physics = (Physics)(*((int*)&data[pos]));
+    pos += sizeof(int);
 
     bool hitbox_has_value = data[pos];
     pos++;
@@ -176,7 +188,7 @@ void read_direct(Entity& value, const std::vector<std::uint8_t>& data) {
         std::size_t size = *((std::size_t*)&data[pos]);
         pos += sizeof(std::size_t);
         if (size % sizeof(Sprite::Pixel) != 0) {
-            throw std::runtime_error("Invalid size");
+            throw std::runtime_error("Invalid size " + std::to_string(size));
         }
         value.sprite.data.resize(size / sizeof(Sprite::Pixel));
 
@@ -184,57 +196,65 @@ void read_direct(Entity& value, const std::vector<std::uint8_t>& data) {
         pos += size;
     }
 
-    {
-        std::size_t size = *((std::size_t*)&data[pos]);
-        if (size % sizeof(Item) != 0) {
-            throw std::runtime_error("Invalid size");
-        }
-        pos += sizeof(std::size_t);
+    value.items.clear();
+    while (true) {
+        bool has_next = data[pos];
+        pos++;
+        if (!has_next) break;
 
-        value.items.resize(size / sizeof(Item));
-        std::memcpy((std::uint8_t*)value.items.data(), &data[pos], size);
-        pos += size;
+        Item item;
+        item.count = *((std::size_t*)&data[pos]);
+        pos += sizeof(std::size_t);
+        item.name = (char*)&data[pos];
+        pos += item.name.size() + 1;
     }
 
     {
         std::size_t size = *((std::size_t*)&data[pos]);
         if (size != value.assigned_items.size() * sizeof(int)) {
-            throw std::runtime_error("Invalid size");
+            throw std::runtime_error("Invalid size " + std::to_string(size));
         }
+        pos += sizeof(std::size_t);
 
         std::memcpy((std::uint8_t*)value.items.data(), &data[pos], size);
         pos += size;
     }
 
-    for (const auto& pair: value.properties) {
-        data.push_back(true);
-        pos = data.size();
+    value.properties.clear();
+    while (true) {
+        bool has_next = data[pos];
+        pos++;
+        if (!has_next) break;
 
-        data.resize(pos + pair.first.size() + 1);
-        strcpy((char*)&data[pos], pair.first.c_str());
-        pos = data.size();
+        std::string first;
+        first = (char*)&data[pos];
+        pos += first.size() + 1;
 
-        data.resize(pos + 8);
-        *((double*)&data[pos]) = pair.second;
-        pos = data.size();
+        double second = *((double*)&data[pos]);
+        pos += sizeof(double);
+
+        value.properties.emplace(first, second);
     }
 
-    for (const auto& pair: value.flags) {
-        data.push_back(true);
-        pos = data.size();
+    value.flags.clear();
+    while (true) {
+        bool has_next = data[pos];
+        pos++;
+        if (!has_next) break;
 
-        data.resize(pos + 4);
-        *((int*)&data[pos]) = pair.first;
-        pos = data.size();
+        int first;
+        first = *((int*)&data[pos]);
+        pos += sizeof(int);
 
-        data.push_back(pair.second);
-        pos = data.size();
+        bool second = data[pos];
+        pos++;
+
+        value.flags.emplace(first, second);
     }
-#endif
 }
 
 int main() {
-    std::size_t N = 10000;
+    std::size_t N = 1000;
     Entity input = Entity::example();
     Entity output;
     std::vector<std::uint8_t> data;
@@ -266,11 +286,8 @@ int main() {
         });
     }
 
+    data = datapack::write_binary(input);
     {
-        std::vector<std::uint8_t> data;
-        datapack::BinaryWriter writer(data, false);
-        writer.value(input);
-
         measure("binary read without binary arrays", N, [&](){
             datapack::BinaryReader reader(data, false);
             auto before = Clock::now();
@@ -280,10 +297,6 @@ int main() {
         });
     }
     {
-        std::vector<std::uint8_t> data;
-        datapack::BinaryWriter writer(data, false);
-        writer.value(input);
-
         measure("binary read with binary arrays", N, [&](){
             datapack::BinaryReader reader(data, true);
             auto before = Clock::now();

@@ -181,7 +181,6 @@ int main() {
     std::cout << "TEST 1 ===============\n";
     test1();
     std::cout << "TEST 2 ===============\n";
-    // TODO: Fix test2
     test2();
     return 0;
 }

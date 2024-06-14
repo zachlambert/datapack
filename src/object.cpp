@@ -1,6 +1,7 @@
 #include "datapack/object.hpp"
 #include <stack>
 #include <assert.h>
+#include <iostream> // TEMP
 
 
 namespace datapack {
@@ -209,8 +210,8 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
     nodes_rhs.push(rhs);
 
     while (!nodes_lhs.empty()) {
-        auto lhs = nodes_lhs.top();
-        auto rhs = nodes_rhs.top();
+        ConstObject lhs = nodes_lhs.top();
+        ConstObject rhs = nodes_rhs.top();
         nodes_lhs.pop();
         nodes_rhs.pop();
 
@@ -221,12 +222,12 @@ bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
             continue;
         }
 
-        if (lhs.parent() && lhs.parent().get_if<Object::map_t>()) {
+        if (!nodes_lhs.empty() && lhs.parent() && lhs.parent().get_if<Object::map_t>()) {
             auto lhs_next = lhs.next();
             nodes_lhs.push(lhs_next);
             nodes_rhs.push(rhs.parent()[lhs_next.key()]);
         }
-        if (lhs.parent() && lhs.parent().get_if<Object::list_t>()) {
+        if (!nodes_lhs.empty() && lhs.parent() && lhs.parent().get_if<Object::list_t>()) {
             nodes_lhs.push(lhs.next());
             nodes_rhs.push(rhs.next());
         }

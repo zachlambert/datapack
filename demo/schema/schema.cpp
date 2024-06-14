@@ -24,5 +24,6 @@ int main() {
     auto another_schema = datapack::create_schema<Entity>();
     std::cout << "Schema equal: " << (another_schema == schema ? "yes" : "no") << std::endl;
 
+#endif
     return 0;
 }

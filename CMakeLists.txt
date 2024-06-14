@@ -46,7 +46,10 @@ if (BUILD_ADDITIONAL_TARGETS)
     FetchContent_MakeAvailable(googletest)
 
     enable_testing()
-    # TODO: Add tests
+
+    add_executable(test_debug test/debug.cpp)
+    target_link_libraries(test_debug datapack datapack_examples GTest::gtest_main)
+    gtest_discover_tests(test_debug)
 endif()
 
 

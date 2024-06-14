@@ -43,17 +43,19 @@ void DebugWriter::value_bool(bool value) {
 
 
 void DebugWriter::enumerate(int value, const std::vector<const char*>& labels) {
-    os << "(enum, type=" << labels[value] << " )\n";
+    os << "(enum, type=" << labels[value] << ")\n";
 }
 
 void DebugWriter::optional(bool has_value) {
     if (!has_value) {
-        os << "null\n";
+        os << "(optional, empty)\n";
+    } else {
+        os << "(optional, has_value) ";
     }
 }
 
 void DebugWriter::variant_begin(const char* label, const std::vector<const char*>& labels) {
-    os << "(variant, type=" << label << " ) ";
+    os << "(variant, type=" << label << ") ";
 }
 
 void DebugWriter::variant_end() {

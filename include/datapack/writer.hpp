@@ -72,7 +72,10 @@ public:
     virtual void value_bool(bool value) = 0;
 
     virtual void enumerate(int value, const std::vector<const char*>& labels) = 0;
-    virtual void optional(bool has_value) = 0;
+
+    virtual void optional_begin(bool has_value) = 0;
+    virtual void optional_end() = 0;
+
     virtual void variant_begin(const char* label, const std::vector<const char*>& labels) = 0;
     virtual void variant_end() = 0;
 

@@ -21,7 +21,8 @@ public:
     void value_bool(bool) override;
 
     void enumerate(int value, const std::vector<const char*>& labels) override;
-    void optional(bool has_value) override;
+    void optional_begin(bool has_value) override;
+    void optional_end() override;
     void variant_begin(const char* label, const std::vector<const char*>& labels) override;
     void variant_end() override;
 

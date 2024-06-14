@@ -17,15 +17,15 @@ add_compile_options(-fconcepts-diagnostics-depth=2)
 # Library
 
 add_library(datapack SHARED
-    src/encode/base64.cpp
-    src/encode/string.cpp
+    # src/encode/base64.cpp
+    # src/encode/string.cpp
     src/util/debug.cpp
-    src/util/object.cpp
-    src/util/random.cpp
-    src/format/binary.cpp
-    src/format/json.cpp
-    src/schema.cpp
-    src/object.cpp
+    # src/util/object.cpp
+    # src/util/random.cpp
+    # src/format/binary.cpp
+    # src/format/json.cpp
+    # src/schema.cpp
+    # src/object.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -37,7 +37,7 @@ target_include_directories(datapack PUBLIC
 
 if (BUILD_ADDITIONAL_TARGETS)
     add_subdirectory(examples)
-    add_subdirectory(demo)
+    # add_subdirectory(demo)
 
     FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
     include(GoogleTest)

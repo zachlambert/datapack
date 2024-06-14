@@ -18,9 +18,10 @@ void read(Reader& reader, std::optional<T>& value) {
 
 template <writeable T>
 void write(Writer& writer, const std::optional<T>& value) {
-    writer.optional(value.has_value());
+    writer.optional_begin(value.has_value());
     if (value.has_value()) {
         writer.value(value.value());
+        writer.optional_end();
     }
 }
 

@@ -20,86 +20,90 @@ TEST(Debug, Debug) {
     entity.pose.angle = 3.0;
 
     const std::string expected = R"((object) {
-    index: 5
-    name: player
-    enabled: true
+    index: 5,
+    name: player,
+    enabled: true,
     pose: (object) {
-        x: 1
-        y: 2
-        angle: 3
-    }
-    physics: (enum, type=kinematic)
-    hitbox: (optional, has_value) (variant, type=circle) (object) {
-        radius: 1
-    }
+        x: 1,
+        y: 2,
+        angle: 3,
+    },
+    physics: (enum, kinematic),
+    hitbox: (optional, has_value) {
+        (variant, circle) {
+            (object) {
+                radius: 1,
+            },
+        },
+    },
     sprite: (object) {
-        width: 2
-        height: 2
-        data: (array) [
+        width: 2,
+        height: 2,
+        data: (list, binary) {
             (object) {
-                r: 0.25
-                g: 0.25
-                b: 0
-            }
+                r: 0.25,
+                g: 0.25,
+                b: 0,
+            },
             (object) {
-                r: 0.25
-                g: 0.75
-                b: 0
-            }
+                r: 0.25,
+                g: 0.75,
+                b: 0,
+            },
             (object) {
-                r: 0.75
-                g: 0.25
-                b: 0
-            }
+                r: 0.75,
+                g: 0.25,
+                b: 0,
+            },
             (object) {
-                r: 0.75
-                g: 0.75
-                b: 0
-            }
-        ]
-    }
-    items: (list) [
+                r: 0.75,
+                g: 0.75,
+                b: 0,
+            },
+        },
+    },
+    items: (list) {
         (object) {
-            count: 5
-            name: hp_potion
-        }
+            count: 5,
+            name: hp_potion,
+        },
         (object) {
-            count: 1
-            name: sword
-        }
+            count: 1,
+            name: sword,
+        },
         (object) {
-            count: 1
-            name: map
-        }
+            count: 1,
+            name: map,
+        },
         (object) {
-            count: 120
-            name: gold
-        }
-    ]
-    assigned_items: (array) [
-        1
-        2
-        -1
-    ]
+            count: 120,
+            name: gold,
+        },
+    },
+    assigned_items: (list, binary) {
+        1,
+        2,
+        -1,
+    },
     properties: (map) {
-        agility: 5
-        strength: 10.5
-    }
-    flags: (list) [
-        (tuple) [
-            2
-            true
-        ]
-        (tuple) [
-            1
-            false
-        ]
-        (tuple) [
-            0
-            true
-        ]
-    ]
-}
+        agility: 5,
+        strength: 10.5,
+    },
+    flags: (list) {
+        (tuple) {
+            2,
+            true,
+        },
+        (tuple) {
+            1,
+            false,
+        },
+        (tuple) {
+            0,
+            true,
+        },
+    },
+},
 )";
 
     std::stringstream ss;

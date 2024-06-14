@@ -17,11 +17,13 @@ add_compile_options(-fconcepts-diagnostics-depth=2)
 # Library
 
 add_library(datapack SHARED
-    # src/encode/base64.cpp
-    # src/encode/string.cpp
     src/util/debug.cpp
-    # src/util/object.cpp
     src/util/random.cpp
+
+    src/encode/base64.cpp
+    src/encode/float_string.cpp
+
+    # src/util/object.cpp
     # src/format/binary.cpp
     # src/format/json.cpp
     # src/schema.cpp
@@ -50,6 +52,10 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(test_util test/util/debug.cpp test/util/random.cpp)
     target_link_libraries(test_util datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_util)
+
+    add_executable(test_encode test/encode/base64.cpp test/encode/float_string.cpp)
+    target_link_libraries(test_encode datapack GTest::gtest_main)
+    gtest_discover_tests(test_encode)
 endif()
 
 

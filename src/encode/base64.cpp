@@ -50,15 +50,23 @@ static std::uint8_t decode_symbol(std::uint8_t symbol) {
     return 0x00;
 }
 
+static std::uint8_t reverse_byte(std::uint8_t byte, int bits = 8) {
+    std::uint8_t result = 0;
+    for (std::size_t i = 0; i < bits; i++) {
+        result |= ((byte & (1 << i)) >> i) << (bits - 1 - i);
+    }
+    return result;
+}
+
 std::string base64_encode(const std::vector<std::uint8_t>& data) {
     std::string text;
     std::size_t pos = 0;
     std::size_t i = 0;
     while (i < data.size()) {
-        std::uint8_t a = data[i];
-        std::uint8_t b = (i + 1 < data.size() ? data[i+1] : 0x00);
-        std::uint8_t value = ((a >> pos) | (b << (8 - pos))) & 0x3F;
-        text += encode_symbol(value);
+        std::uint8_t a = reverse_byte(data[i]);
+        std::uint8_t b = (i + 1 < data.size() ? reverse_byte(data[i+1]) : 0x00);
+        std::uint8_t value = ((a >> pos) | (b << (8 - pos))) & 0b00111111;
+        text += encode_symbol(reverse_byte(value, 6));
         pos += 6;
         if (pos >= 8) {
             pos -= 8;
@@ -83,10 +91,10 @@ std::vector<std::uint8_t> base64_decode(const std::string& text) {
         if (i + 1 >= text.size() || text[i+1] == '=') {
             break;
         }
-        std::uint8_t a = decode_symbol(text[i]);
-        std::uint8_t b = decode_symbol(text[i+1]);
+        std::uint8_t a = reverse_byte(decode_symbol(text[i]), 6);
+        std::uint8_t b = reverse_byte(decode_symbol(text[i+1]), 6);
         std::uint8_t value = (a >> pos) | (b << (6 - pos));
-        data.push_back(value);
+        data.push_back(reverse_byte(value));
         pos += 8;
         while (pos >= 6) {
             pos-=6;

@@ -4,6 +4,7 @@
 
 namespace datapack {
 
-std::string double_to_string(double value);
+template <typename T>
+std::string float_to_string(T value);
 
 } // namespace datpack

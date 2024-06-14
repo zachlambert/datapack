@@ -134,7 +134,10 @@ void BinaryReader::list_end() {
 bool BinaryReader::list_next() {
     if (is_array_) {
         if (!binary_blocks.empty()) {
-            return false; // Unused
+            // If here, then the caller is responsible for calling list_next()
+            // the correct number of times, unless a Reader returns true
+            // to stop early.
+            return true;
         }
         return binary_remaining > 0;
     }

@@ -30,7 +30,9 @@ add_library(datapack SHARED
     src/format/binary_writer.cpp
     src/format/binary_reader.cpp
     src/format/json.cpp
-    # src/schema.cpp
+
+    src/schema/token.cpp
+    src/schema/tokenizer.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -52,11 +54,17 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     enable_testing()
 
-    add_executable(test_util test/util/debug.cpp test/util/random.cpp)
+    add_executable(test_util
+        test/util/debug.cpp
+        test/util/random.cpp
+    )
     target_link_libraries(test_util datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_util)
 
-    add_executable(test_encode test/encode/base64.cpp test/encode/float_string.cpp)
+    add_executable(test_encode
+        test/encode/base64.cpp
+        test/encode/float_string.cpp
+    )
     target_link_libraries(test_encode datapack GTest::gtest_main)
     gtest_discover_tests(test_encode)
 
@@ -75,6 +83,12 @@ if (BUILD_ADDITIONAL_TARGETS)
     )
     target_link_libraries(test_format datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_format)
+
+    add_executable(test_schema
+        test/schema/tokenizer.cpp
+    )
+    target_link_libraries(test_schema datapack datapack_examples GTest::gtest_main)
+    gtest_discover_tests(test_schema)
 endif()
 
 

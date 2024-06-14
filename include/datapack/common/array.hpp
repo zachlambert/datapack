@@ -13,10 +13,10 @@ void read(Reader& reader, std::array<T, N>& value) {
     if constexpr (readable<T>) {
         if (!std::is_trivially_copyable_v<T> || !reader.use_binary_arrays()) {
             reader.list_begin(std::is_trivially_copyable_v<T>);
-            std::size_t i = 0;
             for (auto& element: value) {
-                i++;
-                reader.list_next();
+                if (!reader.list_next()) {
+                    break;
+                }
                 reader.value(element);
             }
             reader.list_end();

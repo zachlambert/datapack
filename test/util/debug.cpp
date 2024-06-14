@@ -16,9 +16,6 @@ static std::vector<std::string> get_lines(const std::string& text) {
 }
 
 TEST(Util, Debug) {
-    auto entity = Entity::example();
-    entity.pose.angle = 3.0;
-
     const std::string expected = R"((object) {
     index: 5,
     name: player,
@@ -107,9 +104,8 @@ TEST(Util, Debug) {
 )";
 
     std::stringstream ss;
-    datapack::DebugWriter(ss).value(entity);
+    datapack::DebugWriter(ss).value(Entity::example());
     const std::string output = ss.str();
-    std::cerr << output << std::endl << "---\n" << expected << "\n---" << std::endl;
 
     auto expected_lines = get_lines(expected);
     auto output_lines = get_lines(output);

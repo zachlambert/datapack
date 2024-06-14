@@ -5,7 +5,8 @@
 #include "datapack/writer.hpp"
 #include "datapack/reader.hpp"
 #include "datapack/object.hpp"
-#include "datapack/util/object.hpp"
+#include "datapack/util/object_reader.hpp"
+#include "datapack/util/object_writer.hpp"
 
 namespace datapack {
 

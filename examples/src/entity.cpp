@@ -96,7 +96,7 @@ Entity Entity::example() {
     result.index = 5;
     result.name = "player";
     result.enabled = true;
-    result.pose = { 1.0, 2.0, M_PI/2 };
+    result.pose = { 1.0, 2.0, 3.0 };
     result.physics = Physics::Kinematic;
     result.hitbox = Circle { 1.0 };
     result.sprite = [](){

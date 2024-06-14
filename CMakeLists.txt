@@ -29,7 +29,7 @@ add_library(datapack SHARED
 
     src/format/binary_writer.cpp
     src/format/binary_reader.cpp
-    # src/format/json.cpp
+    src/format/json.cpp
     # src/schema.cpp
 )
 target_include_directories(datapack PUBLIC
@@ -71,6 +71,7 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(test_format
         test/format/binary.cpp
         test/format/binary_array.cpp
+        test/format/json.cpp
     )
     target_link_libraries(test_format datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_format)

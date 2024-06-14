@@ -1,7 +1,7 @@
 #include "datapack/format/json.hpp"
 #include <assert.h>
 #include "datapack/encode/base64.hpp"
-#include "datapack/encode/string.hpp"
+#include "datapack/encode/float_string.hpp"
 
 
 namespace datapack {
@@ -286,7 +286,7 @@ std::string dump_json(ConstObject object) {
             json += std::to_string(*value);
         }
         else if (auto value = node.get_if<Object::float_t>()) {
-            json += double_to_string(*value);
+            json += float_to_string(*value);
         }
         else if (auto value = node.get_if<Object::str_t>()) {
             json += "\"" + *value + "\"";

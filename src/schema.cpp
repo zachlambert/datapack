@@ -107,6 +107,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         if (state.type == StateType::Map) {
             std::string key;
             if (!reader.map_next(key)) {
+                reader.map_end();
                 writer.map_end();
                 token_pos = state.value_tokens_end;
                 states.pop();
@@ -117,6 +118,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         }
         else if (state.type == StateType::List) {
             if (!reader.list_next()) {
+                reader.list_end();
                 writer.list_end();
                 token_pos = state.value_tokens_end;
                 states.pop();
@@ -334,6 +336,10 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             throw LoadException("Shouldn't be here");
         }
     }
+}
+
+bool operator==(const Schema& lhs, const Schema& rhs) {
+    return lhs == rhs;
 }
 
 template <typename Visitor>

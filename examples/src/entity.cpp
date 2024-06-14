@@ -101,8 +101,8 @@ Entity Entity::example() {
     result.hitbox = Circle { 1.0 };
     result.sprite = [](){
         Sprite sprite;
-        sprite.width = 12;
-        sprite.height = 12;
+        sprite.width = 2;
+        sprite.height = 2;
         sprite.data.resize(sprite.height * sprite.width);
         for (int i = 0; i < sprite.height; i++) {
             for (int j = 0; j < sprite.width; j++) {

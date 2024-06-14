@@ -168,12 +168,14 @@ std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
 
 void BinaryReader::object_begin() {
     if (is_array_) {
+        printf("Object begin\n");
         binary_blocks.push(BinaryBlock(pos));
     }
 }
 
 void BinaryReader::object_end() {
     if (is_array_) {
+        printf("Object end\n");
         const auto& top = binary_blocks.top();
         while ((pos - top.start) % top.padding != 0) {
             pos++;
@@ -204,6 +206,7 @@ void BinaryReader::list_begin(bool is_array) {
         return;
     }
     if (is_array) {
+        printf("Binary list begin\n");
         std::uint64_t size;
         value_number<std::uint64_t>(size);
         is_array_ = true;
@@ -216,6 +219,7 @@ void BinaryReader::list_end() {
         if (!binary_blocks.empty()) {
             object_end();
         } else {
+            printf("Binary list end\n");
             is_array_ = false;
         }
     }

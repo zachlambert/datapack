@@ -27,7 +27,8 @@ add_library(datapack SHARED
     src/util/object_writer.cpp
     src/util/object_reader.cpp
 
-    # src/format/binary.cpp
+    src/format/binary_writer.cpp
+    src/format/binary_reader.cpp
     # src/format/json.cpp
     # src/schema.cpp
 )
@@ -66,6 +67,13 @@ if (BUILD_ADDITIONAL_TARGETS)
     )
     target_link_libraries(test_object datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_object)
+
+    add_executable(test_format
+        test/format/binary.cpp
+        test/format/binary_array.cpp
+    )
+    target_link_libraries(test_format datapack datapack_examples GTest::gtest_main)
+    gtest_discover_tests(test_format)
 endif()
 
 

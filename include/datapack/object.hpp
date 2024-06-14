@@ -148,6 +148,12 @@ public:
     const std::string& key() const {
         return node().key;
     }
+
+    template <typename T>
+    std::conditional_t<IsConst, const T&, T&> get() const {
+        return std::get<T>(node().value);
+    }
+
     template <typename T>
     std::conditional_t<IsConst, const T*, T*> get_if() const {
         if (!(*this)) return nullptr;

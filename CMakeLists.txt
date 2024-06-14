@@ -23,11 +23,13 @@ add_library(datapack SHARED
     src/encode/base64.cpp
     src/encode/float_string.cpp
 
-    # src/util/object.cpp
+    src/object.cpp
+    src/util/object_writer.cpp
+    src/util/object_reader.cpp
+
     # src/format/binary.cpp
     # src/format/json.cpp
     # src/schema.cpp
-    # src/object.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -56,6 +58,14 @@ if (BUILD_ADDITIONAL_TARGETS)
     add_executable(test_encode test/encode/base64.cpp test/encode/float_string.cpp)
     target_link_libraries(test_encode datapack GTest::gtest_main)
     gtest_discover_tests(test_encode)
+
+    add_executable(test_object
+        test/object/object.cpp
+        test/object/writer.cpp
+        test/object/reader.cpp
+    )
+    target_link_libraries(test_object datapack datapack_examples GTest::gtest_main)
+    gtest_discover_tests(test_object)
 endif()
 
 

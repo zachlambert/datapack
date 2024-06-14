@@ -3,7 +3,7 @@
 #include <datapack/examples/entity.hpp>
 #include <sstream>
 
-std::vector<std::string> get_lines(const std::string& text) {
+static std::vector<std::string> get_lines(const std::string& text) {
     std::vector<std::string> lines;
     std::size_t prev = 0;
     std::size_t pos = std::min(text.find('\n', 0), text.size());
@@ -15,7 +15,7 @@ std::vector<std::string> get_lines(const std::string& text) {
     return lines;
 }
 
-TEST(Debug, Debug) {
+TEST(Util, Debug) {
     auto entity = Entity::example();
     entity.pose.angle = 3.0;
 

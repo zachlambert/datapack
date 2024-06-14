@@ -96,7 +96,10 @@ public:
     virtual void value_bool(bool& value) = 0;
 
     virtual int enumerate(const std::vector<const char*>& labels) = 0;
-    virtual bool optional() = 0;
+
+    virtual bool optional_begin() = 0;
+    virtual void optional_end() = 0;
+
     virtual void variant_begin(const std::vector<const char*>& labels) = 0;
     virtual bool variant_match(const char* label) = 0;
     virtual void variant_end() = 0;

@@ -21,7 +21,7 @@ add_library(datapack SHARED
     # src/encode/string.cpp
     src/util/debug.cpp
     # src/util/object.cpp
-    # src/util/random.cpp
+    src/util/random.cpp
     # src/format/binary.cpp
     # src/format/json.cpp
     # src/schema.cpp
@@ -47,9 +47,9 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     enable_testing()
 
-    add_executable(test_debug test/debug.cpp)
-    target_link_libraries(test_debug datapack datapack_examples GTest::gtest_main)
-    gtest_discover_tests(test_debug)
+    add_executable(test_util test/util/debug.cpp test/util/random.cpp)
+    target_link_libraries(test_util datapack datapack_examples GTest::gtest_main)
+    gtest_discover_tests(test_util)
 endif()
 
 

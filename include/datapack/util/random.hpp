@@ -20,7 +20,8 @@ public:
     void value_bool(bool& value) override;
 
     int enumerate(const std::vector<const char*>& labels) override;
-    bool optional() override;
+    bool optional_begin() override;
+    void optional_end() override;
     void variant_begin(const std::vector<const char*>& labels) override;
     bool variant_match(const char* label) override;
     void variant_end() override;

@@ -8,9 +8,10 @@ namespace datapack {
 
 template <readable T>
 void read(Reader& reader, std::optional<T>& value) {
-    if (reader.optional()) {
+    if (reader.optional_begin()) {
         value.emplace();
         reader.value(value.value());
+        reader.optional_end();
     } else {
         value = std::nullopt;
     }

@@ -86,8 +86,12 @@ int RandomReader::enumerate(const std::vector<const char*>& labels) {
     return rand() % labels.size();
 }
 
-bool RandomReader::optional() {
+bool RandomReader::optional_begin() {
     return rand() % 2 == 1;
+}
+
+void RandomReader::optional_end() {
+    // Do nothing
 }
 
 void RandomReader::variant_begin(const std::vector<const char*>& labels) {

@@ -33,6 +33,7 @@ add_library(datapack SHARED
 
     src/schema/token.cpp
     src/schema/tokenizer.cpp
+    src/schema/schema.cpp
 )
 target_include_directories(datapack PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -86,6 +87,7 @@ if (BUILD_ADDITIONAL_TARGETS)
 
     add_executable(test_schema
         test/schema/tokenizer.cpp
+        test/schema/schema.cpp
     )
     target_link_libraries(test_schema datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_schema)

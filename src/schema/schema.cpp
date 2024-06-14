@@ -1,4 +1,6 @@
 #include "datapack/schema/schema.hpp"
+#include "datapack/common.hpp"
+
 
 namespace datapack {
 
@@ -10,7 +12,7 @@ static std::size_t get_tokens_end(const std::vector<Token>& tokens, std::size_t 
             break;
         }
         if (pos >= tokens.size()) {
-            throw LoadException("Invalid binary schema");
+            throw std::runtime_error("Invalid binary schema");
         }
         const auto& token = tokens[pos];
         pos++;
@@ -125,11 +127,13 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         else if (state.type == StateType::Optional) {
             bool has_value = false;
             if (state.remaining) {
-                has_value = reader.optional();
-                writer.optional(has_value);
+                has_value = reader.optional_begin();
+                writer.optional_begin(has_value);
                 state.remaining = 0;
             }
             if (!has_value) {
+                reader.optional_end();
+                writer.optional_end();
                 token_pos = state.value_tokens_end;
                 states.pop();
                 continue;
@@ -253,7 +257,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
                 if (auto value = std::get_if<token::VariantNext>(&token)) {
                     if (reader.variant_match(value->type.c_str())) {
                         if (found_match) {
-                            throw LoadException("Repeated variant labels");
+                            throw std::runtime_error("Repeated variant labels");
                         }
                         found_match = true;
                         variant_start = token_pos;
@@ -265,10 +269,10 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
                 else if (auto value = std::get_if<token::VariantEnd>(&token)) {
                     break;
                 }
-                throw LoadException("Invalid binary schema");
+                throw std::runtime_error("Invalid binary schema");
             }
             if (!found_match) {
-                throw LoadException("No matching variant");
+                throw std::runtime_error("No matching variant");
             }
 
             states.push(State(StateType::Variant, variant_start, token_pos, 1));
@@ -328,7 +332,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             writer.binary_data(data, size);
         }
         else {
-            throw LoadException("Shouldn't be here");
+            throw std::runtime_error("Shouldn't be here");
         }
     }
 }

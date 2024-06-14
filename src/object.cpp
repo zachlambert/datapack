@@ -203,7 +203,7 @@ Object_<IsConst> Object_<IsConst>::create_node(const Node& node) const {
 template Object Object::create_node(const Node&) const;
 
 
-bool compare(const Object& lhs, const Object& rhs, double float_threshold) {
+bool compare(const ConstObject& lhs, const ConstObject& rhs, double float_threshold) {
     std::stack<ConstObject> nodes_lhs;
     std::stack<ConstObject> nodes_rhs;
     nodes_lhs.push(lhs);

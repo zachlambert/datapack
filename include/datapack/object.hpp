@@ -214,7 +214,7 @@ private:
 using Object = Object_<false>;
 using ConstObject = Object_<true>;
 
-bool compare(const Object& lhs, const Object& rhs, double float_threshold=1e-12);
+bool compare(const ConstObject& lhs, const ConstObject& rhs, double float_threshold=1e-12);
 
 } // namespace datapack
 

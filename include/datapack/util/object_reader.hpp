@@ -81,8 +81,4 @@ T read_object(ConstObject object) {
     return result;
 }
 
-#if 0
-Object read_object(const Schema& schema, const std::vector<std::uint8_t>& data);
-#endif
-
 } // namespace datapack

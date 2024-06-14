@@ -238,14 +238,4 @@ bool ObjectReader::list_next() {
     return bool(node);
 }
 
-#if 0
-Object read_object(const Schema& schema, const std::vector<std::uint8_t>& data) {
-    Object object;
-    ObjectWriter writer(object);
-    BinaryReader reader(data);
-    use_schema(schema, reader, writer);
-    return object;
-}
-#endif
-
 } // namespace datapack

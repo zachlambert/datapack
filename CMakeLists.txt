@@ -1,52 +1,65 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.8)
 project(datapack)
 
 # Setup
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-include(FetchContent)
 
 set(BUILD_ADDITIONAL_TARGETS OFF)
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)
 endif()
 
-add_compile_options(-fconcepts-diagnostics-depth=2)
+add_compile_options("-DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
 
 # Library
 
-add_library(datapack SHARED
-    src/util/debug.cpp
-    src/util/random.cpp
+if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
+    add_library(datapack ${LIB_TYPE}
+        src/util/debug.cpp
+        src/util/random.cpp
 
-    src/encode/base64.cpp
-    src/encode/float_string.cpp
+        src/encode/base64.cpp
+        src/encode/float_string.cpp
 
-    src/object.cpp
-    src/util/object_writer.cpp
-    src/util/object_reader.cpp
+        src/object.cpp
+        src/util/object_writer.cpp
+        src/util/object_reader.cpp
 
-    src/format/binary_writer.cpp
-    src/format/binary_reader.cpp
-    src/format/json.cpp
+        src/format/binary_writer.cpp
+        src/format/binary_reader.cpp
+        src/format/json.cpp
 
-    src/schema/token.cpp
-    src/schema/tokenizer.cpp
-    src/schema/schema.cpp
-    src/schema/binary.cpp
-)
-target_include_directories(datapack PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+        src/schema/token.cpp
+        src/schema/tokenizer.cpp
+        src/schema/schema.cpp
+        src/schema/binary.cpp
+    )
+    target_include_directories(datapack PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
 
+else()
+    add_library(datapack INTERFACE
+        # TODO: Add mcu-specific source files
+    )
+    target_link_libraries(datapack INTERFACE micro-types)
+    target_include_directories(datapack INTERFACE
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    )
+
+endif()
 
 # Additional targets
 
-if (BUILD_ADDITIONAL_TARGETS)
+if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_subdirectory(examples)
     # add_subdirectory(demo)
+
+    include(FetchContent)
 
     FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
     include(GoogleTest)
@@ -97,7 +110,6 @@ endif()
 
 
 # Create install target
-# https://stackoverflow.com/questions/47718485/install-and-export-interface-only-library-cmake
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(

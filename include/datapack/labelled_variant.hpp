@@ -6,6 +6,15 @@
 #include <concepts>
 
 
+#ifdef EMBEDDED
+template <typename ...Args>
+using variant_t = mct::variant<Args...>;
+#else
+template <typename ...Args>
+using variant_t = std::variant<Args...>;
+#endif
+
+
 namespace datapack {
 
 template <typename T>
@@ -35,9 +44,9 @@ std::optional<T> variant_from_label_iter(const char* label, std::size_t index) {
 }
 
 template <typename ...Args>
-requires labelled_variant<std::variant<Args...>>
-std::optional<std::variant<Args...>> variant_from_label(const char* label) {
-    using T = std::variant<Args...>;
+requires labelled_variant<variant_t<Args...>>
+std::optional<variant_t<Args...>> variant_from_label(const char* label) {
+    using T = variant_t<Args...>;
     return variant_from_label_iter<T, Args...>(label, 0);
 }
 

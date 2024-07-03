@@ -4,7 +4,6 @@
 #include <cstring>
 #include "datapack/datapack.hpp"
 
-
 namespace datapack {
 
 template <typename T, std::size_t N>

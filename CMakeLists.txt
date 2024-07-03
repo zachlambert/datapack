@@ -11,8 +11,6 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)
 endif()
 
-add_compile_options("-DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}")
-
 # Library
 
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
@@ -37,7 +35,8 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/schema/binary.cpp
     )
     target_include_directories(datapack PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/common>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/host>
         $<INSTALL_INTERFACE:include>
     )
 
@@ -47,10 +46,10 @@ else()
     )
     target_link_libraries(datapack INTERFACE micro-types)
     target_include_directories(datapack INTERFACE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/common>
         $<INSTALL_INTERFACE:include>
     )
-
+    add_compile_options("-DEMBEDDED")
 endif()
 
 # Additional targets

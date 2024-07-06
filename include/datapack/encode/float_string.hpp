@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include <string>
 
@@ -8,3 +9,4 @@ template <typename T>
 std::string float_to_string(T value);
 
 } // namespace datpack
+#endif

@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include "datapack/writer.hpp"
 #include <iostream>
@@ -71,3 +72,4 @@ template <datapack::writeable T>
 std::ostream& operator<<(std::ostream& os, datapack::debug<T> manipulator) {
     return manipulator(os);
 }
+#endif

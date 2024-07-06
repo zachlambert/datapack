@@ -40,20 +40,20 @@ void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t size)
 
 void BinaryWriter::object_begin() {
     if (is_array_) {
-        binary_blocks.push(BinaryBlock(data.size()));
+        binary_blocks.push_back(BinaryBlock(data.size()));
     }
 }
 
 void BinaryWriter::object_end() {
     if (is_array_) {
-        const auto& top = binary_blocks.top();
+        const auto& top = binary_blocks.back();
         while ((data.size() - top.start) % top.padding != 0) {
             data.push_back(0x00);
         }
         std::size_t size = data.size() - top.start;
-        binary_blocks.pop();
+        binary_blocks.pop_back();
         if (!binary_blocks.empty()) {
-            binary_blocks.top().padding = std::max(binary_blocks.top().padding, size);
+            binary_blocks.back().padding = std::max(binary_blocks.back().padding, size);
         } else {
             binary_size += size;
         }

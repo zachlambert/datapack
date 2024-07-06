@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include <datapack/reader.hpp>
 
@@ -58,3 +59,4 @@ T random() {
 }
 
 } // namespace datapack
+#endif

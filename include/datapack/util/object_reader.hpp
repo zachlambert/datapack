@@ -1,10 +1,8 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include "datapack/object.hpp"
 #include "datapack/reader.hpp"
-#if 0
-#include "datapack/schema.hpp"
-#endif
 
 
 namespace datapack {
@@ -82,3 +80,4 @@ T read_object(ConstObject object) {
 }
 
 } // namespace datapack
+#endif

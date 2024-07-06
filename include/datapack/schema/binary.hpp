@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include "datapack/schema/schema.hpp"
 #include "datapack/object.hpp"
@@ -9,3 +10,4 @@ Object binary_to_object(const Schema& schema, const std::vector<std::uint8_t>& b
 std::vector<std::uint8_t> object_to_binary(const Schema& schema, ConstObject object);
 
 } // namespace datapack
+#endif

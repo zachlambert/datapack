@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include "datapack/datapack.hpp"
 #include "datapack/labelled_variant.hpp"
@@ -107,3 +108,4 @@ DATAPACK_EMPTY(token::Map)
 bool operator==(const Token& lhs, const Token& rhs);
 
 } // namespace datpack
+#endif

@@ -1,18 +1,7 @@
 #pragma once
 
-#include <variant>
-#include <vector>
-#include <optional>
 #include <concepts>
-
-
-#ifdef EMBEDDED
-template <typename ...Args>
-using variant_t = mct::variant<Args...>;
-#else
-template <typename ...Args>
-using variant_t = std::variant<Args...>;
-#endif
+#include "datapack/types.hpp"
 
 
 namespace datapack {
@@ -22,11 +11,11 @@ struct variant_labels {};
 
 template <typename T>
 concept labelled_variant = requires() {
-    { variant_labels<T>::value } -> std::convertible_to<std::vector<const char*>>;
+    { variant_labels<T>::value } -> std::convertible_to<vector_t<const char*>>;
 };
 
 template <labelled_variant T>
-const std::vector<const char*>& variant_labels_v() {
+const vector_t<const char*>& variant_labels_v() {
     return variant_labels<T>::value;
 }
 
@@ -60,5 +49,5 @@ const char* variant_to_label(const T& value) {
 #define DATAPACK_LABELLED_VARIANT(T) \
 template <> \
 struct variant_labels<T> { \
-    static std::vector<const char*> value; \
+    static vector_t<const char*> value; \
 };

@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include <array>
 #include <cstring>
@@ -49,3 +50,5 @@ void write(Writer& writer, const std::array<T, N>& value) {
 }
 
 } // namespace datapack
+
+#endif

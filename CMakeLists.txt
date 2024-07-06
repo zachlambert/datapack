@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.14)
 project(datapack)
 
 # Setup
@@ -35,18 +35,18 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/schema/binary.cpp
     )
     target_include_directories(datapack PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/common>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/host>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
 
 else()
-    add_library(datapack INTERFACE
-        # TODO: Add mcu-specific source files
+    add_library(datapack STATIC
+        src/format/binary_writer.cpp
+        src/format/binary_reader.cpp
     )
-    target_link_libraries(datapack INTERFACE micro-types)
-    target_include_directories(datapack INTERFACE
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/common>
+    target_link_libraries(datapack PUBLIC micro-types)
+    target_include_directories(datapack PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
     )
     add_compile_options("-DEMBEDDED")

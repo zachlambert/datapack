@@ -12,6 +12,7 @@ build_release:
 
 .PHONY: build_stm32
 build_stm32:
+	test -n "$(MCU)"
 	mkdir -p build/$(MCU)
 	cmake -E chdir build/$(MCU) cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/stm32/toolchain/$(MCU).cmake ../..
 	cmake --build build/$(MCU)
@@ -26,4 +27,5 @@ install:
 
 .PHONY: install_stm32
 install_stm32:
-	cmake --build build/stm32 --target install
+	test -n "$(MCU)"
+	cmake --build build/$(MCU) --target install

@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include "datapack/schema/token.hpp"
 
@@ -56,3 +57,4 @@ private:
 };
 
 } // namespace datapack
+#endif

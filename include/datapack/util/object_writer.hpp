@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include "datapack/object.hpp"
 #include "datapack/reader.hpp"
@@ -65,3 +66,4 @@ Object write_object(const T& value) {
 }
 
 } // namespace datapack
+#endif

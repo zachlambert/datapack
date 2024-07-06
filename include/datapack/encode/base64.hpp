@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include <vector>
 #include <string>
@@ -27,3 +28,4 @@ private:
 };
 
 } // namespace datapack
+#endif

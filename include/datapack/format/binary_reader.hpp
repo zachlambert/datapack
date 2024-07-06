@@ -1,12 +1,14 @@
 #pragma once
 
 #include "datapack/reader.hpp"
+#include "datapack/types.hpp"
+
 
 namespace datapack {
 
 class BinaryReader : public Reader {
 public:
-    BinaryReader(const std::vector<std::uint8_t>& data, bool use_binary_arrays=true):
+    BinaryReader(const vector_t<std::uint8_t>& data, bool use_binary_arrays=true):
         Reader(use_binary_arrays, true, false),
         data(data),
         pos(0),
@@ -22,13 +24,13 @@ public:
     void value_f32(float& value) override { value_number(value); }
     void value_f64(double& value) override { value_number(value); }
 
-    void value_string(std::string& value) override;
+    void value_string(string_t& value) override;
     void value_bool(bool& value) override;
 
-    int enumerate(const std::vector<const char*>& labels) override;
+    int enumerate(const vector_t<const char*>& labels) override;
     bool optional_begin() override;
     void optional_end() override;
-    void variant_begin(const std::vector<const char*>& labels) override;
+    void variant_begin(const vector_t<const char*>& labels) override;
     bool variant_match(const char* label) override;
     void variant_end() override {}
 
@@ -48,7 +50,7 @@ public:
 
     void map_begin() override {}
     void map_end() override {}
-    bool map_next(std::string& key) override;
+    bool map_next(string_t& key) override;
 
     void list_begin(bool is_array) override;
     void list_end() override;
@@ -59,7 +61,7 @@ private:
     void value_number(T& value) {
         if (is_array_) {
             if (!binary_blocks.empty()) {
-                auto& top = binary_blocks.top();
+                auto& top = binary_blocks.back();
                 top.padding = std::max(top.padding, sizeof(T));
                 while ((pos - top.start) % sizeof(T) != 0) {
                     pos++;
@@ -77,7 +79,7 @@ private:
         pos += sizeof(T);
     }
 
-    const std::vector<std::uint8_t>& data;
+    const vector_t<std::uint8_t>& data;
     std::size_t pos;
 
     struct BinaryBlock {
@@ -90,11 +92,11 @@ private:
     };
     bool is_array_;
     std::int64_t binary_remaining;
-    std::stack<BinaryBlock> binary_blocks;
+    vector_t<BinaryBlock> binary_blocks;
 };
 
 template <readable T>
-T read_binary(const std::vector<std::uint8_t>& data) {
+T read_binary(const vector_t<std::uint8_t>& data) {
     T result;
     BinaryReader(data).value(result);
     return result;

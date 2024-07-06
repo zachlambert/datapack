@@ -1,13 +1,14 @@
 #pragma once
 
 #include <concepts>
-#include <string>
-#include <stdexcept>
-#include <vector>
-#include <stack>
 #include <type_traits>
 #include <tuple>
 #include "datapack/constraint.hpp"
+#include "datapack/types.hpp"
+
+#ifndef EMBEDDED
+#include <stdexcept>
+#endif
 
 
 namespace datapack {
@@ -29,6 +30,7 @@ inline void read(Reader& reader, T& value) {
     value.read(reader);
 }
 
+#ifndef EMBEDDED
 class ReadException: public std::exception {
 public:
     ReadException(const std::string& message):
@@ -41,6 +43,7 @@ private:
     }
     std::string message;
 };
+#endif
 
 class Reader {
 public:
@@ -48,7 +51,8 @@ public:
         use_binary_arrays_(use_binary_arrays),
         use_constraints(use_constraints),
         is_exhaustive_(is_exhaustive),
-        constraint_(nullptr)
+        constraint_(nullptr),
+        has_error_(false)
     {}
 
     template <readable T>
@@ -92,15 +96,15 @@ public:
     virtual void value_f32(float& value) = 0;
     virtual void value_f64(double& value) = 0;
 
-    virtual void value_string(std::string& value) = 0;
+    virtual void value_string(string_t& value) = 0;
     virtual void value_bool(bool& value) = 0;
 
-    virtual int enumerate(const std::vector<const char*>& labels) = 0;
+    virtual int enumerate(const vector_t<const char*>& labels) = 0;
 
     virtual bool optional_begin() = 0;
     virtual void optional_end() = 0;
 
-    virtual void variant_begin(const std::vector<const char*>& labels) = 0;
+    virtual void variant_begin(const vector_t<const char*>& labels) = 0;
     virtual bool variant_match(const char* label) = 0;
     virtual void variant_end() = 0;
 
@@ -116,14 +120,20 @@ public:
 
     virtual void map_begin() = 0;
     virtual void map_end() = 0;
-    virtual bool map_next(std::string& key) = 0;
+    virtual bool map_next(string_t& key) = 0;
 
     virtual void list_begin(bool is_array = false) = 0;
     virtual void list_end() = 0;
     virtual bool list_next() = 0;
 
-    void error(const std::string& error) {
+    void error(const string_t& error) {
+        has_error_ = true;
+#ifndef EMBEDDED
         throw ReadException(error);
+#endif
+    }
+    bool has_error() const {
+        return has_error_;
     }
 
     bool use_binary_arrays() const {
@@ -144,6 +154,7 @@ private:
     const bool use_constraints;
     const bool is_exhaustive_;
     const ConstraintBase* constraint_;
+    bool has_error_;
 };
 
 } // namespace datapack

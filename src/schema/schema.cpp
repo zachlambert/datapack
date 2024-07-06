@@ -1,6 +1,8 @@
 #include "datapack/schema/schema.hpp"
 #include "datapack/common.hpp"
 
+#include <stack>
+
 
 namespace datapack {
 

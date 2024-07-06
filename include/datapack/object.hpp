@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include <vector>
 #include <type_traits>
@@ -223,3 +224,5 @@ inline std::ostream& operator<<(std::ostream& os, datapack::Object object) {
     os << static_cast<datapack::ConstObject>(object);
     return os;
 }
+
+#endif

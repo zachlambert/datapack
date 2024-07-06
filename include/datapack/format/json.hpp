@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include <sstream>
 #include <stack>
@@ -29,3 +30,4 @@ std::string write_json(const T& value) {
 }
 
 } // namespace datpack
+#endif

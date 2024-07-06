@@ -1,6 +1,7 @@
 #pragma once
 
 #include "datapack/datapack.hpp"
+#include "datapack/types.hpp"
 
 
 namespace datapack {
@@ -29,7 +30,7 @@ inline void read(Reader& reader, double& value) {
     reader.value_f64(value);
 }
 
-inline void read(Reader& reader, std::string& value) {
+inline void read(Reader& reader, string_t& value) {
     reader.value_string(value);
 }
 
@@ -61,7 +62,7 @@ inline void write(Writer& writer, double value) {
     writer.value_f64(value);
 }
 
-inline void write(Writer& writer, std::string value) {
+inline void write(Writer& writer, string_t value) {
     writer.value_string(value);
 }
 

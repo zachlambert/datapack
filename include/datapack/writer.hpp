@@ -1,9 +1,12 @@
 #pragma once
 
 #include <concepts>
-#include <string>
-#include <vector>
 #include "datapack/constraint.hpp"
+#include "datapack/types.hpp"
+
+#ifndef EMBEDDED
+#include <stdexcept>
+#endif
 
 
 namespace datapack {
@@ -29,6 +32,21 @@ template <writeable_class T>
 inline void write(Writer& writer, const T& value) {
     value.write(writer);
 }
+
+#ifndef EMBEDDED
+class WriteException: public std::exception {
+public:
+    WriteException(const std::string& message):
+        message(message)
+    {}
+
+private:
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
+    std::string message;
+};
+#endif
 
 class Writer {
 public:
@@ -68,15 +86,15 @@ public:
     virtual void value_f32(float value) = 0;
     virtual void value_f64(double value) = 0;
 
-    virtual void value_string(const std::string&) = 0;
+    virtual void value_string(const string_t&) = 0;
     virtual void value_bool(bool value) = 0;
 
-    virtual void enumerate(int value, const std::vector<const char*>& labels) = 0;
+    virtual void enumerate(int value, const vector_t<const char*>& labels) = 0;
 
     virtual void optional_begin(bool has_value) = 0;
     virtual void optional_end() = 0;
 
-    virtual void variant_begin(const char* label, const std::vector<const char*>& labels) = 0;
+    virtual void variant_begin(const char* label, const vector_t<const char*>& labels) = 0;
     virtual void variant_end() = 0;
 
     virtual void binary_data(const std::uint8_t* data, std::size_t size) = 0;
@@ -91,7 +109,7 @@ public:
 
     virtual void map_begin() = 0;
     virtual void map_end() = 0;
-    virtual void map_next(const std::string& key) = 0;
+    virtual void map_next(const string_t& key) = 0;
 
     virtual void list_begin(bool is_array = false) = 0;
     virtual void list_end() = 0;
@@ -103,19 +121,6 @@ public:
 
 private:
     const bool use_binary_arrays_;
-};
-
-class WriteException: public std::exception {
-public:
-    WriteException(const std::string& message):
-        message(message)
-    {}
-
-private:
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-    std::string message;
 };
 
 } // namespace datapack

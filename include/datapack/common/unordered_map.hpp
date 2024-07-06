@@ -1,4 +1,5 @@
 #pragma once
+#ifndef EMBEDDED
 
 #include <unordered_map>
 #include "datapack/datapack.hpp"
@@ -61,3 +62,4 @@ void write(Writer& writer, const std::unordered_map<K, V>& value) {
 }
 
 } // namespace datapack
+#endif

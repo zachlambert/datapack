@@ -1,15 +1,14 @@
 #pragma once
 
-#include <vector>
 #include <cstring>
 #include "datapack/datapack.hpp"
-
+#include "datapack/types.hpp"
 
 namespace datapack {
 
 template <typename T>
 requires (readable<T> || std::is_trivially_copyable_v<T>)
-void read(Reader& reader, std::vector<T>& value) {
+void read(Reader& reader, vector_t<T>& value) {
     if constexpr (readable<T>) {
         if (!std::is_trivially_copyable_v<T> || !reader.use_binary_arrays()) {
             reader.list_begin(std::is_trivially_copyable_v<T>);
@@ -34,7 +33,7 @@ void read(Reader& reader, std::vector<T>& value) {
 
 template <typename T>
 requires (writeable<T> || std::is_trivially_copyable_v<T>)
-void write(Writer& writer, const std::vector<T>& value) {
+void write(Writer& writer, const vector_t<T>& value) {
     if constexpr(writeable<T>) {
         if (!std::is_trivially_copyable_v<T> || !writer.use_binary_arrays()) {
             writer.list_begin(std::is_trivially_copyable_v<T>);
@@ -50,7 +49,7 @@ void write(Writer& writer, const std::vector<T>& value) {
 }
 
 template <typename T>
-bool validate(const std::vector<T>& value, const LengthConstraint& constraint) {
+bool validate(const vector_t<T>& value, const LengthConstraint& constraint) {
     return value.size() == constraint.length;
 }
 

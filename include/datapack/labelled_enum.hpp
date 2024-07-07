@@ -1,7 +1,6 @@
 #pragma once
 
 #include <span>
-#include <optional>
 #include <concepts>
 #include <vector>
 
@@ -23,13 +22,14 @@ std::span<const char*> enum_labels_v() {
 }
 
 template <labelled_enum T>
-std::optional<T> enum_from_label(const char* label) {
+bool enum_from_label(const char* label, T& value) {
     for (std::size_t i = 0; i < enum_labels<T>().size(); i++) {
         if (strcmp(label, enum_labels_v<T>()[i]) == 0) {
-            return (T)i;
+            value = (T)i;
+            return true;
         }
     }
-    return std::nullopt;
+    return false;
 }
 
 template <labelled_enum T>

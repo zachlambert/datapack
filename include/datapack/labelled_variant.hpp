@@ -3,8 +3,7 @@
 #include <concepts>
 #include <variant>
 #include <span>
-#include <optional>
-#include <micro_types/optional.hpp>
+#include <micro_types/variant.hpp>
 
 
 namespace datapack {
@@ -23,23 +22,31 @@ std::span<const char*> variant_labels_v() {
 }
 
 template <labelled_variant T>
-std::optional<T> variant_from_label_iter(const char* label, std::size_t index) {
-    return std::nullopt;
+bool variant_from_label_iter(const char* label, std::size_t index, T& value) {
+    return false;
 }
 
 template <labelled_variant T, typename Next, typename ...Remainder>
-std::optional<T> variant_from_label_iter(const char* label, std::size_t index) {
+bool variant_from_label_iter(const char* label, std::size_t index, T& value) {
     if (strcmp(variant_labels_v<T>()[index], label) == 0) {
-        return Next();
+        value = Next();
+        return true;
     }
-    return variant_from_label_iter<T, Remainder...>(label, index+1);
+    return variant_from_label_iter<T, Remainder...>(label, index+1, value);
 }
 
 template <typename ...Args>
 requires labelled_variant<std::variant<Args...>>
-std::optional<std::variant<Args...>> variant_from_label(const char* label) {
+bool variant_from_label(const char* label, std::variant<Args...>& value) {
     using T = std::variant<Args...>;
-    return variant_from_label_iter<T, Args...>(label, 0);
+    return variant_from_label_iter<T, Args...>(label, 0, value);
+}
+
+template <typename ...Args>
+requires labelled_variant<std::variant<Args...>>
+bool variant_from_label(const char* label, mct::variant<Args...>& value) {
+    using T = std::variant<Args...>;
+    return variant_from_label_iter<T, Args...>(label, 0, value);
 }
 
 template <labelled_variant T>

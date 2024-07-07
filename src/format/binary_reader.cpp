@@ -29,7 +29,7 @@ void BinaryReader::value_bool(bool& value) {
 
 
 int BinaryReader::enumerate(const std::span<const char*>& labels) {
-    int value;
+    int value = -1;
     value_number(value);
     return value;
 }
@@ -63,7 +63,7 @@ bool BinaryReader::variant_match(const char* label) {
 }
 
 std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
-    std::size_t size;
+    std::size_t size = 0;
     value_number(size);
     if (pos + size > data.size()) {
         error("Input data is too short");
@@ -101,7 +101,7 @@ void BinaryReader::list_begin(bool is_array) {
         return;
     }
     if (is_array) {
-        std::uint64_t size;
+        std::uint64_t size = 0;
         value_number<std::uint64_t>(size);
         is_array_ = true;
         binary_remaining = size;

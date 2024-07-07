@@ -2,6 +2,7 @@
 
 #include "datapack/labelled_variant.hpp"
 #include "datapack/datapack.hpp"
+#include <micro_types/variant.hpp>
 
 
 namespace datapack {

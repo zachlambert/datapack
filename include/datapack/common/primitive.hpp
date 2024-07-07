@@ -1,6 +1,7 @@
 #pragma once
 
 #include "datapack/datapack.hpp"
+#include <micro_types/string.hpp>
 
 
 namespace datapack {
@@ -30,9 +31,16 @@ inline void read(Reader& reader, double& value) {
 }
 
 inline void read(Reader& reader, std::string& value) {
-    const char* result = reader.value_string();
-    if (result) {
-        value = result;
+    if (const char* value_cstr = reader.value_string()) {
+        value = value_cstr;
+    } else {
+        value.clear();
+    }
+}
+
+inline void read(Reader& reader, mct::string& value) {
+    if (const char* value_cstr = reader.value_string()) {
+        value = value_cstr;
     } else {
         value.clear();
     }
@@ -67,6 +75,10 @@ inline void write(Writer& writer, double value) {
 }
 
 inline void write(Writer& writer, const std::string& value) {
+    writer.value_string(value.c_str());
+}
+
+inline void write(Writer& writer, const mct::string& value) {
     writer.value_string(value.c_str());
 }
 

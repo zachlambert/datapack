@@ -4,7 +4,7 @@
 namespace datapack {
 
 RandomReader::RandomReader():
-    container_counter(0),
+    list_counter(0),
     next_variant_label(nullptr)
 {}
 
@@ -64,17 +64,18 @@ void RandomReader::value_f64(double& value) {
 }
 
 
-void RandomReader::value_string(std::string& value) {
+const char* RandomReader::value_string() {
     // Length: [4, 20]
     // Characters ~ { a, ..., z }
     if (auto c = constraint<LengthConstraint>()) {
-        value.resize(c->length);
+        string_temp.resize(c->length);
     } else {
-        value.resize(4 + rand() % 17);
+        string_temp.resize(4 + rand() % 17);
     }
-    for (auto& c: value) {
+    for (auto& c: string_temp) {
         c = 'a' + rand() % 26;
     }
+    return string_temp.c_str();
 }
 
 void RandomReader::value_bool(bool& value) {
@@ -82,7 +83,7 @@ void RandomReader::value_bool(bool& value) {
 }
 
 
-int RandomReader::enumerate(const std::vector<const char*>& labels) {
+int RandomReader::enumerate(const std::span<const char*>& labels) {
     return rand() % labels.size();
 }
 
@@ -94,7 +95,7 @@ void RandomReader::optional_end() {
     // Do nothing
 }
 
-void RandomReader::variant_begin(const std::vector<const char*>& labels) {
+void RandomReader::variant_begin(const std::span<const char*>& labels) {
     next_variant_label = labels[rand() % labels.size()];
 }
 
@@ -144,33 +145,12 @@ void RandomReader::tuple_next() {
 }
 
 
-void RandomReader::map_begin() {
-    container_counter = rand() % 10;
-}
-
-void RandomReader::map_end() {
-
-}
-
-bool RandomReader::map_next(std::string& key) {
-    if (container_counter == 0) {
-        return false;
-    }
-    container_counter--;
-    key.resize(1 + rand() % 10);
-    for (auto& c: key) {
-        c = 'a' + rand() % 26;
-    }
-    return true;
-}
-
-
 void RandomReader::list_begin(bool is_array) {
     if (auto c = constraint<LengthConstraint>()) {
-        container_counter = c->length;
+        list_counter = c->length;
         return;
     }
-    container_counter = rand() % 10;
+    list_counter = rand() % 10;
 }
 
 void RandomReader::list_end() {
@@ -178,10 +158,10 @@ void RandomReader::list_end() {
 }
 
 bool RandomReader::list_next() {
-    if (container_counter == 0) {
+    if (list_counter == 0) {
         return false;
     }
-    container_counter--;
+    list_counter--;
     return true;
 }
 

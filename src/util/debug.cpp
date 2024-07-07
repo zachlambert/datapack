@@ -33,7 +33,7 @@ void DebugWriter::value_f64(double value) {
 }
 
 
-void DebugWriter::value_string(const std::string& value) {
+void DebugWriter::value_string(const char* value) {
     os << value << ",\n";
 }
 
@@ -42,7 +42,7 @@ void DebugWriter::value_bool(bool value) {
 }
 
 
-void DebugWriter::enumerate(int value, const std::vector<const char*>& labels) {
+void DebugWriter::enumerate(int value, const std::span<const char*>& labels) {
     os << "(enum, " << labels[value] << "),\n";
 }
 
@@ -62,7 +62,7 @@ void DebugWriter::optional_end() {
     os << "},\n";
 }
 
-void DebugWriter::variant_begin(const char* label, const std::vector<const char*>& labels) {
+void DebugWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
     os << "(variant, " << label << ") {\n";
     depth++;
     indent();
@@ -109,23 +109,6 @@ void DebugWriter::tuple_end() {
 
 void DebugWriter::tuple_next() {
     indent();
-}
-
-
-void DebugWriter::map_begin() {
-    os << "(map) {\n";
-    depth++;
-}
-
-void DebugWriter::map_end() {
-    depth--;
-    indent();
-    os << "},\n";
-}
-
-void DebugWriter::map_next(const std::string& key) {
-    indent();
-    os << key << ": ";
 }
 
 

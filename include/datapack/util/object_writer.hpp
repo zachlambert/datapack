@@ -20,13 +20,13 @@ public:
     void value_f32(float value) override;
     void value_f64(double value) override;
 
-    void value_string(const std::string& value) override;
+    void value_string(const char* value) override;
     void value_bool(bool value) override;
 
-    void enumerate(int value, const std::vector<const char*>& labels) override;
+    void enumerate(int value, const std::span<const char*>& labels) override;
     void optional_begin(bool has_value) override;
     void optional_end() override;
-    void variant_begin(const char* label, const std::vector<const char*>& labels) override;
+    void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override;
 
     void binary_data(const std::uint8_t* data, std::size_t size) override;
@@ -38,10 +38,6 @@ public:
     void tuple_begin() override;
     void tuple_end() override;
     void tuple_next() override;
-
-    void map_begin() override;
-    void map_end() override;
-    void map_next(const std::string& key) override;
 
     void list_begin(bool is_array) override;
     void list_end() override;

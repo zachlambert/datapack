@@ -3,6 +3,27 @@
 #include <datapack/examples/entity.hpp>
 #include <cmath>
 
+bool compare_map(datapack::ConstObject object, datapack::ConstObject expected) {
+    // Special case: Unordered map with key != string, uses list of lists
+    // and does not know that the order doesn't matter
+    auto iter1 = object["flags"][0];
+    bool found_all = true;
+    while (iter1) {
+        bool found = false;
+        auto iter2 = expected["flags"][0];
+        while (iter2) {
+            if (compare(iter1, iter2)) {
+                found = true;
+            }
+            iter2 = iter2.next();
+        }
+        if (!found) {
+            found_all = false;
+        }
+        iter1 = iter1.next();
+    }
+    return found_all;
+}
 
 TEST(Object, Writer) {
     using namespace datapack;
@@ -70,7 +91,10 @@ TEST(Object, Writer) {
         object.insert("strength", 10.5);
         object.insert("agility", 5.0);
     }(expected.insert("properties", Object::map_t()));
-    EXPECT_TRUE(compare(object["properties"], expected["properties"]));
+
+    EXPECT_TRUE(compare_map(object["properties"], expected["properties"]));
+    object["properties"].erase();
+    expected["properties"].erase();
 
     [](Object object) {
         auto add_flag = [&object](int index, bool value) {
@@ -83,27 +107,7 @@ TEST(Object, Writer) {
         add_flag(2, true);
     }(expected.insert("flags", Object::list_t()));
 
-    // Special case: Unordered map with key != string, uses list of lists
-    // and does not know that the order doesn't matter
-    {
-        auto iter1 = object["flags"][0];
-        bool found_all = true;
-        while (iter1) {
-            bool found = false;
-            auto iter2 = expected["flags"][0];
-            while (iter2) {
-                if (compare(iter1, iter2)) {
-                    found = true;
-                }
-                iter2 = iter2.next();
-            }
-            if (!found) {
-                found_all = false;
-            }
-            iter1 = iter1.next();
-        }
-        EXPECT_TRUE(found_all);
-    }
+    EXPECT_TRUE(compare_map(object["flags"], expected["properties"]));
     object["flags"].erase();
     expected["flags"].erase();
 

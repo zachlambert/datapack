@@ -22,10 +22,7 @@ static std::size_t get_tokens_end(const std::vector<Token>& tokens, std::size_t 
         // All these tokens are preceded by another value
         // so skip to the next token, such that the loop doesn't exit
         // if the depth is still zero
-        if (std::get_if<token::Map>(&token)){
-            continue;
-        }
-        else if (std::get_if<token::List>(&token)){
+        if (std::get_if<token::List>(&token)){
             continue;
         }
         else if (std::get_if<token::Optional>(&token)){
@@ -70,7 +67,6 @@ static std::size_t get_tokens_end(const std::vector<Token>& tokens, std::size_t 
 void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
     enum class StateType {
         None,
-        Map,
         List,
         Array,
         Optional,
@@ -103,19 +99,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         }
 
         auto& state = states.top();
-        if (state.type == StateType::Map) {
-            std::string key;
-            if (!reader.map_next(key)) {
-                reader.map_end();
-                writer.map_end();
-                token_pos = state.value_tokens_end;
-                states.pop();
-                continue;
-            }
-            writer.map_next(key);
-            token_pos = state.value_tokens_begin;
-        }
-        else if (state.type == StateType::List) {
+        if (state.type == StateType::List) {
             if (!reader.list_next()) {
                 reader.list_end();
                 writer.list_end();
@@ -208,17 +192,6 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             continue;
         }
 
-        if (std::get_if<token::Map>(&token)) {
-            reader.map_begin();
-            writer.map_begin();
-            states.push(State(
-                StateType::Map,
-                token_pos,
-                get_tokens_end(schema.tokens, token_pos),
-                0
-            ));
-            continue;
-        }
         if (auto value = std::get_if<token::List>(&token)) {
             reader.list_begin(value->is_array);
             writer.list_begin(value->is_array);
@@ -318,8 +291,8 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         }
         else if (std::get_if<std::string>(&token)) {
             std::string value;
-            reader.value_string(value);
-            writer.value_string(value);
+            const char* string = reader.value_string();
+            writer.value_string(string);
         }
         else if (auto value = std::get_if<token::Enumerate>(&token)) {
             std::vector<const char*> labels_cstr;

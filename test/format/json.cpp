@@ -79,10 +79,16 @@ static const std::string entity_json = R"({
         2,
         -1
     ],
-    "properties": {
-        "agility": 5,
-        "strength": 10.5
-    },
+    "properties": [
+        [
+            "agility",
+            5
+        ],
+        [
+            "strength",
+            10.5
+        ]
+    ],
     "flags": [
         [
             2,

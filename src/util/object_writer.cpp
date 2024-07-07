@@ -37,8 +37,8 @@ void ObjectWriter::value_f64(double value) {
 }
 
 
-void ObjectWriter::value_string(const std::string& value) {
-    set_value(value);
+void ObjectWriter::value_string(const char* value) {
+    set_value(std::string(value));
 }
 
 void ObjectWriter::value_bool(bool value) {
@@ -46,7 +46,7 @@ void ObjectWriter::value_bool(bool value) {
 }
 
 
-void ObjectWriter::enumerate(int value, const std::vector<const char*>& labels) {
+void ObjectWriter::enumerate(int value, const std::span<const char*>& labels) {
     set_value(std::string(labels[value]));
 }
 
@@ -60,7 +60,7 @@ void ObjectWriter::optional_end() {
     // Do nothing
 }
 
-void ObjectWriter::variant_begin(const char* label, const std::vector<const char*>& labels) {
+void ObjectWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
     object_begin();
     object_next("type");
     value_string(label);
@@ -102,19 +102,6 @@ void ObjectWriter::tuple_end() {
 
 void ObjectWriter::tuple_next() {
     next_key = "";
-}
-
-
-void ObjectWriter::map_begin() {
-    set_value(Object::map_t());
-}
-
-void ObjectWriter::map_end() {
-    nodes.pop();
-}
-
-void ObjectWriter::map_next(const std::string& key) {
-    next_key = key;
 }
 
 

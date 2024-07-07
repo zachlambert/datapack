@@ -1,8 +1,9 @@
 #pragma once
 
-#include <vector>
+#include <span>
 #include <optional>
 #include <concepts>
+#include <vector>
 
 
 namespace datapack {
@@ -13,11 +14,11 @@ struct enum_labels {};
 template <typename T>
 concept labelled_enum = requires(const char* label, T& value) {
     std::is_enum_v<T>;
-    { enum_labels<T>::value } -> std::convertible_to<std::vector<const char*>>;
+    { enum_labels<T>::value } -> std::convertible_to<std::span<const char*>>;
 };
 
 template <labelled_enum T>
-const std::vector<const char*>& enum_labels_v() {
+std::span<const char*> enum_labels_v() {
     return enum_labels<T>::value;
 }
 

@@ -4,14 +4,15 @@
 
 namespace datapack {
 
-void BinaryReader::value_string(std::string& value) {
+const char* BinaryReader::value_string() {
     std::size_t max_len = data.size() - pos;
     std::size_t len = strnlen((char*)&data[pos], max_len);
     if (len == max_len) {
         error("Unterminated string");
     }
-    value = (char*)&data[pos];
+    const char* result = (char*)&data[pos];
     pos += (len + 1);
+    return result;
 }
 
 void BinaryReader::value_bool(bool& value) {
@@ -27,7 +28,7 @@ void BinaryReader::value_bool(bool& value) {
 }
 
 
-int BinaryReader::enumerate(const std::vector<const char*>& labels) {
+int BinaryReader::enumerate(const std::span<const char*>& labels) {
     int value;
     value_number(value);
     return value;
@@ -43,7 +44,7 @@ void BinaryReader::optional_end() {
     // Nothing required
 }
 
-void BinaryReader::variant_begin(const std::vector<const char*>& labels) {
+void BinaryReader::variant_begin(const std::span<const char*>& labels) {
     // Nothing required
 }
 
@@ -92,16 +93,6 @@ void BinaryReader::object_end() {
             binary_remaining -= size;
         }
     }
-}
-
-bool BinaryReader::map_next(std::string& key) {
-    bool has_next;
-    value_bool(has_next);
-    if (!has_next) {
-        return false;
-    }
-    value_string(key);
-    return true;
 }
 
 void BinaryReader::list_begin(bool is_array) {

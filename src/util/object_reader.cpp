@@ -49,12 +49,12 @@ void ObjectReader::value_f64(double& value) {
 }
 
 
-void ObjectReader::value_string(std::string& value) {
+const char* ObjectReader::value_string() {
     if (auto x = node.get_if<Object::str_t>()){
-        value = *x;
-        return;
+        return x->c_str();
     }
     error("Incorrect value type (string)");
+    return nullptr;
 }
 
 void ObjectReader::value_bool(bool& value) {
@@ -66,7 +66,7 @@ void ObjectReader::value_bool(bool& value) {
 }
 
 
-int ObjectReader::enumerate(const std::vector<const char*>& labels) {
+int ObjectReader::enumerate(const std::span<const char*>& labels) {
     auto x = node.get_if<Object::str_t>();
     if (!x) {
         error("Incorrect value type (enumerate)");
@@ -92,7 +92,7 @@ void ObjectReader::optional_end() {
     // Do nothing
 }
 
-void ObjectReader::variant_begin(const std::vector<const char*>& labels) {
+void ObjectReader::variant_begin(const std::span<const char*>& labels) {
     object_begin();
     object_next("type");
 }
@@ -180,38 +180,6 @@ void ObjectReader::tuple_next() {
     if (!node) {
         error("Tuple element missing");
     }
-}
-
-
-void ObjectReader::map_begin() {
-    if (!node.get_if<Object::map_t>()) {
-        error("Incorrect value type");
-    }
-    list_start = true;
-    nodes.push(node);
-    node = node.child();
-}
-
-void ObjectReader::map_end() {
-    list_start = false;
-    node = nodes.top();
-    nodes.pop();
-}
-
-bool ObjectReader::map_next(std::string& key) {
-    if (!list_start) {
-        node = node.next();
-    }
-    list_start = false;
-    if (!node) {
-        return false;
-    }
-
-    if (node.key().empty()) {
-        error("Empty map key");
-    }
-    key = node.key();
-    return true;
 }
 
 

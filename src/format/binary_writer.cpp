@@ -3,11 +3,11 @@
 
 namespace datapack {
 
-void BinaryWriter::value_string(const std::string& value) {
-    std::size_t size = value.size() + 1;
+void BinaryWriter::value_string(const char* value) {
+    std::size_t size = std::strlen(value) + 1;
     std::size_t pos = data.size();
     data.resize(data.size() + size);
-    strncpy((char*)&data[pos], value.c_str(), size);
+    strncpy((char*)&data[pos], value, size);
 }
 
 void BinaryWriter::value_bool(bool value) {
@@ -15,7 +15,7 @@ void BinaryWriter::value_bool(bool value) {
 }
 
 
-void BinaryWriter::enumerate(int value, const std::vector<const char*>& labels) {
+void BinaryWriter::enumerate(int value, const std::span<const char*>& labels) {
     value_number(value);
 }
 
@@ -27,7 +27,7 @@ void BinaryWriter::optional_end() {
     // Nothing required
 }
 
-void BinaryWriter::variant_begin(const char* label, const std::vector<const char*>& labels) {
+void BinaryWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
     value_string(label);
 }
 
@@ -59,20 +59,6 @@ void BinaryWriter::object_end() {
         }
     }
 }
-
-void BinaryWriter::map_begin() {
-
-}
-
-void BinaryWriter::map_end() {
-    value_bool(false);
-}
-
-void BinaryWriter::map_next(const std::string& key) {
-    value_bool(true);
-    value_string(key);
-}
-
 
 void BinaryWriter::list_begin(bool is_array) {
     if (is_array_) {

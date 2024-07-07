@@ -2,15 +2,15 @@
 
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
-#include "datapack/types.hpp"
 #include <cstring>
+#include <vector>
 
 
 namespace datapack {
 
 class BinaryWriter : public Writer {
 public:
-    BinaryWriter(vector_t<std::uint8_t>& data, bool use_binary_arrays=true):
+    BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary_arrays=true):
         Writer(use_binary_arrays),
         data(data),
         is_array_(false),
@@ -27,13 +27,13 @@ public:
     void value_f32(float value) override { value_number(value); }
     void value_f64(double value) override { value_number(value); }
 
-    void value_string(const string_t&) override;
+    void value_string(const char* value) override;
     void value_bool(bool value) override;
 
-    void enumerate(int value, const vector_t<const char*>& labels) override;
+    void enumerate(int value, const std::span<const char*>& labels) override;
     void optional_begin(bool has_value) override;
     void optional_end() override;
-    void variant_begin(const char* label, const vector_t<const char*>& labels) override;
+    void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override {}
 
     void binary_data(const std::uint8_t* data, std::size_t size) override;
@@ -45,10 +45,6 @@ public:
     void tuple_begin() override { object_begin(); }
     void tuple_end() override { object_end(); }
     void tuple_next() override {}
-
-    void map_begin() override;
-    void map_end() override;
-    void map_next(const string_t& key) override;
 
     void list_begin(bool is_array) override;
     void list_end() override;
@@ -74,7 +70,7 @@ private:
         *((T*)&data[pos]) = value;
     }
 
-    vector_t<std::uint8_t>& data;
+    std::vector<std::uint8_t>& data;
 
     struct BinaryBlock {
         const std::size_t start;
@@ -86,13 +82,13 @@ private:
     };
     bool is_array_;
     std::size_t binary_size;
-    vector_t<BinaryBlock> binary_blocks;
+    std::vector<BinaryBlock> binary_blocks;
 };
 
 
 template <writeable T>
-vector_t<std::uint8_t> write_binary(const T& value) {
-    vector_t<std::uint8_t> data;
+std::vector<std::uint8_t> write_binary(const T& value) {
+    std::vector<std::uint8_t> data;
     BinaryWriter(data).value(value);
     return data;
 }

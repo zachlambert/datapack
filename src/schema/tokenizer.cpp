@@ -36,8 +36,9 @@ void Tokenizer::value_f64(double& value) {
 }
 
 
-void Tokenizer::value_string(std::string& value) {
-    tokens.push_back(value);
+const char* Tokenizer::value_string() {
+    tokens.push_back(std::string());
+    return nullptr;
 }
 
 void Tokenizer::value_bool(bool& value) {
@@ -45,7 +46,7 @@ void Tokenizer::value_bool(bool& value) {
 }
 
 
-int Tokenizer::enumerate(const std::vector<const char*>& labels) {
+int Tokenizer::enumerate(const std::span<const char*>& labels) {
     tokens.push_back(token::Enumerate(labels));
     return 0;
 }
@@ -59,7 +60,7 @@ void Tokenizer::optional_end() {
     // Nothing required
 }
 
-void Tokenizer::variant_begin(const std::vector<const char*>& labels) {
+void Tokenizer::variant_begin(const std::span<const char*>& labels) {
     tokens.push_back(token::VariantBegin(labels));
 }
 
@@ -101,24 +102,6 @@ void Tokenizer::tuple_end() {
 
 void Tokenizer::tuple_next() {
     tokens.push_back(token::TupleNext());
-}
-
-
-void Tokenizer::map_begin() {
-    tokens.push_back(token::Map());
-    first_element = true;
-}
-
-void Tokenizer::map_end() {
-    // Do nothing
-}
-
-bool Tokenizer::map_next(std::string& key) {
-    if (first_element) {
-        first_element = false;
-        return true;
-    }
-    return false;
 }
 
 

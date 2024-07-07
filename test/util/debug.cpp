@@ -82,9 +82,15 @@ TEST(Util, Debug) {
         2,
         -1,
     },
-    properties: (map) {
-        agility: 5,
-        strength: 10.5,
+    properties: (list) {
+        (tuple) {
+            agility,
+            5,
+        },
+        (tuple) {
+            strength,
+            10.5,
+        },
     },
     flags: (list) {
         (tuple) {

@@ -3,6 +3,7 @@
 
 #include "datapack/datapack.hpp"
 #include "datapack/labelled_variant.hpp"
+#include <vector>
 
 
 namespace datapack {
@@ -15,7 +16,7 @@ struct Enumerate {
     std::vector<std::string> labels;
     Enumerate() {}
     Enumerate(const std::vector<std::string>& labels): labels(labels) {}
-    Enumerate(const std::vector<const char*>& labels) {
+    Enumerate(const std::span<const char*>& labels) {
         for (const char* str: labels) {
             this->labels.push_back(std::string(str));
         }
@@ -25,7 +26,7 @@ struct VariantBegin {
     std::vector<std::string> labels;
     VariantBegin() {}
     VariantBegin(const std::vector<std::string>& labels): labels(labels) {}
-    VariantBegin(const std::vector<const char*>& labels) {
+    VariantBegin(const std::span<const char*>& labels) {
         for (const char* str: labels) {
             this->labels.push_back(std::string(str));
         }
@@ -51,8 +52,6 @@ struct ObjectNext {
 struct TupleBegin {};
 struct TupleEnd {};
 struct TupleNext {};
-
-struct Map {};
 
 struct List {
     bool is_array;
@@ -84,7 +83,6 @@ using Token = std::variant<
     token::TupleBegin,
     token::TupleEnd,
     token::TupleNext,
-    token::Map,
     token::List
 >;
 
@@ -103,7 +101,6 @@ DATAPACK_EMPTY(token::ObjectEnd)
 DATAPACK_EMPTY(token::TupleBegin)
 DATAPACK_EMPTY(token::TupleEnd)
 DATAPACK_EMPTY(token::TupleNext)
-DATAPACK_EMPTY(token::Map)
 
 bool operator==(const Token& lhs, const Token& rhs);
 

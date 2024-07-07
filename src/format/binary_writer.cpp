@@ -5,13 +5,19 @@ namespace datapack {
 
 void BinaryWriter::value_string(const char* value) {
     std::size_t size = std::strlen(value) + 1;
-    std::size_t pos = data.size();
-    data.resize(data.size() + size);
+    if (!resize(pos + size)) {
+        return;
+    }
     strncpy((char*)&data[pos], value, size);
+    pos += size;
 }
 
 void BinaryWriter::value_bool(bool value) {
-    data.push_back(value ? 0x01 : 0x00);
+    if (!resize(pos + 1)) {
+        return;
+    }
+    data[pos] = (value ? 0x01 : 0x00);
+    pos++;
 }
 
 
@@ -33,24 +39,30 @@ void BinaryWriter::variant_begin(const char* label, const std::span<const char*>
 
 void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t size) {
     value_number(std::uint64_t(size));
-    std::size_t pos = data.size();
-    data.resize(pos + size);
+    if (!resize(pos + size)) {
+        return;
+    }
     std::memcpy(&data[pos], input_data, size);
+    pos += size;
 }
 
 void BinaryWriter::object_begin() {
     if (is_array_) {
-        binary_blocks.push_back(BinaryBlock(data.size()));
+        binary_blocks.push_back(BinaryBlock(pos));
     }
 }
 
 void BinaryWriter::object_end() {
     if (is_array_) {
         const auto& top = binary_blocks.back();
-        while ((data.size() - top.start) % top.padding != 0) {
-            data.push_back(0x00);
+        while ((pos - top.start) % top.padding != 0) {
+            if (!resize(pos + 1)) {
+                return;
+            }
+            data[pos] = 0x00;
+            pos++;
         }
-        std::size_t size = data.size() - top.start;
+        std::size_t size = pos - top.start;
         binary_blocks.pop_back();
         if (!binary_blocks.empty()) {
             binary_blocks.back().padding = std::max(binary_blocks.back().padding, size);
@@ -79,7 +91,7 @@ void BinaryWriter::list_end() {
             return;
         }
         is_array_ = false;
-        std::size_t start = data.size() - binary_size - sizeof(std::uint64_t);
+        std::size_t start = pos - binary_size - sizeof(std::uint64_t);
         *((std::uint64_t*)&data[start]) = binary_size;
         return;
     }

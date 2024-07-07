@@ -8,7 +8,7 @@ namespace datapack {
 
 class BinaryReader : public Reader {
 public:
-    BinaryReader(const std::vector<std::uint8_t>& data, bool use_binary_arrays=true):
+    BinaryReader(std::span<const std::uint8_t> data, bool use_binary_arrays=true):
         Reader(use_binary_arrays, true, false),
         data(data),
         pos(0),
@@ -75,7 +75,7 @@ private:
         pos += sizeof(T);
     }
 
-    const std::vector<std::uint8_t>& data;
+    std::span<const std::uint8_t> data;
     std::size_t pos;
 
     struct BinaryBlock {

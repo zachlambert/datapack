@@ -8,16 +8,24 @@
 
 namespace datapack {
 
+
 class BinaryWriter : public Writer {
 public:
     BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary_arrays=true):
         Writer(use_binary_arrays),
-        data(data),
-        is_array_(false),
-        binary_size(0)
-    {
-        data.clear();
-    }
+        data_variable(&data),
+        data(nullptr),
+        pos(0),
+        is_array_(false)
+    {}
+    BinaryWriter(std::span<std::uint8_t> data, bool use_binary_arrays=true):
+        Writer(use_binary_arrays),
+        data_variable(nullptr),
+        data_fixed(data),
+        data(data.data()),
+        pos(0),
+        is_array_(false)
+    {}
 
     void value_i32(std::int32_t value) override { value_number(value); }
     void value_i64(std::int64_t value) override { value_number(value); }
@@ -51,26 +59,45 @@ public:
     void list_next() override;
 
 private:
+    bool resize(std::size_t new_size) {
+        if (data_variable) {
+            data_variable->resize(new_size);
+            data = data_variable->data();
+            return true;
+        } else {
+            return new_size <= data_fixed.size();
+        }
+    }
+
     template <typename T>
     void value_number(T value) {
         if (is_array_) {
             if (!binary_blocks.empty()) {
                 auto& top = binary_blocks.back();
                 top.padding = std::max(top.padding, sizeof(T));
-                while ((data.size() - top.start) % sizeof(T) != 0) {
-                    data.push_back(0x00);
+                while ((pos - top.start) % sizeof(T) != 0) {
+                    if (!resize(pos + 1)) {
+                        return;
+                    }
+                    data[pos] = 0x00;
+                    pos++;
                 }
             } else {
                 binary_size += sizeof(T);
             }
         }
 
-        std::size_t pos = data.size();
-        data.resize(data.size() + sizeof(T));
+        if (!resize(pos + sizeof(T))) {
+            return;
+        }
         *((T*)&data[pos]) = value;
+        pos += sizeof(T);
     }
 
-    std::vector<std::uint8_t>& data;
+    std::vector<std::uint8_t>* data_variable;
+    std::span<std::uint8_t> data_fixed;
+    std::uint8_t* data;
+    std::size_t pos;
 
     struct BinaryBlock {
         const std::size_t start;
@@ -91,6 +118,11 @@ std::vector<std::uint8_t> write_binary(const T& value) {
     std::vector<std::uint8_t> data;
     BinaryWriter(data).value(value);
     return data;
+}
+
+template <writeable T>
+void write_binary(const T& value, std::span<std::uint8_t> data) {
+    BinaryWriter(data).value(value);
 }
 
 } // namespace datapack

@@ -3,6 +3,9 @@
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
 
+template <typename V>
+concept is_visitor = std::is_same_v<V, datapack::Reader> | std::is_same_v<V, datapack::Writer>;
+
 #define DATAPACK(T) \
 template <typename V> \
 void visit(V& visitor, T& value); \

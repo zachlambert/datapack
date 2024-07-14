@@ -14,7 +14,7 @@ endif()
 # Library
 
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
-    add_library(datapack ${LIB_TYPE}
+    add_library(datapack SHARED
         src/util/debug.cpp
         src/util/random.cpp
 

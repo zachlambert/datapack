@@ -8,12 +8,13 @@ namespace datapack {
 
 class BinaryReader : public Reader {
 public:
-    BinaryReader(const std::span<const std::uint8_t>& data, bool use_binary_arrays=true):
-        Reader(use_binary_arrays, true, false),
+    BinaryReader(const std::span<const std::uint8_t>& data, bool trivial_as_binary=true):
+        Reader(trivial_as_binary, true, false),
         data(data),
         pos(0),
-        is_array_(false),
-        binary_remaining(0)
+        binary_depth(0),
+        binary_start(0),
+        binary_end(0)
     {}
 
     void value_i32(std::int32_t& value) override { value_number(value); }
@@ -35,6 +36,8 @@ public:
     void variant_end() override {}
 
     std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
+    void trivial_begin(std::size_t size) override;
+    void trivial_end(std::size_t size) override;
 
     void object_begin() override;
     void object_end() override;
@@ -48,47 +51,35 @@ public:
     }
     void tuple_next() override {}
 
-    void list_begin(bool is_array) override;
+    void list_begin() override;
     void list_end() override;
     bool list_next() override;
 
 private:
+    void pad(std::size_t size) {
+        if ((pos-binary_start) % size != 0) {
+            pos += (size - (pos-binary_start) % size);
+        }
+    }
     template <typename T>
     void value_number(T& value) {
-        if (is_array_) {
-            if (!binary_blocks.empty()) {
-                auto& top = binary_blocks.back();
-                top.padding = std::max(top.padding, sizeof(T));
-                while ((pos - top.start) % sizeof(T) != 0) {
-                    pos++;
-                }
-            } else {
-                binary_remaining -= sizeof(T);
-            }
+        if (binary_depth > 0) {
+            pad(sizeof(T));
         }
-
         if (pos + sizeof(T) > data.size()) {
-            // error("Input data is too short");
+            set_error("Input data is too short");
             return;
         }
+
         value = *((T*)&data[pos]);
         pos += sizeof(T);
     }
 
     std::span<const std::uint8_t> data;
     std::size_t pos;
-
-    struct BinaryBlock {
-        const std::size_t start;
-        std::size_t padding;
-        BinaryBlock(std::size_t start):
-            start(start),
-            padding(0)
-        {}
-    };
-    bool is_array_;
-    std::int64_t binary_remaining;
-    std::vector<BinaryBlock> binary_blocks;
+    std::size_t binary_depth;
+    std::int64_t binary_start;
+    std::int64_t binary_end;
 };
 
 template <readable T>

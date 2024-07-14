@@ -8,7 +8,7 @@ const char* BinaryReader::value_string() {
     std::size_t max_len = data.size() - pos;
     std::size_t len = strnlen((char*)&data[pos], max_len);
     if (len == max_len) {
-        error("Unterminated string");
+        set_error("Unterminated string");
     }
     const char* result = (char*)&data[pos];
     pos += (len + 1);
@@ -17,12 +17,12 @@ const char* BinaryReader::value_string() {
 
 void BinaryReader::value_bool(bool& value) {
     if (pos + 1 > data.size()) {
-        error("Input data too short");
+        set_error("Input data too short");
     }
     std::uint8_t byte = data[pos];
     pos++;
     if (byte >= 0x02) {
-        error("Unexpected byte for bool");
+        set_error("Unexpected byte for bool");
     }
     value = (byte == 0x01);
 }
@@ -53,7 +53,7 @@ bool BinaryReader::variant_match(const char* label) {
     std::size_t max_len = data.size() - pos;
     std::size_t len = strnlen((char*)&data[pos], max_len);
     if (len == max_len) {
-        error("Unterminated string");
+        set_error("Unterminated string");
     }
     if (strncmp(label, label_value, max_len) == 0) {
         pos += (len + 1);
@@ -66,67 +66,56 @@ std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
     std::size_t size = 0;
     value_number(size);
     if (pos + size > data.size()) {
-        error("Input data is too short");
+        set_error("Input data is too short");
     }
     const std::uint8_t* output_data = &data[pos];
     pos += size;
     return std::make_tuple(output_data, size);
 }
 
-void BinaryReader::object_begin() {
-    if (is_array_) {
-        binary_blocks.push_back(BinaryBlock(pos));
+void BinaryReader::trivial_begin(std::size_t size) {
+    if (binary_depth == 0) {
+        std::uint64_t binary_size = 0; // = 0 to avoid compiler warnings
+        value_number<std::uint64_t>(binary_size);
+        binary_start = pos;
+        binary_end = binary_start + binary_size;
     }
+
+    pad(size);
+    binary_depth++;
+}
+
+void BinaryReader::trivial_end(std::size_t size) {
+    pad(size);
+    binary_depth--;
+    if (binary_depth == 0 && pos != binary_end) {
+        set_error("Didn't reach end of trivial as binary");
+    }
+}
+
+void BinaryReader::object_begin() {
+    // Do nothing
 }
 
 void BinaryReader::object_end() {
-    if (is_array_) {
-        const auto& top = binary_blocks.back();
-        while ((pos - top.start) % top.padding != 0) {
-            pos++;
-        }
-        std::size_t size = pos - top.start;
-        binary_blocks.pop_back();
-        if (!binary_blocks.empty()) {
-            binary_blocks.back().padding = std::max(binary_blocks.back().padding, size);
-        } else {
-            binary_remaining -= size;
-        }
-    }
+    // Do nothing
 }
 
-void BinaryReader::list_begin(bool is_array) {
-    if (is_array_) {
-        object_begin();
-        return;
-    }
-    if (is_array) {
-        std::uint64_t size = 0;
-        value_number<std::uint64_t>(size);
-        is_array_ = true;
-        binary_remaining = size;
-    }
+void BinaryReader::list_begin() {
+    // Do nothing
 }
 
 void BinaryReader::list_end() {
-    if (is_array_) {
-        if (!binary_blocks.empty()) {
-            object_end();
-        } else {
-            is_array_ = false;
-        }
-    }
+    // Do nothing
 }
 
 bool BinaryReader::list_next() {
-    if (is_array_) {
-        if (!binary_blocks.empty()) {
-            // If here, then the caller is responsible for calling list_next()
-            // the correct number of times, unless a Reader returns true
-            // to stop early.
-            return true;
+    if (binary_depth > 0) {
+        if (binary_depth > 1) {
+            set_error("Cannot have a list inside a trivial object");
+            return false;
         }
-        return binary_remaining > 0;
+        return pos != binary_end;
     }
     bool has_next;
     value_bool(has_next);

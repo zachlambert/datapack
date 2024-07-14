@@ -79,6 +79,14 @@ std::tuple<const std::uint8_t*, std::size_t> Tokenizer::binary_data() {
     return std::make_tuple(nullptr, 0);
 }
 
+void Tokenizer::trivial_begin(std::size_t size) {
+    tokens.push_back(token::TrivialBegin(size));
+}
+
+void Tokenizer::trivial_end(std::size_t size) {
+    tokens.push_back(token::TrivialEnd(size));
+}
+
 void Tokenizer::object_begin() {
     tokens.push_back(token::ObjectBegin());
 }
@@ -105,8 +113,8 @@ void Tokenizer::tuple_next() {
 }
 
 
-void Tokenizer::list_begin(bool is_array) {
-    tokens.push_back(token::List(is_array));
+void Tokenizer::list_begin() {
+    tokens.push_back(token::List());
     first_element = true;
 }
 

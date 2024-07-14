@@ -31,6 +31,8 @@ public:
     void variant_end() override;
 
     std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
+    void trivial_begin(std::size_t size) override;
+    void trivial_end(std::size_t size) override;
 
     void object_begin() override;
     void object_end() override;
@@ -43,7 +45,7 @@ public:
 
     void tuple_next() override;
 
-    void list_begin(bool is_array) override;
+    void list_begin() override;
     void list_end() override;
     bool list_next() override;
 

@@ -40,6 +40,16 @@ struct VariantNext {
 };
 
 struct BinaryData {};
+struct TrivialBegin {
+    std::size_t size;
+    TrivialBegin(): size(0) {}
+    TrivialBegin(std::size_t size): size(size) {}
+};
+struct TrivialEnd {
+    std::size_t size;
+    TrivialEnd(): size(0) {}
+    TrivialEnd(std::size_t size): size(size) {}
+};
 
 struct ObjectBegin {};
 struct ObjectEnd {};
@@ -53,12 +63,7 @@ struct TupleBegin {};
 struct TupleEnd {};
 struct TupleNext {};
 
-struct List {
-    bool is_array;
-    List(bool is_array = false):
-        is_array(is_array)
-    {}
-};
+struct List {};
 
 } // namespace dtoken
 
@@ -77,6 +82,8 @@ using Token = std::variant<
     token::VariantEnd,
     token::VariantNext,
     token::BinaryData,
+    token::TrivialBegin,
+    token::TrivialEnd,
     token::ObjectBegin,
     token::ObjectEnd,
     token::ObjectNext,
@@ -90,9 +97,11 @@ DATAPACK(token::Enumerate)
 DATAPACK(token::VariantBegin)
 DATAPACK(token::VariantNext)
 DATAPACK(token::ObjectNext)
-DATAPACK(token::List)
+DATAPACK(token::TrivialBegin)
+DATAPACK(token::TrivialEnd)
 DATAPACK_LABELLED_VARIANT(Token)
 
+DATAPACK_EMPTY(token::List)
 DATAPACK_EMPTY(token::Optional)
 DATAPACK_EMPTY(token::VariantEnd)
 DATAPACK_EMPTY(token::BinaryData)

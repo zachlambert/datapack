@@ -105,7 +105,7 @@ void ObjectWriter::tuple_next() {
 }
 
 
-void ObjectWriter::list_begin(bool is_array) {
+void ObjectWriter::list_begin() {
     set_value(Object::list_t());
 }
 

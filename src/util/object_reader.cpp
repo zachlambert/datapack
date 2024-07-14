@@ -13,25 +13,25 @@ ObjectReader::ObjectReader(ConstObject object):
 
 void ObjectReader::value_i32(std::int32_t& value) {
     if (!value_obj_int(value)) {
-        error("Incorrect value type (i32)");
+        set_error("Incorrect value type (i32)");
     }
 }
 
 void ObjectReader::value_i64(std::int64_t& value) {
     if (!value_obj_int(value)) {
-        error("Incorrect value type (i64)");
+        set_error("Incorrect value type (i64)");
     }
 }
 
 void ObjectReader::value_u32(std::uint32_t& value) {
     if (!value_obj_int(value)) {
-        error("Incorrect value type (u32)");
+        set_error("Incorrect value type (u32)");
     }
 }
 
 void ObjectReader::value_u64(std::uint64_t& value) {
     if (!value_obj_int(value)) {
-        error("Incorrect value type (u64)");
+        set_error("Incorrect value type (u64)");
     }
 }
 
@@ -39,13 +39,13 @@ void ObjectReader::value_u64(std::uint64_t& value) {
 void ObjectReader::value_f32(float& value) {
     if (value_obj_float(value)) return;
     if (value_obj_int(value)) return;
-    error("Incorrect value type (f32)");
+    set_error("Incorrect value type (f32)");
 }
 
 void ObjectReader::value_f64(double& value) {
     if (value_obj_float(value)) return;
     if (value_obj_int(value)) return;
-    error("Incorrect value type (f64)");
+    set_error("Incorrect value type (f64)");
 }
 
 
@@ -53,7 +53,7 @@ const char* ObjectReader::value_string() {
     if (auto x = node.get_if<Object::str_t>()){
         return x->c_str();
     }
-    error("Incorrect value type (string)");
+    set_error("Incorrect value type (string)");
     return nullptr;
 }
 
@@ -62,14 +62,14 @@ void ObjectReader::value_bool(bool& value) {
         value = *x;
         return;
     }
-    error("Incorrect value type (bool)");
+    set_error("Incorrect value type (bool)");
 }
 
 
 int ObjectReader::enumerate(const std::span<const char*>& labels) {
     auto x = node.get_if<Object::str_t>();
     if (!x) {
-        error("Incorrect value type (enumerate)");
+        set_error("Incorrect value type (enumerate)");
         return 0;
     }
     for (int i = 0; i < labels.size(); i++) {
@@ -77,7 +77,7 @@ int ObjectReader::enumerate(const std::span<const char*>& labels) {
             return i;
         }
     }
-    error("Unknown enum label");
+    set_error("Unknown enum label");
     return 0;
 }
 
@@ -105,7 +105,7 @@ bool ObjectReader::variant_match(const char* label) {
         }
         return false;
     }
-    error("Incorrect data type");
+    set_error("Incorrect data type");
     return false;
 }
 
@@ -121,13 +121,13 @@ std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data() {
         data_temp = base64_decode(*x);
         return std::make_tuple(data_temp.data(), data_temp.size());
     }
-    error("Incorrect value type (binary)");
+    set_error("Incorrect value type (binary)");
     return std::make_tuple(nullptr, 0);
 }
 
 void ObjectReader::object_begin() {
     if (!node.get_if<Object::map_t>()) {
-        error("Incorrect value type");
+        set_error("Incorrect value type");
     }
     nodes.push(node);
     node = node.child();
@@ -141,16 +141,16 @@ void ObjectReader::object_end() {
 void ObjectReader::object_next(const char* key) {
     auto parent = node.parent();
     if (!parent) {
-        error("Not in a map");
+        set_error("Not in a map");
         return;
     }
     if (!parent.get_if<Object::map_t>()) {
-        error("Not in a map");
+        set_error("Not in a map");
         return;
     }
     auto next = parent[std::string(key)];
     if (!next) {
-        error("Key not found");
+        set_error("Key not found");
         return;
     }
     node = next;
@@ -159,7 +159,7 @@ void ObjectReader::object_next(const char* key) {
 
 void ObjectReader::tuple_begin() {
     if (!node.get_if<Object::list_t>()) {
-        error("Incorrect value type");
+        set_error("Incorrect value type");
     }
     list_start = true;
     nodes.push(node);
@@ -178,14 +178,14 @@ void ObjectReader::tuple_next() {
     }
     list_start = false;
     if (!node) {
-        error("Tuple element missing");
+        set_error("Tuple element missing");
     }
 }
 
 
-void ObjectReader::list_begin(bool is_array) {
+void ObjectReader::list_begin() {
     if (!node.get_if<Object::list_t>()) {
-        error("Incorrect value type");
+        set_error("Incorrect value type");
     }
     list_start = true;
     nodes.push(node);

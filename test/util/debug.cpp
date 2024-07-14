@@ -36,7 +36,7 @@ TEST(Util, Debug) {
     sprite: (object) {
         width: 2,
         height: 2,
-        data: (list, binary) {
+        data: (list) {
             (object) {
                 r: 0.25,
                 g: 0.25,
@@ -77,7 +77,7 @@ TEST(Util, Debug) {
             name: gold,
         },
     },
-    assigned_items: (list, binary) {
+    assigned_items: (tuple) {
         1,
         2,
         -1,

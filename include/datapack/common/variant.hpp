@@ -10,7 +10,7 @@ namespace datapack {
 template <labelled_variant T>
 void match_variant_next(Reader& reader, T& value, std::size_t index) {
     if (!reader.is_exhaustive()) {
-        reader.error("No matching variant");
+        reader.set_error("No matching variant");
     }
 }
 

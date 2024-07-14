@@ -30,28 +30,36 @@ DATAPACK_IMPL(token::VariantNext)
 template <typename Visitor>
 void visit(Visitor& visitor, datapack::token::ObjectNext& value) {
     visitor.object_begin();
-    visitor.value("type", value.key);
+    visitor.value("key", value.key);
     visitor.object_end();
 }
 DATAPACK_IMPL(token::ObjectNext)
 
 template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::List& value) {
+void visit(Visitor& visitor, datapack::token::TrivialBegin& value) {
     visitor.object_begin();
-    visitor.value("is_array", value.is_array);
+    visitor.value("size", value.size);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::List)
+DATAPACK_IMPL(token::TrivialBegin)
+
+template <typename Visitor>
+void visit(Visitor& visitor, datapack::token::TrivialEnd& value) {
+    visitor.object_begin();
+    visitor.value("size", value.size);
+    visitor.object_end();
+}
+DATAPACK_IMPL(token::TrivialEnd)
 
 std::vector<const char*> variant_labels<Token>::value = {
     "i32", "i64", "u32", "u64", "f32", "f64",
     "string", "boolean",
     "optional", "enumerate",
     "variant_begin", "variant_end", "variant_next",
-    "binary_data",
+    "binary_data", "trivial_begin", "trivial_end",
     "object_begin", "object_end", "object_next",
     "tuple_begin", "tuple_end", "tuple_next",
-    "map", "list"
+    "list"
 };
 
 bool operator==(const Token& lhs, const Token& rhs) {
@@ -73,9 +81,13 @@ bool operator==(const Token& lhs, const Token& rhs) {
         auto rhs_value = std::get_if<token::ObjectNext>(&rhs);
         return lhs_value->key == rhs_value->key;
     }
-    if (auto lhs_value = std::get_if<token::List>(&lhs)) {
-        auto rhs_value = std::get_if<token::List>(&rhs);
-        return lhs_value->is_array == rhs_value->is_array;
+    if (auto lhs_value = std::get_if<token::TrivialBegin>(&lhs)) {
+        auto rhs_value = std::get_if<token::TrivialBegin>(&rhs);
+        return lhs_value->size == rhs_value->size;
+    }
+    if (auto lhs_value = std::get_if<token::TrivialEnd>(&lhs)) {
+        auto rhs_value = std::get_if<token::TrivialEnd>(&rhs);
+        return lhs_value->size == rhs_value->size;
     }
 
     return true;

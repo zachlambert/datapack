@@ -4,11 +4,9 @@
 #include <type_traits>
 #include <tuple>
 #include <span>
+#include <optional>
+#include <string>
 #include "datapack/constraint.hpp"
-
-#ifndef EMBEDDED
-#include <stdexcept>
-#endif
 
 
 namespace datapack {
@@ -30,29 +28,13 @@ inline void read(Reader& reader, T& value) {
     value.read(reader);
 }
 
-#ifndef EMBEDDED
-class ReadException: public std::exception {
-public:
-    ReadException(const std::string& message):
-        message(message)
-    {}
-
-private:
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-    std::string message;
-};
-#endif
-
 class Reader {
 public:
-    Reader(bool use_binary_arrays=false, bool use_constraints=true, bool is_exhaustive=false):
-        use_binary_arrays_(use_binary_arrays),
+    Reader(bool trivial_as_binary=false, bool use_constraints=true, bool is_exhaustive=false):
+        trivial_as_binary_(trivial_as_binary),
         use_constraints(use_constraints),
         is_exhaustive_(is_exhaustive),
-        constraint_(nullptr),
-        has_error_(false)
+        constraint_(nullptr)
     {}
 
     template <readable T>
@@ -75,7 +57,7 @@ public:
         this->value(value);
         if (use_constraints) {
             if (!validate(value, constraint)) {
-                error("Constraint failed");
+                set_error("Constraint failed");
             }
             constraint_ = nullptr;
         }
@@ -109,6 +91,8 @@ public:
     virtual void variant_end() = 0;
 
     virtual std::tuple<const std::uint8_t*, std::size_t> binary_data() = 0;
+    virtual void trivial_begin(std::size_t size) {}
+    virtual void trivial_end(std::size_t size) {}
 
     virtual void object_begin() = 0;
     virtual void object_end() = 0;
@@ -118,22 +102,19 @@ public:
     virtual void tuple_end() = 0;
     virtual void tuple_next() = 0;
 
-    virtual void list_begin(bool is_array = false) = 0;
+    virtual void list_begin() = 0;
     virtual void list_end() = 0;
     virtual bool list_next() = 0;
 
-    void error(const char* error) {
-        has_error_ = true;
-#ifndef EMBEDDED
-        throw ReadException(error);
-#endif
+    void set_error(const char* error) {
+        error_ = std::string(error);
     }
-    bool has_error() const {
-        return has_error_;
+    const std::optional<std::string>& error() {
+        return error_;
     }
 
-    bool use_binary_arrays() const {
-        return use_binary_arrays_;
+    bool trivial_as_binary() const {
+        return trivial_as_binary_;
     }
 
     bool is_exhaustive() const {
@@ -146,11 +127,12 @@ public:
     }
 
 private:
-    const bool use_binary_arrays_;
+    const bool trivial_as_binary_;
     const bool use_constraints;
     const bool is_exhaustive_;
     const ConstraintBase* constraint_;
-    bool has_error_;
+
+    std::optional<std::string> error_;
 };
 
 } // namespace datapack

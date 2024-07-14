@@ -48,8 +48,8 @@ private:
 
 class Writer {
 public:
-    Writer(bool use_binary_arrays = false):
-        use_binary_arrays_(use_binary_arrays)
+    Writer(bool trivial_as_binary = false):
+        trivial_as_binary_(trivial_as_binary)
     {}
 
     template <writeable T>
@@ -96,6 +96,8 @@ public:
     virtual void variant_end() = 0;
 
     virtual void binary_data(const std::uint8_t* data, std::size_t size) = 0;
+    virtual void trivial_begin(std::size_t size) {}
+    virtual void trivial_end(std::size_t size) {}
 
     virtual void object_begin() = 0;
     virtual void object_end() = 0;
@@ -105,16 +107,16 @@ public:
     virtual void tuple_end() = 0;
     virtual void tuple_next() = 0;
 
-    virtual void list_begin(bool is_array = false) = 0;
+    virtual void list_begin() = 0;
     virtual void list_end() = 0;
     virtual void list_next() = 0;
 
-    bool use_binary_arrays() const {
-        return use_binary_arrays_;
+    bool trivial_as_binary() const {
+        return trivial_as_binary_;
     }
 
 private:
-    const bool use_binary_arrays_;
+    const bool trivial_as_binary_;
 };
 
 } // namespace datapack

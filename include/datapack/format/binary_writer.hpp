@@ -11,20 +11,22 @@ namespace datapack {
 
 class BinaryWriter : public Writer {
 public:
-    BinaryWriter(std::vector<std::uint8_t>& data, bool use_binary_arrays=true):
-        Writer(use_binary_arrays),
+    BinaryWriter(std::vector<std::uint8_t>& data, bool trivial_as_binary=true):
+        Writer(trivial_as_binary),
         data_variable(&data),
         data(nullptr),
         pos(0),
-        is_array_(false)
+        binary_depth(false),
+        binary_start(0)
     {}
-    BinaryWriter(std::span<std::uint8_t> data, bool use_binary_arrays=true):
-        Writer(use_binary_arrays),
+    BinaryWriter(std::span<std::uint8_t> data, bool trivial_as_binary=true):
+        Writer(trivial_as_binary),
         data_variable(nullptr),
         data_fixed(data),
         data(data.data()),
         pos(0),
-        is_array_(false)
+        binary_depth(false),
+        binary_start(0)
     {}
 
     void value_i32(std::int32_t value) override { value_number(value); }
@@ -45,6 +47,8 @@ public:
     void variant_end() override {}
 
     void binary_data(const std::uint8_t* data, std::size_t size) override;
+    void trivial_begin(std::size_t size) override;
+    void trivial_end(std::size_t size) override;
 
     void object_begin() override;
     void object_end() override;
@@ -54,11 +58,21 @@ public:
     void tuple_end() override { object_end(); }
     void tuple_next() override {}
 
-    void list_begin(bool is_array) override;
+    void list_begin() override;
     void list_end() override;
     void list_next() override;
 
 private:
+    bool pad(std::size_t size) {
+        if ((pos-binary_start) % size != 0) {
+            printf("pos %zu, size %zu, bin start %zu, remainder %zu\n", pos, size, binary_start, (pos-binary_start) % size);
+            pos += (size - (pos-binary_start) % size);
+            printf("pad to: %zu\n", pos);
+            return resize(pos);
+        }
+        return true;
+    }
+
     bool resize(std::size_t new_size) {
         if (data_variable) {
             data_variable->resize(new_size);
@@ -71,25 +85,16 @@ private:
 
     template <typename T>
     void value_number(T value) {
-        if (is_array_) {
-            if (!binary_blocks.empty()) {
-                auto& top = binary_blocks.back();
-                top.padding = std::max(top.padding, sizeof(T));
-                while ((pos - top.start) % sizeof(T) != 0) {
-                    if (!resize(pos + 1)) {
-                        return;
-                    }
-                    data[pos] = 0x00;
-                    pos++;
-                }
-            } else {
-                binary_size += sizeof(T);
+        printf("number: %zu\n", pos);
+        if (binary_depth > 0) {
+            if (!pad(sizeof(T))) {
+                return;
             }
         }
-
         if (!resize(pos + sizeof(T))) {
             return;
         }
+
         *((T*)&data[pos]) = value;
         pos += sizeof(T);
     }
@@ -98,18 +103,8 @@ private:
     std::span<std::uint8_t> data_fixed;
     std::uint8_t* data;
     std::size_t pos;
-
-    struct BinaryBlock {
-        const std::size_t start;
-        std::size_t padding;
-        BinaryBlock(std::size_t start):
-            start(start),
-            padding(0)
-        {}
-    };
-    bool is_array_;
-    std::size_t binary_size;
-    std::vector<BinaryBlock> binary_blocks;
+    std::size_t binary_depth;
+    std::size_t binary_start;
 };
 
 

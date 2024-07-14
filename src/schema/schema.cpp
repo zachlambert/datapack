@@ -192,9 +192,9 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             continue;
         }
 
-        if (auto value = std::get_if<token::List>(&token)) {
-            reader.list_begin(value->is_array);
-            writer.list_begin(value->is_array);
+        if (std::get_if<token::List>(&token)) {
+            reader.list_begin();
+            writer.list_begin();
 
             states.push(State(
                 StateType::List,
@@ -251,6 +251,16 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             }
 
             states.push(State(StateType::Variant, variant_start, token_pos, 1));
+            continue;
+        }
+        if (auto value = std::get_if<token::TrivialBegin>(&token)) {
+            reader.trivial_begin(value->size);
+            writer.trivial_begin(value->size);
+            continue;
+        }
+        if (auto value = std::get_if<token::TrivialEnd>(&token)) {
+            reader.trivial_end(value->size);
+            writer.trivial_end(value->size);
             continue;
         }
 

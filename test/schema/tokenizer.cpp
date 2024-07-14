@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <datapack/schema/tokenizer.hpp>
 #include <datapack/examples/entity.hpp>
+#include <datapack/util/debug.hpp>
+#include <datapack/common.hpp>
 
 
 TEST(Schema, Tokenizer) {
@@ -44,12 +46,14 @@ TEST(Schema, Tokenizer) {
                     token::ObjectNext("width"), std::size_t(),
                     token::ObjectNext("height"), std::size_t(),
                     token::ObjectNext("data"),
-                        token::List(true),
+                        token::TrivialBegin(1),
+                        token::List(),
                             token::ObjectBegin(),
                                 token::ObjectNext("r"), double(),
                                 token::ObjectNext("g"), double(),
                                 token::ObjectNext("b"), double(),
                             token::ObjectEnd(),
+                        token::TrivialEnd(1),
                 token::ObjectEnd(),
             token::ObjectNext("items"),
                 token::List(),
@@ -58,8 +62,13 @@ TEST(Schema, Tokenizer) {
                         token::ObjectNext("name"), std::string(),
                     token::ObjectEnd(),
             token::ObjectNext("assigned_items"),
-                token::List(true),
-                    int(),
+                token::TrivialBegin(1),
+                token::TupleBegin(),
+                    token::TupleNext(), int(),
+                    token::TupleNext(), int(),
+                    token::TupleNext(), int(),
+                token::TupleEnd(),
+                token::TrivialEnd(1),
             token::ObjectNext("properties"),
                 token::List(),
                     token::TupleBegin(),
@@ -77,6 +86,10 @@ TEST(Schema, Tokenizer) {
 
     ASSERT_EQ(tokens.size(), expected.size());
     for (std::size_t i = 0; i < tokens.size(); i++) {
+        if (tokens[i] != expected[i]) {
+            std::cerr << "Token["  << i << "]:\n" << datapack::debug(tokens[i]) << std::endl;
+            std::cerr << "Expected:\n" << datapack::debug(expected[i]) << std::endl;
+        }
         EXPECT_TRUE(tokens[i] == expected[i]);
     }
 }

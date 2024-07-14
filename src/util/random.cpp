@@ -27,7 +27,7 @@ void RandomReader::value_i64(std::int64_t& value) {
 void RandomReader::value_u32(std::uint32_t& value) {
     if (auto c = constraint<RangeConstraint>()) {
         if (c->lower < 0 || c->upper < 0) {
-            error("Invalid range constraint");
+            set_error("Invalid range constraint");
         }
         value = std::uint32_t(c->lower) + rand() % std::uint32_t(c->upper - c->lower);
         return;
@@ -38,7 +38,7 @@ void RandomReader::value_u32(std::uint32_t& value) {
 void RandomReader::value_u64(std::uint64_t& value) {
     if (auto c = constraint<RangeConstraint>()) {
         if (c->lower < 0 || c->upper < 0) {
-            error("Invalid range constraint");
+            set_error("Invalid range constraint");
         }
         value = std::uint64_t(c->lower) + rand() % std::uint64_t(c->upper - c->lower);
         return;
@@ -145,7 +145,7 @@ void RandomReader::tuple_next() {
 }
 
 
-void RandomReader::list_begin(bool is_array) {
+void RandomReader::list_begin() {
     if (auto c = constraint<LengthConstraint>()) {
         list_counter = c->length;
         return;

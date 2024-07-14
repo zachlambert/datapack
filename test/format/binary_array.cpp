@@ -33,18 +33,22 @@ struct Point {
     }
 };
 void write(datapack::Writer& writer, const Point& value) {
+    writer.trivial_begin(sizeof(Point));
     writer.object_begin();
     writer.value("x", value.x);
     writer.value("y", value.y);
     writer.value("z", value.z);
     writer.object_end();
+    writer.trivial_end(sizeof(Point));
 }
 void read(datapack::Reader& reader, Point& value) {
+    reader.trivial_begin(sizeof(Point));
     reader.object_begin();
     reader.value("x", value.x);
     reader.value("y", value.y);
     reader.value("z", value.z);
     reader.object_end();
+    reader.trivial_end(sizeof(Point));
 }
 
 bool compare(const std::vector<Point>& a, const std::vector<Point>& b) {
@@ -99,7 +103,10 @@ TEST(Format, BinaryArrayOfObjects) {
         std::vector<std::uint8_t> a, b;
         datapack::BinaryWriter(a, false).value(points);
         datapack::BinaryWriter(b, true).value(points);
+        std::cerr << "Expect: " << points.size() * sizeof(Point) << std::endl;
 
+        std::cerr << "A size: " << a.size() << std::endl;
+        std::cerr << "B size: " << b.size() << std::endl;
         EXPECT_TRUE(compare(a, b));
     }
 }

@@ -39,7 +39,7 @@ public:
     void tuple_end() override;
     void tuple_next() override;
 
-    void list_begin(bool is_array) override;
+    void list_begin() override;
     void list_end() override;
     bool list_next() override;
 

@@ -112,12 +112,8 @@ void DebugWriter::tuple_next() {
 }
 
 
-void DebugWriter::list_begin(bool is_array) {
-    if (is_array) {
-        os << "(list, binary) {\n";
-    } else {
-        os << "(list) {\n";
-    }
+void DebugWriter::list_begin() {
+    os << "(list) {\n";
     depth++;
 }
 

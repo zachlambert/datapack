@@ -20,7 +20,7 @@ TEST(Util, Debug) {
     index: 5,
     name: player,
     enabled: true,
-    pose: (object) {
+    pose: (object, trivial size = 24) {
         x: 1,
         y: 2,
         angle: 3,
@@ -28,7 +28,7 @@ TEST(Util, Debug) {
     physics: (enum, kinematic),
     hitbox: (optional, has_value) {
         (variant, circle) {
-            (object) {
+            (object, trivial size = 8) {
                 radius: 1,
             },
         },
@@ -36,23 +36,23 @@ TEST(Util, Debug) {
     sprite: (object) {
         width: 2,
         height: 2,
-        data: (list) {
-            (object) {
+        data: (list, trivial) {
+            (object, trivial size = 24) {
                 r: 0.25,
                 g: 0.25,
                 b: 0,
             },
-            (object) {
+            (object, trivial size = 24) {
                 r: 0.25,
                 g: 0.75,
                 b: 0,
             },
-            (object) {
+            (object, trivial size = 24) {
                 r: 0.75,
                 g: 0.25,
                 b: 0,
             },
-            (object) {
+            (object, trivial size = 24) {
                 r: 0.75,
                 g: 0.75,
                 b: 0,
@@ -77,7 +77,7 @@ TEST(Util, Debug) {
             name: gold,
         },
     },
-    assigned_items: (tuple) {
+    assigned_items: (tuple, trivial size = 12) {
         1,
         2,
         -1,
@@ -112,6 +112,7 @@ TEST(Util, Debug) {
     std::stringstream ss;
     datapack::DebugWriter(ss).value(Entity::example());
     const std::string output = ss.str();
+    std::cerr << datapack::debug(Entity::example()) << std::endl;
 
     auto expected_lines = get_lines(expected);
     auto output_lines = get_lines(output);

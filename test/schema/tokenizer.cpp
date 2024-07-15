@@ -72,11 +72,11 @@ TEST(Schema, Tokenizer) {
                         token::TupleNext(), double(),
                     token::TupleEnd(),
             token::ObjectNext("flags"),
-                token::List(true),
-                    token::TupleBegin(sizeof(Entity::flags)),
+                token::List(),
+                    token::TupleBegin(),
                         token::TupleNext(), int(),
                         token::TupleNext(), bool(),
-                    token::TupleEnd(sizeof(Entity::flags)),
+                    token::TupleEnd(),
         token::ObjectEnd()
     };
 

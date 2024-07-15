@@ -110,8 +110,15 @@ void RandomReader::variant_end() {
 
 }
 
-std::tuple<const std::uint8_t*, std::size_t> RandomReader::binary_data() {
-    std::size_t size = rand() % 256;
+std::tuple<const std::uint8_t*, std::size_t> RandomReader::binary_data(std::size_t length, std::size_t stride) {
+    if (length == 0) {
+        if (auto c = constraint<LengthConstraint>()){
+            length = c->length;
+        } else {
+            length = rand() % 10;
+        }
+    }
+    std::size_t size = length * stride;
     data_temp.resize(size);
     for (std::size_t i = 0; i < size; i++) {
         data_temp[i] = rand() % 256;
@@ -119,11 +126,11 @@ std::tuple<const std::uint8_t*, std::size_t> RandomReader::binary_data() {
     return std::make_tuple(data_temp.data(), data_temp.size());
 }
 
-void RandomReader::object_begin() {
+void RandomReader::object_begin(std::size_t size) {
     // Do nothing
 }
 
-void RandomReader::object_end() {
+void RandomReader::object_end(std::size_t size) {
     // Do nothing
 }
 
@@ -132,11 +139,11 @@ void RandomReader::object_next(const char* key) {
 }
 
 
-void RandomReader::tuple_begin() {
+void RandomReader::tuple_begin(std::size_t size) {
     // Do nothing
 }
 
-void RandomReader::tuple_end() {
+void RandomReader::tuple_end(std::size_t size) {
     // Do nothing
 }
 
@@ -145,7 +152,7 @@ void RandomReader::tuple_next() {
 }
 
 
-void RandomReader::list_begin() {
+void RandomReader::list_begin(bool is_trivial) {
     if (auto c = constraint<LengthConstraint>()) {
         list_counter = c->length;
         return;

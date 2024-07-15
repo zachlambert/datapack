@@ -29,17 +29,17 @@ public:
     void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override;
 
-    void binary_data(const std::uint8_t* data, std::size_t size) override;
+    void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) override;
 
-    void object_begin() override;
-    void object_end() override;
+    void object_begin(std::size_t size) override;
+    void object_end(std::size_t size) override;
     void object_next(const char* key) override;
 
-    void tuple_begin() override;
-    void tuple_end() override;
+    void tuple_begin(std::size_t size) override;
+    void tuple_end(std::size_t size) override;
     void tuple_next() override;
 
-    void list_begin() override;
+    void list_begin(bool is_trivial) override;
     void list_end() override;
     void list_next() override;
 

@@ -74,25 +74,17 @@ void Tokenizer::variant_end() {
 }
 
 
-std::tuple<const std::uint8_t*, std::size_t> Tokenizer::binary_data() {
-    tokens.push_back(token::BinaryData());
+std::tuple<const std::uint8_t*, std::size_t> Tokenizer::binary_data(std::size_t length, std::size_t stride) {
+    tokens.push_back(token::BinaryData(length, stride));
     return std::make_tuple(nullptr, 0);
 }
 
-void Tokenizer::trivial_begin(std::size_t size) {
-    tokens.push_back(token::TrivialBegin(size));
+void Tokenizer::object_begin(std::size_t size) {
+    tokens.push_back(token::ObjectBegin(size));
 }
 
-void Tokenizer::trivial_end(std::size_t size) {
-    tokens.push_back(token::TrivialEnd(size));
-}
-
-void Tokenizer::object_begin() {
-    tokens.push_back(token::ObjectBegin());
-}
-
-void Tokenizer::object_end() {
-    tokens.push_back(token::ObjectEnd());
+void Tokenizer::object_end(std::size_t size) {
+    tokens.push_back(token::ObjectEnd(size));
 }
 
 void Tokenizer::object_next(const char* key) {
@@ -100,12 +92,12 @@ void Tokenizer::object_next(const char* key) {
 }
 
 
-void Tokenizer::tuple_begin() {
-    tokens.push_back(token::TupleBegin());
+void Tokenizer::tuple_begin(std::size_t size) {
+    tokens.push_back(token::TupleBegin(size));
 }
 
-void Tokenizer::tuple_end() {
-    tokens.push_back(token::TupleEnd());
+void Tokenizer::tuple_end(std::size_t size) {
+    tokens.push_back(token::TupleEnd(size));
 }
 
 void Tokenizer::tuple_next() {
@@ -113,8 +105,8 @@ void Tokenizer::tuple_next() {
 }
 
 
-void Tokenizer::list_begin() {
-    tokens.push_back(token::List());
+void Tokenizer::list_begin(bool is_trivial) {
+    tokens.push_back(token::List(is_trivial));
     first_element = true;
 }
 

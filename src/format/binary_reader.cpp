@@ -1,6 +1,7 @@
 #include "datapack/format/binary_reader.hpp"
-
+#include <assert.h>
 #include <cstring>
+
 
 namespace datapack {
 
@@ -62,60 +63,73 @@ bool BinaryReader::variant_match(const char* label) {
     return false;
 }
 
-std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data() {
-    std::size_t size = 0;
-    value_number(size);
+std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data(
+    std::size_t length,
+    std::size_t stride)
+{
+    if (length == 0) {
+        value_number(length);
+    }
+    std::size_t size = length * stride;
     if (pos + size > data.size()) {
         set_error("Input data is too short");
     }
+
     const std::uint8_t* output_data = &data[pos];
     pos += size;
     return std::make_tuple(output_data, size);
 }
 
-void BinaryReader::trivial_begin(std::size_t size) {
-    if (binary_depth == 0) {
-        std::uint64_t binary_size = 0; // = 0 to avoid compiler warnings
-        value_number<std::uint64_t>(binary_size);
-        binary_start = pos;
-        binary_end = binary_start + binary_size;
+void BinaryReader::object_begin(std::size_t size) {
+    if (size == 0) {
+        return;
     }
-
+    if (binary_depth == 0) {
+        binary_start = pos;
+    }
     pad(size);
     binary_depth++;
 }
 
-void BinaryReader::trivial_end(std::size_t size) {
+void BinaryReader::object_end(std::size_t size) {
+    if (size == 0) {
+        return;
+    }
     pad(size);
     binary_depth--;
-    if (binary_depth == 0 && pos != binary_end) {
-        set_error("Didn't reach end of trivial as binary");
+}
+
+void BinaryReader::list_begin(bool is_trivial) {
+    if (binary_depth != 0) {
+        set_error("Cannot start a list inside a trivial list");
+        return;
     }
-}
+    if (!is_trivial) {
+        return;
+    }
+    std::uint64_t length;
+    value_number(length);
+    trivial_list_remaining = length;
 
-void BinaryReader::object_begin() {
-    // Do nothing
-}
-
-void BinaryReader::object_end() {
-    // Do nothing
-}
-
-void BinaryReader::list_begin() {
-    // Do nothing
+    binary_depth++;
+    binary_start = pos;
 }
 
 void BinaryReader::list_end() {
-    // Do nothing
+    if (binary_depth == 0) {
+        return;
+    }
+    binary_depth--;
+    assert(binary_depth == 0);
 }
 
 bool BinaryReader::list_next() {
     if (binary_depth > 0) {
-        if (binary_depth > 1) {
-            set_error("Cannot have a list inside a trivial object");
+        if (trivial_list_remaining == 0) {
             return false;
         }
-        return pos != binary_end;
+        trivial_list_remaining--;
+        return true;
     }
     bool has_next;
     value_bool(has_next);

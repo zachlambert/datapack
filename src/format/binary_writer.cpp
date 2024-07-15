@@ -1,4 +1,5 @@
 #include "datapack/format/binary_writer.hpp"
+#include <assert.h>
 
 
 namespace datapack {
@@ -37,8 +38,9 @@ void BinaryWriter::variant_begin(const char* label, const std::span<const char*>
     value_string(label);
 }
 
-void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t size) {
-    value_number(std::uint64_t(size));
+void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t length, std::size_t stride) {
+    std::size_t size = length * stride;
+    value_number(std::uint64_t(length));
     if (!resize(pos + size)) {
         return;
     }
@@ -46,55 +48,60 @@ void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t size)
     pos += size;
 }
 
-void BinaryWriter::trivial_begin(std::size_t size) {
-    printf("trivial_begin: %zu\n", pos);
+void BinaryWriter::object_begin(std::size_t size) {
+    if (size == 0){
+        return;
+    }
     if (binary_depth == 0) {
-        printf("start\n");
-        value_number<std::uint64_t>(0); // Placeholder
         binary_start = pos;
     }
-    printf("at: %zu\n", pos);
-    if (!pad(size)) {
-        return;
-    }
+    pad(size);
     binary_depth++;
-    printf("data start at: %zu\n", pos);
 }
 
-void BinaryWriter::trivial_end(std::size_t size) {
-    printf("trivial_end: %zu\n", pos);
-    if (!pad(size)) {
+void BinaryWriter::object_end(std::size_t size) {
+    if (size == 0) {
         return;
     }
+    pad(size);
     binary_depth--;
-    if (binary_depth == 0) {
-        std::size_t binary_size = pos - binary_start;
-        *((std::uint64_t*)&data[binary_start - sizeof(std::uint64_t)]) = binary_size;
+}
+
+void BinaryWriter::list_begin(bool is_trivial) {
+    if (binary_depth != 0) {
+        assert(false);
+        // TODO: Handle er
+        // set_error("Cannot start a list inside a trivial list");
+        return;
     }
-}
+    if (!is_trivial) {
+        return;
+    }
 
-void BinaryWriter::object_begin() {
-    // Do nothing
-}
+    trivial_list_length = 0;
+    value_number(std::uint64_t(0)); // Placeholder
 
-void BinaryWriter::object_end() {
-    // Do nothing
-}
-
-void BinaryWriter::list_begin() {
-    // Do nothing
+    binary_depth++;
+    binary_start = pos;
 }
 
 void BinaryWriter::list_end() {
     if (binary_depth == 0) {
         value_bool(false);
+        return;
     }
+
+    *(std::uint64_t*)&data[binary_start - sizeof(std::uint64_t)] = trivial_list_length;
+    binary_depth--;
+    assert(binary_depth == 0);
 }
 
 void BinaryWriter::list_next() {
     if (binary_depth == 0) {
         value_bool(true);
+        return;
     }
+    trivial_list_length++;
 }
 
 

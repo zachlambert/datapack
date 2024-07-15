@@ -17,7 +17,8 @@ public:
         data(nullptr),
         pos(0),
         binary_depth(false),
-        binary_start(0)
+        binary_start(0),
+        trivial_list_length(0)
     {}
     BinaryWriter(std::span<std::uint8_t> data, bool trivial_as_binary=true):
         Writer(trivial_as_binary),
@@ -26,7 +27,8 @@ public:
         data(data.data()),
         pos(0),
         binary_depth(false),
-        binary_start(0)
+        binary_start(0),
+        trivial_list_length(0)
     {}
 
     void value_i32(std::int32_t value) override { value_number(value); }
@@ -46,19 +48,17 @@ public:
     void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override {}
 
-    void binary_data(const std::uint8_t* data, std::size_t size) override;
-    void trivial_begin(std::size_t size) override;
-    void trivial_end(std::size_t size) override;
+    void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) override;
 
-    void object_begin() override;
-    void object_end() override;
+    void object_begin(std::size_t size) override;
+    void object_end(std::size_t size) override;
     void object_next(const char* key) override {}
 
-    void tuple_begin() override { object_begin(); }
-    void tuple_end() override { object_end(); }
+    void tuple_begin(std::size_t size) override { object_begin(size); }
+    void tuple_end(std::size_t size) override { object_end(size); }
     void tuple_next() override {}
 
-    void list_begin() override;
+    void list_begin(bool is_trivial) override;
     void list_end() override;
     void list_next() override;
 
@@ -105,6 +105,7 @@ private:
     std::size_t pos;
     std::size_t binary_depth;
     std::size_t binary_start;
+    std::size_t trivial_list_length;
 };
 
 

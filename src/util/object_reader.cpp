@@ -93,7 +93,7 @@ void ObjectReader::optional_end() {
 }
 
 void ObjectReader::variant_begin(const std::span<const char*>& labels) {
-    object_begin();
+    object_begin(0);
     object_next("type");
 }
 
@@ -110,22 +110,48 @@ bool ObjectReader::variant_match(const char* label) {
 }
 
 void ObjectReader::variant_end() {
-    object_end();
+    object_end(0);
 }
 
-std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data() {
+std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data(
+    std::size_t length, std::size_t stride)
+{
+    const std::uint8_t* data = nullptr;
+    std::size_t size = 0;
+
     if (auto x = node.get_if<Object::binary_t>()) {
-        return std::make_tuple(x->data(), x->size());
+        if (x->size() % stride != 0) {
+            set_error("Invalid binary, size not a multiple of stride");
+        }
+        if (length != 0 && length * stride != x->size()) {
+            set_error("Invalid binary, size not a multiple of stride");
+        }
+        data = x->data();
+        size = x->size();
     }
-    if (auto x = node.get_if<Object::str_t>()) {
+    else if (auto x = node.get_if<Object::str_t>()) {
         data_temp = base64_decode(*x);
-        return std::make_tuple(data_temp.data(), data_temp.size());
+        data = data_temp.data();
+        size = data_temp.size();
     }
-    set_error("Incorrect value type (binary)");
-    return std::make_tuple(nullptr, 0);
+    else {
+        set_error("Incorrect value type (binary)");
+    }
+
+    if (size % stride != 0) {
+        set_error("Invalid binary data, size not a multiple of the stride");
+        length = 0;
+    } else if (length == 0) {
+        length = size / stride;
+    } else if (length * stride != size) {
+        set_error("Invalid binary data, size didn't match expected length");
+        length = 0;
+    }
+
+    return std::make_tuple(data, length);
 }
 
-void ObjectReader::object_begin() {
+void ObjectReader::object_begin(std::size_t size) {
     if (!node.get_if<Object::map_t>()) {
         set_error("Incorrect value type");
     }
@@ -133,7 +159,7 @@ void ObjectReader::object_begin() {
     node = node.child();
 }
 
-void ObjectReader::object_end() {
+void ObjectReader::object_end(std::size_t size) {
     node = nodes.top();
     nodes.pop();
 }
@@ -157,7 +183,7 @@ void ObjectReader::object_next(const char* key) {
 }
 
 
-void ObjectReader::tuple_begin() {
+void ObjectReader::tuple_begin(std::size_t size) {
     if (!node.get_if<Object::list_t>()) {
         set_error("Incorrect value type");
     }
@@ -166,7 +192,7 @@ void ObjectReader::tuple_begin() {
     node = node.child();
 }
 
-void ObjectReader::tuple_end() {
+void ObjectReader::tuple_end(std::size_t size) {
     list_start = false;
     node = nodes.top();
     nodes.pop();
@@ -183,7 +209,7 @@ void ObjectReader::tuple_next() {
 }
 
 
-void ObjectReader::list_begin() {
+void ObjectReader::list_begin(bool is_trivial) {
     if (!node.get_if<Object::list_t>()) {
         set_error("Incorrect value type");
     }

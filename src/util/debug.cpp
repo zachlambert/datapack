@@ -74,17 +74,25 @@ void DebugWriter::variant_end() {
     os << "},\n";
 }
 
-void DebugWriter::binary_data(const std::uint8_t* data, std::size_t size) {
-    os << "(binary, size = " << size << "),\n";
+void DebugWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) {
+    if (length == 0) {
+        os << "(binary, fixed length = " << length << ", stride = " << stride << "),\n";
+    } else {
+        os << "(binary, variable length, stride = " << stride << "),\n";
+    }
 }
 
 
-void DebugWriter::object_begin() {
-    os << "(object) {\n";
+void DebugWriter::object_begin(std::size_t size) {
+    if (size == 0) {
+        os << "(object) {\n";
+    } else {
+        os << "(object, trivial size = " << size << ") {\n";
+    }
     depth++;
 }
 
-void DebugWriter::object_end() {
+void DebugWriter::object_end(std::size_t size) {
     depth--;
     indent();
     os << "},\n";
@@ -96,12 +104,16 @@ void DebugWriter::object_next(const char* key) {
 }
 
 
-void DebugWriter::tuple_begin() {
-    os << "(tuple) {\n";
+void DebugWriter::tuple_begin(std::size_t size) {
+    if (size == 0) {
+        os << "(tuple) {\n";
+    } else {
+        os << "(tuple, trivial size = " << size << ") {\n";
+    }
     depth++;
 }
 
-void DebugWriter::tuple_end() {
+void DebugWriter::tuple_end(std::size_t size) {
     depth--;
     indent();
     os << "},\n";
@@ -112,8 +124,12 @@ void DebugWriter::tuple_next() {
 }
 
 
-void DebugWriter::list_begin() {
-    os << "(list) {\n";
+void DebugWriter::list_begin(bool is_trivial) {
+    if (is_trivial) {
+        os << "(list, trivial) {\n";
+    } else {
+        os << "(list) {\n";
+    }
     depth++;
 }
 

@@ -33,22 +33,18 @@ struct Point {
     }
 };
 void write(datapack::Writer& writer, const Point& value) {
-    writer.trivial_begin(sizeof(Point));
-    writer.object_begin();
+    writer.object_begin(sizeof(Point));
     writer.value("x", value.x);
     writer.value("y", value.y);
     writer.value("z", value.z);
-    writer.object_end();
-    writer.trivial_end(sizeof(Point));
+    writer.object_end(sizeof(Point));
 }
 void read(datapack::Reader& reader, Point& value) {
-    reader.trivial_begin(sizeof(Point));
-    reader.object_begin();
+    reader.object_begin(sizeof(Point));
     reader.value("x", value.x);
     reader.value("y", value.y);
     reader.value("z", value.z);
-    reader.object_end();
-    reader.trivial_end(sizeof(Point));
+    reader.object_end(sizeof(Point));
 }
 
 bool compare(const std::vector<Point>& a, const std::vector<Point>& b) {

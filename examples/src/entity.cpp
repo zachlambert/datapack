@@ -7,18 +7,18 @@
 
 template <typename V>
 void visit(V& visitor, Circle& value) {
-    visitor.object_begin();
+    visitor.object_begin(sizeof(Circle));
     visitor.value("radius", value.radius);
-    visitor.object_end();
+    visitor.object_end(sizeof(Circle));
 }
 DATAPACK_IMPL(Circle)
 
 template <typename V>
 void visit(V& visitor, Rect& value) {
-    visitor.object_begin();
+    visitor.object_begin(sizeof(Rect));
     visitor.value("width", value.width);
     visitor.value("height", value.height);
-    visitor.object_end();
+    visitor.object_end(sizeof(Rect));
 }
 DATAPACK_IMPL(Rect)
 
@@ -32,12 +32,12 @@ std::vector<const char*> datapack::variant_labels<Shape>::value = {
 
 template <typename V>
 void visit(V& visitor, Pose& value) {
-    visitor.object_begin();
+    visitor.object_begin(sizeof(Pose));
     visitor.value("x", value.x);
     visitor.value("y", value.y);
     visitor.value("angle", value.angle,
         datapack::RangeConstraint(-M_PI, M_PI));
-    visitor.object_end();
+    visitor.object_end(sizeof(Pose));
 }
 DATAPACK_IMPL(Pose)
 
@@ -65,11 +65,11 @@ DATAPACK_IMPL(Sprite)
 
 template <typename V>
 void visit(V& visitor, Sprite::Pixel& value) {
-    visitor.object_begin();
+    visitor.object_begin(sizeof(Sprite::Pixel));
     visitor.value("r", value.r);
     visitor.value("g", value.g);
     visitor.value("b", value.b);
-    visitor.object_end();
+    visitor.object_end(sizeof(Sprite::Pixel));
 }
 DATAPACK_IMPL(Sprite::Pixel)
 

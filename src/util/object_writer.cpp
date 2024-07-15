@@ -61,29 +61,29 @@ void ObjectWriter::optional_end() {
 }
 
 void ObjectWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
-    object_begin();
+    object_begin(0);
     object_next("type");
     value_string(label);
     object_next("value");
 }
 
 void ObjectWriter::variant_end() {
-    object_end();
+    object_end(0);
 }
 
 
-void ObjectWriter::binary_data(const std::uint8_t* data, std::size_t size) {
-    std::vector<std::uint8_t> vec(size);
-    std::memcpy(vec.data(), data, size);
+void ObjectWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) {
+    std::vector<std::uint8_t> vec(length * stride);
+    std::memcpy(vec.data(), data, length * stride);
     set_value(vec);
 }
 
 
-void ObjectWriter::object_begin() {
+void ObjectWriter::object_begin(std::size_t size) {
     set_value(Object::map_t());
 }
 
-void ObjectWriter::object_end() {
+void ObjectWriter::object_end(std::size_t size) {
     nodes.pop();
 }
 
@@ -92,11 +92,11 @@ void ObjectWriter::object_next(const char* key) {
 }
 
 
-void ObjectWriter::tuple_begin() {
+void ObjectWriter::tuple_begin(std::size_t size) {
     set_value(Object::list_t());
 }
 
-void ObjectWriter::tuple_end() {
+void ObjectWriter::tuple_end(std::size_t size) {
     nodes.pop();
 }
 
@@ -105,7 +105,7 @@ void ObjectWriter::tuple_next() {
 }
 
 
-void ObjectWriter::list_begin() {
+void ObjectWriter::list_begin(bool is_trivial) {
     set_value(Object::list_t());
 }
 

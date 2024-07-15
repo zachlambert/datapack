@@ -28,6 +28,31 @@ void visit(Visitor& visitor, token::VariantNext& value) {
 DATAPACK_IMPL(token::VariantNext)
 
 template <typename Visitor>
+void visit(Visitor& visitor, token::BinaryData& value) {
+    visitor.object_begin();
+    visitor.value("length", value.stride);
+    visitor.value("stride", value.length);
+    visitor.object_end();
+}
+DATAPACK_IMPL(token::BinaryData)
+
+template <typename Visitor>
+void visit(Visitor& visitor, datapack::token::ObjectBegin& value) {
+    visitor.object_begin();
+    visitor.value("size", value.size);
+    visitor.object_end();
+}
+DATAPACK_IMPL(token::ObjectBegin)
+
+template <typename Visitor>
+void visit(Visitor& visitor, datapack::token::ObjectEnd& value) {
+    visitor.object_begin();
+    visitor.value("size", value.size);
+    visitor.object_end();
+}
+DATAPACK_IMPL(token::ObjectEnd)
+
+template <typename Visitor>
 void visit(Visitor& visitor, datapack::token::ObjectNext& value) {
     visitor.object_begin();
     visitor.value("key", value.key);
@@ -36,27 +61,35 @@ void visit(Visitor& visitor, datapack::token::ObjectNext& value) {
 DATAPACK_IMPL(token::ObjectNext)
 
 template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::TrivialBegin& value) {
+void visit(Visitor& visitor, datapack::token::TupleBegin& value) {
     visitor.object_begin();
     visitor.value("size", value.size);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::TrivialBegin)
+DATAPACK_IMPL(token::TupleBegin)
 
 template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::TrivialEnd& value) {
+void visit(Visitor& visitor, datapack::token::TupleEnd& value) {
     visitor.object_begin();
     visitor.value("size", value.size);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::TrivialEnd)
+DATAPACK_IMPL(token::TupleEnd)
+
+template <typename Visitor>
+void visit(Visitor& visitor, datapack::token::List& value) {
+    visitor.object_begin();
+    visitor.value("is_trivial", value.is_trivial);
+    visitor.object_end();
+}
+DATAPACK_IMPL(token::List)
 
 std::vector<const char*> variant_labels<Token>::value = {
     "i32", "i64", "u32", "u64", "f32", "f64",
     "string", "boolean",
     "optional", "enumerate",
     "variant_begin", "variant_end", "variant_next",
-    "binary_data", "trivial_begin", "trivial_end",
+    "binary_data",
     "object_begin", "object_end", "object_next",
     "tuple_begin", "tuple_end", "tuple_next",
     "list"
@@ -77,17 +110,29 @@ bool operator==(const Token& lhs, const Token& rhs) {
         auto rhs_value = std::get_if<token::VariantNext>(&rhs);
         return lhs_value->type == rhs_value->type;
     }
+    if (auto lhs_value = std::get_if<token::ObjectBegin>(&lhs)) {
+        auto rhs_value = std::get_if<token::ObjectBegin>(&rhs);
+        return lhs_value->size == rhs_value->size;
+    }
+    if (auto lhs_value = std::get_if<token::ObjectEnd>(&lhs)) {
+        auto rhs_value = std::get_if<token::ObjectEnd>(&rhs);
+        return lhs_value->size == rhs_value->size;
+    }
     if (auto lhs_value = std::get_if<token::ObjectNext>(&lhs)) {
         auto rhs_value = std::get_if<token::ObjectNext>(&rhs);
         return lhs_value->key == rhs_value->key;
     }
-    if (auto lhs_value = std::get_if<token::TrivialBegin>(&lhs)) {
-        auto rhs_value = std::get_if<token::TrivialBegin>(&rhs);
+    if (auto lhs_value = std::get_if<token::TupleBegin>(&lhs)) {
+        auto rhs_value = std::get_if<token::TupleBegin>(&rhs);
         return lhs_value->size == rhs_value->size;
     }
-    if (auto lhs_value = std::get_if<token::TrivialEnd>(&lhs)) {
-        auto rhs_value = std::get_if<token::TrivialEnd>(&rhs);
+    if (auto lhs_value = std::get_if<token::TupleEnd>(&lhs)) {
+        auto rhs_value = std::get_if<token::TupleEnd>(&rhs);
         return lhs_value->size == rhs_value->size;
+    }
+    if (auto lhs_value = std::get_if<token::List>(&lhs)) {
+        auto rhs_value = std::get_if<token::List>(&rhs);
+        return lhs_value->is_trivial == rhs_value->is_trivial;
     }
 
     return true;

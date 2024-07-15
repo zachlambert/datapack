@@ -14,7 +14,7 @@ public:
         pos(0),
         binary_depth(0),
         binary_start(0),
-        binary_end(0)
+        trivial_list_remaining(0)
     {}
 
     void value_i32(std::int32_t& value) override { value_number(value); }
@@ -35,23 +35,22 @@ public:
     bool variant_match(const char* label) override;
     void variant_end() override {}
 
-    std::tuple<const std::uint8_t*, std::size_t> binary_data() override;
-    void trivial_begin(std::size_t size) override;
-    void trivial_end(std::size_t size) override;
+    std::tuple<const std::uint8_t*, std::size_t>
+        binary_data(std::size_t length, std::size_t stride) override;
 
-    void object_begin() override;
-    void object_end() override;
+    void object_begin(std::size_t size) override;
+    void object_end(std::size_t size) override;
     void object_next(const char* key) override {}
 
-    void tuple_begin() override {
-        object_begin();
+    void tuple_begin(std::size_t size) override {
+        object_begin(size);
     }
-    void tuple_end() override {
-        object_end();
+    void tuple_end(std::size_t size) override {
+        object_end(size);
     }
     void tuple_next() override {}
 
-    void list_begin() override;
+    void list_begin(bool is_trivial) override;
     void list_end() override;
     bool list_next() override;
 
@@ -79,7 +78,7 @@ private:
     std::size_t pos;
     std::size_t binary_depth;
     std::int64_t binary_start;
-    std::int64_t binary_end;
+    int trivial_list_remaining;
 };
 
 template <readable T>

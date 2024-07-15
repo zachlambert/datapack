@@ -39,31 +39,48 @@ struct VariantNext {
     VariantNext(const std::string& type): type(type) {}
 };
 
-struct BinaryData {};
-struct TrivialBegin {
-    std::size_t size;
-    TrivialBegin(): size(0) {}
-    TrivialBegin(std::size_t size): size(size) {}
-};
-struct TrivialEnd {
-    std::size_t size;
-    TrivialEnd(): size(0) {}
-    TrivialEnd(std::size_t size): size(size) {}
+struct BinaryData {
+    std::size_t length;
+    std::size_t stride;
+    BinaryData(): length(0), stride(0) {}
+    BinaryData(std::size_t length, std::size_t stride):
+        length(length), stride(stride)
+    {}
 };
 
-struct ObjectBegin {};
-struct ObjectEnd {};
+struct ObjectBegin {
+    std::size_t size;
+    ObjectBegin(): size(0) {}
+    ObjectBegin(std::size_t size): size(size) {}
+};
+struct ObjectEnd {
+    std::size_t size;
+    ObjectEnd(): size(0) {}
+    ObjectEnd(std::size_t size): size(size) {}
+};
 struct ObjectNext {
     std::string key;
     ObjectNext() {}
     ObjectNext(const std::string& key): key(key) {}
 };
 
-struct TupleBegin {};
-struct TupleEnd {};
+struct TupleBegin {
+    std::size_t size;
+    TupleBegin(): size(0) {}
+    TupleBegin(std::size_t size): size(size) {}
+};
+struct TupleEnd {
+    std::size_t size;
+    TupleEnd(): size(0) {}
+    TupleEnd(std::size_t size): size(size) {}
+};
 struct TupleNext {};
 
-struct List {};
+struct List {
+    bool is_trivial;
+    List(): is_trivial(false) {}
+    List(bool is_trivial): is_trivial(is_trivial) {}
+};
 
 } // namespace dtoken
 
@@ -82,8 +99,6 @@ using Token = std::variant<
     token::VariantEnd,
     token::VariantNext,
     token::BinaryData,
-    token::TrivialBegin,
-    token::TrivialEnd,
     token::ObjectBegin,
     token::ObjectEnd,
     token::ObjectNext,
@@ -96,19 +111,17 @@ using Token = std::variant<
 DATAPACK(token::Enumerate)
 DATAPACK(token::VariantBegin)
 DATAPACK(token::VariantNext)
+DATAPACK(token::BinaryData)
+DATAPACK(token::ObjectBegin)
+DATAPACK(token::ObjectEnd)
 DATAPACK(token::ObjectNext)
-DATAPACK(token::TrivialBegin)
-DATAPACK(token::TrivialEnd)
+DATAPACK(token::TupleBegin)
+DATAPACK(token::TupleEnd)
+DATAPACK(token::List)
 DATAPACK_LABELLED_VARIANT(Token)
 
-DATAPACK_EMPTY(token::List)
 DATAPACK_EMPTY(token::Optional)
 DATAPACK_EMPTY(token::VariantEnd)
-DATAPACK_EMPTY(token::BinaryData)
-DATAPACK_EMPTY(token::ObjectBegin)
-DATAPACK_EMPTY(token::ObjectEnd)
-DATAPACK_EMPTY(token::TupleBegin)
-DATAPACK_EMPTY(token::TupleEnd)
 DATAPACK_EMPTY(token::TupleNext)
 
 bool operator==(const Token& lhs, const Token& rhs);

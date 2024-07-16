@@ -54,7 +54,11 @@ public:
 
     template <writeable T>
     void value(const T& value) {
-        write(*this, value);
+        if (std::is_trivially_copyable_v<T> && !std::is_arithmetic_v<T> && trivial_as_binary_) {
+            binary_data((const std::uint8_t*)&value, 1, sizeof(T), true);
+        } else {
+            write(*this, value);
+        }
     }
 
     template <writeable T>

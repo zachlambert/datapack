@@ -53,12 +53,16 @@ DATAPACK_IMPL(Item)
 template <typename V>
 void visit(V& visitor, Sprite& value) {
     visitor.object_begin();
+    printf("width\n");
     visitor.value("width", value.width);
+    printf("height\n");
     visitor.value("height", value.height);
+    printf("data\n");
     visitor.value(
         "data", value.data,
         datapack::LengthConstraint(value.width * value.height)
     );
+    printf("done\n");
     visitor.object_end();
 }
 DATAPACK_IMPL(Sprite)
@@ -76,15 +80,25 @@ DATAPACK_IMPL(Sprite::Pixel)
 template <typename V>
 void Entity::visit(V& visitor) {
     visitor.object_begin();
+    printf("index\n");
     visitor.value("index", index);
+    printf("name\n");
     visitor.value("name", name);
+    printf("enabled\n");
     visitor.value("enabled", enabled);
+    printf("pose\n");
     visitor.value("pose", pose);
+    printf("physics\n");
     visitor.value("physics", physics);
+    printf("hitbox\n");
     visitor.value("hitbox", hitbox);
+    printf("sprite\n");
     visitor.value("sprite", sprite);
+    printf("items\n");
     visitor.value("items", items);
+    printf("assigned_items\n");
     visitor.value("assigned_items", assigned_items);
+    printf("properties\n");
     visitor.value("properties", properties);
     visitor.value("flags", flags);
     visitor.object_end();

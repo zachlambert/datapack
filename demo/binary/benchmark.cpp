@@ -1,19 +1,23 @@
 #include <chrono>
 #include <functional>
-#include <datapack/format/binary.hpp>
+#include <datapack/format/binary_reader.hpp>
+#include <datapack/format/binary_writer.hpp>
 #include <datapack/examples/entity.hpp>
 #include <datapack/util/random.hpp>
 #include <datapack/common/vector.hpp>
 #include <assert.h>
 #include <cstring>
+#include <iostream>
 
 
 using Clock = std::chrono::high_resolution_clock;
 void measure(const std::string& label, std::size_t N, const std::function<Clock::duration()>& func) {
     // A few dummy invocations at the start to avoid one-off initial costs
+#if 0
     for (std::size_t i = 0; i < 5; i++) {
         func();
     }
+#endif
 
     Clock::duration::rep nanos = 0;
     for (std::size_t i = 0; i < N; i++) {
@@ -24,6 +28,7 @@ void measure(const std::string& label, std::size_t N, const std::function<Clock:
 }
 
 void write_direct(const std::vector<Entity>& values, std::vector<std::uint8_t>& data) {
+    data.clear();
     std::size_t pos = 0;
 
     for (const auto& value: values) {
@@ -41,16 +46,19 @@ void write_direct(const std::vector<Entity>& values, std::vector<std::uint8_t>& 
         data.push_back(value.enabled);
         pos = data.size();
 
-        data.resize(pos + 8 * 3);
+        data.resize(pos + sizeof(double) * 3);
         *((double*)&data[pos]) = value.pose.x;
         *((double*)&data[pos] + 1) = value.pose.y;
         *((double*)&data[pos] + 2) = value.pose.angle;
         pos = data.size();
 
-        data.push_back((int)value.physics);
+        data.resize(pos + sizeof(int));
+        *((int*)&data[pos]) = (int)value.physics;
         pos = data.size();
 
         data.push_back(value.hitbox.has_value());
+        pos = data.size();
+
         if (value.hitbox.has_value()) {
             if (auto circle = std::get_if<Circle>(&value.hitbox.value())) {
                 std::string label = "circle";
@@ -223,6 +231,8 @@ void read_direct(std::vector<Entity>& values, const std::vector<std::uint8_t>& d
             pos += sizeof(std::size_t);
             item.name = (char*)&data[pos];
             pos += item.name.size() + 1;
+
+            value.items.push_back(item);
         }
 
         {
@@ -271,15 +281,28 @@ void read_direct(std::vector<Entity>& values, const std::vector<std::uint8_t>& d
 }
 
 int main() {
-    std::size_t N = 10;
+    std::size_t N = 100;
     std::vector<Entity> input;
-    for (std::size_t n = 0; n < 10; n++) {
+    for (std::size_t n = 0; n < 20; n++) {
         input.push_back(datapack::random<Entity>());
     }
-    std::vector<Entity> output;
-    std::vector<std::uint8_t> data;
-    data.reserve(20000);
+#if 1
+    for (auto& entity: input) {
+        entity.sprite.width = 2;
+        entity.sprite.height = 2;
+        entity.sprite.data.resize(4);
+    }
+#endif
+    std::size_t reserve_size = datapack::write_binary(input).size() * 2;
+    std::size_t sprite_size = input[0].sprite.data.size();
+
     {
+        std::vector<std::uint8_t> data;
+        data.reserve(reserve_size);
+        std::vector<Entity> output(input.size());
+        for (auto& entity: output) {
+            entity.sprite.data.reserve(sprite_size);
+        }
         measure("binary write without binary arrays", N, [&](){
             datapack::BinaryWriter writer(data, false);
             auto before = Clock::now();
@@ -287,27 +310,6 @@ int main() {
             auto after = Clock::now();
             return after - before;
         });
-    }
-    {
-        measure("binary write with binary arrays", N, [&](){
-            datapack::BinaryWriter writer(data, true);
-            auto before = Clock::now();
-            writer.value(input);
-            auto after = Clock::now();
-            return after - before;
-        });
-    }
-    {
-        measure("binary direct write", N, [&](){
-            auto before = Clock::now();
-            write_direct(input, data);
-            auto after = Clock::now();
-            return after - before;
-        });
-    }
-
-    data = datapack::write_binary(input);
-    {
         measure("binary read without binary arrays", N, [&](){
             datapack::BinaryReader reader(data, false);
             auto before = Clock::now();
@@ -316,19 +318,50 @@ int main() {
             return after - before;
         });
     }
+
     {
+        std::vector<std::uint8_t> data;
+        data.reserve(reserve_size);
+        std::vector<Entity> output(input.size());
+        for (auto& entity: output) {
+            entity.sprite.data.reserve(sprite_size);
+        }
+        measure("binary write with binary arrays", N, [&](){
+            datapack::BinaryWriter writer(data, true);
+            auto before = Clock::now();
+            // printf("Input size: %zu\n", input.size());
+            writer.value(input);
+            auto after = Clock::now();
+            return after - before;
+        });
         measure("binary read with binary arrays", N, [&](){
             datapack::BinaryReader reader(data, true);
             auto before = Clock::now();
             reader.value(output);
+            // printf("Output size: %zu\n", output.size());
             auto after = Clock::now();
             return after - before;
         });
     }
+
     {
+        std::vector<std::uint8_t> data;
+        data.reserve(reserve_size);
+        std::vector<Entity> output(input.size());
+        for (auto& entity: output) {
+            entity.sprite.data.reserve(sprite_size);
+        }
+        measure("binary direct write", N, [&](){
+            auto before = Clock::now();
+            write_direct(input, data);
+            // printf("Input size: %zu\n", input.size());
+            auto after = Clock::now();
+            return after - before;
+        });
         measure("binary direct read", N, [&](){
             auto before = Clock::now();
             read_direct(output, data);
+            // printf("Output size: %zu\n", input.size());
             auto after = Clock::now();
             return after - before;
         });

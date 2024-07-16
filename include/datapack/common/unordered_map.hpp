@@ -9,6 +9,7 @@ namespace datapack {
 template <readable K, readable V>
 void read(Reader& reader, std::unordered_map<K, V>& value) {
     std::pair<K, V> pair;
+    value.clear();
     reader.list_begin();
     while (reader.list_next()) {
         reader.tuple_begin();

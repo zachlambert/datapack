@@ -73,7 +73,9 @@ private:
 
     bool resize(std::size_t new_size) {
         if (data_variable) {
-            data_variable->resize(new_size);
+            if (data_variable->size() < new_size) {
+                data_variable->resize(new_size);
+            }
             data = data_variable->data();
             return true;
         } else {

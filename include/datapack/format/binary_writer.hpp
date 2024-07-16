@@ -52,7 +52,7 @@ public:
 
     void object_begin(std::size_t size) override;
     void object_end(std::size_t size) override;
-    void object_next(const char* key) override { printf("%zu, %s\n", pos, key);}
+    void object_next(const char* key) override {}
 
     void tuple_begin(std::size_t size) override { object_begin(size); }
     void tuple_end(std::size_t size) override { object_end(size); }

@@ -39,7 +39,7 @@ public:
 
     template <readable T>
     void value(T& value) {
-        if (std::is_trivially_copyable_v<T> && !std::is_arithmetic_v<T> && trivial_as_binary_) {
+        if (std::is_trivially_constructible_v<T> && !std::is_arithmetic_v<T> && trivial_as_binary_) {
             auto [data, length] = binary_data(1, sizeof(T));
             value = *(const T*)data;
         } else {

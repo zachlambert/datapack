@@ -23,7 +23,6 @@ TEST(Schema, ObjectToBinary) {
     }
 }
 
-#if 0
 TEST(Schema, BinaryToObject) {
     auto schema = datapack::create_schema<Entity>();
 
@@ -35,4 +34,3 @@ TEST(Schema, BinaryToObject) {
 
     EXPECT_TRUE(datapack::compare(out_direct, out_schema));
 }
-#endif

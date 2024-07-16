@@ -22,7 +22,7 @@ void read(Reader& reader, std::array<T, N>& value) {
         }
     }
     // Either !readable or (trivially_copyable_v && use_binary_arrays)
-    auto [data, length] = reader.binary_data(0, sizeof(T));
+    auto [data, length] = reader.binary_data(N, sizeof(T));
     std::size_t size = length * sizeof(T);
     std::memcpy((std::uint8_t*)value.data(), data, size);
 }
@@ -35,14 +35,14 @@ void write(Writer& writer, const std::array<T, N>& value) {
             std::size_t trivial_size = std::is_trivially_copyable_v<T> ? N * sizeof(T) : 0;
             writer.tuple_begin(trivial_size);
             for (const auto& element: value) {
-                writer.list_next();
+                writer.tuple_next();
                 writer.value(element);
             }
             writer.tuple_end(trivial_size);
             return;
         }
     }
-    writer.binary_data((const std::uint8_t*)value.data(), value.size(), sizeof(T));
+    writer.binary_data((const std::uint8_t*)value.data(), value.size(), sizeof(T), true);
 }
 
 } // namespace datapack

@@ -29,7 +29,7 @@ public:
     void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override;
 
-    void binary_data(const std::uint8_t* data, std::size_t size, std::size_t stride) override;
+    void binary_data(const std::uint8_t* data, std::size_t size, std::size_t stride, bool fixed_length) override;
 
     void object_begin(std::size_t size) override;
     void object_end(std::size_t size) override;

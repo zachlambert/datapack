@@ -304,7 +304,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         }
         else if (auto value = std::get_if<token::BinaryData>(&token)) {
             auto [data, length] = reader.binary_data(value->length, value->stride);
-            writer.binary_data(data, length, value->stride);
+            writer.binary_data(data, length, value->stride, value->length!=0);
         }
         else {
             throw std::runtime_error("Shouldn't be here");

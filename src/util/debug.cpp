@@ -74,11 +74,11 @@ void DebugWriter::variant_end() {
     os << "},\n";
 }
 
-void DebugWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) {
-    if (length == 0) {
+void DebugWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
+    if (fixed_length) {
         os << "(binary, fixed length = " << length << ", stride = " << stride << "),\n";
     } else {
-        os << "(binary, variable length, stride = " << stride << "),\n";
+        os << "(binary, variable length = " << length << ", stride = " << stride << "),\n";
     }
 }
 

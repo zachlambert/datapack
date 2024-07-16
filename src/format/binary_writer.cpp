@@ -38,9 +38,11 @@ void BinaryWriter::variant_begin(const char* label, const std::span<const char*>
     value_string(label);
 }
 
-void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t length, std::size_t stride) {
+void BinaryWriter::binary_data(const std::uint8_t* input_data, std::size_t length, std::size_t stride, bool fixed_length) {
     std::size_t size = length * stride;
-    value_number(std::uint64_t(length));
+    if (!fixed_length) {
+        value_number(std::uint64_t(length));
+    }
     if (!resize(pos + size)) {
         return;
     }

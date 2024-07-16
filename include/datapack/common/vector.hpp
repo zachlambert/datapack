@@ -43,7 +43,7 @@ void write(Writer& writer, const std::vector<T>& value) {
             return;
         }
     }
-    writer.binary_data((const std::uint8_t*)value.data(), value.size(), sizeof(T));
+    writer.binary_data((const std::uint8_t*)value.data(), value.size(), sizeof(T), false);
 }
 
 template <typename T>
@@ -86,7 +86,7 @@ void write(Writer& writer, const mct::vector<T>& value) {
             return;
         }
     }
-    writer.binary_data((const std::uint8_t*)value.data(), value.size(), sizeof(T));
+    writer.binary_data((const std::uint8_t*)value.data(), value.size(), sizeof(T), false);
 }
 
 template <typename T>

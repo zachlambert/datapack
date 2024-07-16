@@ -95,7 +95,7 @@ public:
     virtual void variant_begin(const char* label, const std::span<const char*>& labels) = 0;
     virtual void variant_end() = 0;
 
-    virtual void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) = 0;
+    virtual void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) = 0;
 
     virtual void object_begin(std::size_t size = 0) = 0;
     virtual void object_end(std::size_t size = 0) = 0;

@@ -48,7 +48,7 @@ public:
     void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override {}
 
-    void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) override;
+    void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) override;
 
     void object_begin(std::size_t size) override;
     void object_end(std::size_t size) override;
@@ -65,9 +65,7 @@ public:
 private:
     bool pad(std::size_t size) {
         if ((pos-binary_start) % size != 0) {
-            printf("pos %zu, size %zu, bin start %zu, remainder %zu\n", pos, size, binary_start, (pos-binary_start) % size);
             pos += (size - (pos-binary_start) % size);
-            printf("pad to: %zu\n", pos);
             return resize(pos);
         }
         return true;
@@ -85,7 +83,6 @@ private:
 
     template <typename T>
     void value_number(T value) {
-        printf("number: %zu\n", pos);
         if (binary_depth > 0) {
             if (!pad(sizeof(T))) {
                 return;

@@ -77,7 +77,7 @@ std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data(
 
     const std::uint8_t* output_data = &data[pos];
     pos += size;
-    return std::make_tuple(output_data, size);
+    return std::make_tuple(output_data, length);
 }
 
 void BinaryReader::object_begin(std::size_t size) {

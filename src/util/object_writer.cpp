@@ -72,7 +72,7 @@ void ObjectWriter::variant_end() {
 }
 
 
-void ObjectWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) {
+void ObjectWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
     std::vector<std::uint8_t> vec(length * stride);
     std::memcpy(vec.data(), data, length * stride);
     set_value(vec);

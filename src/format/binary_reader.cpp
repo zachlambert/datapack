@@ -107,7 +107,7 @@ void BinaryReader::list_begin(bool is_trivial) {
     if (!is_trivial) {
         return;
     }
-    std::uint64_t length;
+    std::uint64_t length = 0;
     value_number(length);
     trivial_list_remaining = length;
 

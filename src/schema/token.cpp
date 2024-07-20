@@ -3,86 +3,66 @@
 
 namespace datapack {
 
-template <typename Visitor>
-void visit(Visitor& visitor, token::Enumerate& value) {
+DATAPACK_IMPL(token::Enumerate) {
     visitor.object_begin();
     visitor.value("labels", value.labels);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::Enumerate)
 
-template <typename Visitor>
-void visit(Visitor& visitor, token::VariantBegin& value) {
+DATAPACK_IMPL(token::VariantBegin) {
     visitor.object_begin();
     visitor.value("labels", value.labels);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::VariantBegin)
 
-template <typename Visitor>
-void visit(Visitor& visitor, token::VariantNext& value) {
+DATAPACK_IMPL(token::VariantNext) {
     visitor.object_begin();
     visitor.value("type", value.type);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::VariantNext)
 
-template <typename Visitor>
-void visit(Visitor& visitor, token::BinaryData& value) {
+DATAPACK_IMPL(token::BinaryData) {
     visitor.object_begin();
     visitor.value("length", value.stride);
     visitor.value("stride", value.length);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::BinaryData)
 
-template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::ObjectBegin& value) {
+DATAPACK_IMPL(token::ObjectBegin) {
     visitor.object_begin();
     visitor.value("size", value.size);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::ObjectBegin)
 
-template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::ObjectEnd& value) {
+DATAPACK_IMPL(token::ObjectEnd) {
     visitor.object_begin();
     visitor.value("size", value.size);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::ObjectEnd)
 
-template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::ObjectNext& value) {
+DATAPACK_IMPL(token::ObjectNext) {
     visitor.object_begin();
     visitor.value("key", value.key);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::ObjectNext)
 
-template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::TupleBegin& value) {
+DATAPACK_IMPL(token::TupleBegin) {
     visitor.object_begin();
     visitor.value("size", value.size);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::TupleBegin)
 
-template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::TupleEnd& value) {
+DATAPACK_IMPL(token::TupleEnd) {
     visitor.object_begin();
     visitor.value("size", value.size);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::TupleEnd)
 
-template <typename Visitor>
-void visit(Visitor& visitor, datapack::token::List& value) {
+DATAPACK_IMPL(token::List) {
     visitor.object_begin();
     visitor.value("is_trivial", value.is_trivial);
     visitor.object_end();
 }
-DATAPACK_IMPL(token::List)
 
 std::vector<const char*> variant_labels<Token>::value = {
     "i32", "i64", "u32", "u64", "f32", "f64",

@@ -5,22 +5,18 @@
 #include <datapack/common.hpp>
 
 
-template <typename V>
-void visit(V& visitor, Circle& value) {
+DATAPACK_IMPL(Circle) {
     visitor.object_begin(sizeof(Circle));
     visitor.value("radius", value.radius);
     visitor.object_end(sizeof(Circle));
 }
-DATAPACK_IMPL(Circle)
 
-template <typename V>
-void visit(V& visitor, Rect& value) {
+DATAPACK_IMPL(Rect) {
     visitor.object_begin(sizeof(Rect));
     visitor.value("width", value.width);
     visitor.value("height", value.height);
     visitor.object_end(sizeof(Rect));
 }
-DATAPACK_IMPL(Rect)
 
 std::vector<const char*> datapack::enum_labels<Physics>::value = {
     "dynamic", "kinematic", "static"
@@ -30,8 +26,7 @@ std::vector<const char*> datapack::variant_labels<Shape>::value = {
     "circle", "rect"
 };
 
-template <typename V>
-void visit(V& visitor, Pose& value) {
+DATAPACK_IMPL(Pose) {
     visitor.object_begin(sizeof(Pose));
     visitor.value("x", value.x);
     visitor.value("y", value.y);
@@ -39,19 +34,15 @@ void visit(V& visitor, Pose& value) {
         datapack::RangeConstraint(-M_PI, M_PI));
     visitor.object_end(sizeof(Pose));
 }
-DATAPACK_IMPL(Pose)
 
-template <typename V>
-void visit(V& visitor, Item& value) {
+DATAPACK_IMPL(Item) {
     visitor.object_begin();
     visitor.value("count", value.count);
     visitor.value("name", value.name);
     visitor.object_end();
 }
-DATAPACK_IMPL(Item)
 
-template <typename V>
-void visit(V& visitor, Sprite& value) {
+DATAPACK_IMPL(Sprite) {
     visitor.object_begin();
     visitor.value("width", value.width);
     visitor.value("height", value.height);
@@ -61,20 +52,16 @@ void visit(V& visitor, Sprite& value) {
     );
     visitor.object_end();
 }
-DATAPACK_IMPL(Sprite)
 
-template <typename V>
-void visit(V& visitor, Sprite::Pixel& value) {
+DATAPACK_IMPL(Sprite::Pixel) {
     visitor.object_begin(sizeof(Sprite::Pixel));
     visitor.value("r", value.r);
     visitor.value("g", value.g);
     visitor.value("b", value.b);
     visitor.object_end(sizeof(Sprite::Pixel));
 }
-DATAPACK_IMPL(Sprite::Pixel)
 
-template <typename V>
-void Entity::visit(V& visitor) {
+DATAPACK_METHODS_IMPL(Entity) {
     visitor.object_begin();
     visitor.value("index", index);
     visitor.value("name", name);
@@ -89,7 +76,6 @@ void Entity::visit(V& visitor) {
     visitor.value("flags", flags);
     visitor.object_end();
 }
-DATAPACK_METHODS_IMPL(Entity)
 
 Entity Entity::example() {
     Entity result;

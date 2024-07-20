@@ -108,21 +108,21 @@ using Token = std::variant<
     token::List
 >;
 
-DATAPACK(token::Enumerate)
-DATAPACK(token::VariantBegin)
-DATAPACK(token::VariantNext)
-DATAPACK(token::BinaryData)
-DATAPACK(token::ObjectBegin)
-DATAPACK(token::ObjectEnd)
-DATAPACK(token::ObjectNext)
-DATAPACK(token::TupleBegin)
-DATAPACK(token::TupleEnd)
-DATAPACK(token::List)
-DATAPACK_LABELLED_VARIANT(Token)
+DATAPACK(token::Enumerate);
+DATAPACK(token::VariantBegin);
+DATAPACK(token::VariantNext);
+DATAPACK(token::BinaryData);
+DATAPACK(token::ObjectBegin);
+DATAPACK(token::ObjectEnd);
+DATAPACK(token::ObjectNext);
+DATAPACK(token::TupleBegin);
+DATAPACK(token::TupleEnd);
+DATAPACK(token::List);
+DATAPACK_LABELLED_VARIANT(Token);
 
-DATAPACK_EMPTY(token::Optional)
-DATAPACK_EMPTY(token::VariantEnd)
-DATAPACK_EMPTY(token::TupleNext)
+DATAPACK_EMPTY(token::Optional);
+DATAPACK_EMPTY(token::VariantEnd);
+DATAPACK_EMPTY(token::TupleNext);
 
 bool operator==(const Token& lhs, const Token& rhs);
 

@@ -40,7 +40,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
 
 else()
     add_library(datapack STATIC
-        src/format/binary_writer.cpp
         src/format/binary_reader.cpp
     )
     target_link_libraries(datapack PUBLIC micro-types)

@@ -23,7 +23,8 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer);
 inline void use_schema(const Schema& schema, Reader&& reader, Writer&& writer) {
     use_schema(schema, reader, writer);
 }
-DATAPACK(Schema)
+
+DATAPACK(Schema);
 
 bool operator==(const Schema& lhs, const Schema& rhs);
 

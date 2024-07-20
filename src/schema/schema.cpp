@@ -316,12 +316,10 @@ bool operator==(const Schema& lhs, const Schema& rhs) {
     return lhs == rhs;
 }
 
-template <typename Visitor>
-void visit(Visitor& visitor, Schema& value) {
+DATAPACK_IMPL(Schema) {
     visitor.object_begin();
     visitor.value("tokens", value.tokens);
     visitor.object_end();
 }
-DATAPACK_IMPL(Schema)
 
 } // namespace datapack

@@ -5,6 +5,7 @@
 #include <cstring>
 #include <vector>
 #include <assert.h>
+#include <micro_types/vector.hpp>
 
 
 namespace datapack {
@@ -13,21 +14,14 @@ namespace datapack {
 template <bool Dynamic>
 class BinaryWriterGeneric : public Writer {
 public:
-    BinaryWriterGeneric(std::vector<std::uint8_t>& data, bool trivial_as_binary=true)
-        requires Dynamic:
+    using data_t = std::conditional_t<Dynamic,
+        std::vector<std::uint8_t>,
+        mct::vector<std::uint8_t>
+    >;
+    BinaryWriterGeneric(data_t& data, bool trivial_as_binary=true):
         Writer(trivial_as_binary),
         data(data),
         pos(data.size()),
-        binary_depth(false),
-        binary_start(0),
-        trivial_list_length(0)
-    {}
-
-    BinaryWriterGeneric(const std::span<std::uint8_t>& data, bool trivial_as_binary=true)
-        requires (!Dynamic):
-        Writer(trivial_as_binary),
-        data(data),
-        pos(0),
         binary_depth(false),
         binary_start(0),
         trivial_list_length(0)
@@ -112,8 +106,6 @@ public:
     void list_begin(bool is_trivial) override {
         if (binary_depth != 0) {
             assert(false);
-            // TODO: Handle er
-            // set_error("Cannot start a list inside a trivial list");
             return;
         }
         if (!is_trivial) {
@@ -150,6 +142,10 @@ public:
     void tuple_end(std::size_t size) override { object_end(size); }
     void tuple_next() override {}
 
+    std::span<std::uint8_t> result() const {
+        return std::span(&data[0], pos);
+    }
+
 private:
     bool pad(std::size_t size) {
         if ((pos-binary_start) % size != 0) {
@@ -161,13 +157,11 @@ private:
 
     bool resize(std::size_t new_size) {
         if constexpr(Dynamic) {
-            if (data.size() < new_size) {
-                data.resize(new_size);
-            }
+            data.resize(new_size);
             return true;
         }
         if constexpr(!Dynamic) {
-            return new_size <= data.size();
+            return data.resize(new_size);
         }
     }
 
@@ -186,11 +180,7 @@ private:
         pos += sizeof(T);
     }
 
-    std::conditional_t<
-        Dynamic,
-        std::vector<std::uint8_t>&,
-        std::span<std::uint8_t>
-    > data;
+    data_t& data;
     std::size_t pos;
     std::size_t binary_depth;
     std::size_t binary_start;
@@ -209,7 +199,7 @@ std::vector<std::uint8_t> write_binary(const T& value) {
 }
 
 template <writeable T>
-void write_binary(const T& value, std::span<std::uint8_t> data) {
+void write_binary(const T& value, mct::vector<std::uint8_t>& data) {
     BinaryWriterStatic(data).value(value);
 }
 

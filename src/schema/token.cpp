@@ -64,7 +64,7 @@ DATAPACK_IMPL(token::List) {
     visitor.object_end();
 }
 
-std::vector<const char*> variant_labels<Token>::value = {
+DATAPACK_LABELLED_VARIANT_DEF(Token) = {
     "i32", "i64", "u32", "u64", "f32", "f64",
     "string", "boolean",
     "optional", "enumerate",

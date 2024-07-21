@@ -4,6 +4,7 @@
 #include <cmath>
 #include <datapack/common.hpp>
 
+namespace datapack {
 
 DATAPACK_IMPL(Circle) {
     visitor.object_begin(sizeof(Circle));
@@ -18,11 +19,12 @@ DATAPACK_IMPL(Rect) {
     visitor.object_end(sizeof(Rect));
 }
 
-std::vector<const char*> datapack::enum_labels<Physics>::value = {
+DATAPACK_LABELLED_ENUM_DEF(Physics) = {
     "dynamic", "kinematic", "static"
 };
 
-std::vector<const char*> datapack::variant_labels<Shape>::value = {
+
+DATAPACK_LABELLED_VARIANT_DEF(Shape) = {
     "circle", "rect"
 };
 
@@ -60,6 +62,8 @@ DATAPACK_IMPL(Sprite::Pixel) {
     visitor.value("b", value.b);
     visitor.object_end(sizeof(Sprite::Pixel));
 }
+
+} // namespace datapack
 
 DATAPACK_METHODS_IMPL(Entity) {
     visitor.object_begin();

@@ -118,7 +118,7 @@ DATAPACK(token::ObjectNext);
 DATAPACK(token::TupleBegin);
 DATAPACK(token::TupleEnd);
 DATAPACK(token::List);
-DATAPACK_LABELLED_VARIANT(Token);
+DATAPACK_LABELLED_VARIANT(Token, 21);
 
 DATAPACK_EMPTY(token::Optional);
 DATAPACK_EMPTY(token::VariantEnd);

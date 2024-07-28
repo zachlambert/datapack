@@ -10,7 +10,7 @@ namespace datapack {
 
 class ObjectWriter: public Writer {
 public:
-    ObjectWriter(Object& object);
+    ObjectWriter(Object::Reference object);
 
     void value_i32(std::int32_t value) override;
     void value_i64(std::int64_t value) override;
@@ -46,7 +46,7 @@ public:
 private:
     void set_value(const Object::value_t& value);
 
-    Object& object;
+    Object::Reference object;
     std::stack<Object> nodes;
     std::string next_key;
     std::size_t next_stride;

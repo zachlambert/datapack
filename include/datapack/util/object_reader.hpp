@@ -9,7 +9,7 @@ namespace datapack {
 
 class ObjectReader: public Reader {
 public:
-    ObjectReader(ConstObject object);
+    ObjectReader(Object::ConstReference object);
 
     void value_i32(std::int32_t& value) override;
     void value_i64(std::int64_t& value) override;
@@ -61,15 +61,15 @@ private:
         return false;
     }
 
-    ConstObject node;
-    std::stack<ConstObject> nodes;
+    Object::ConstReference node;
+    std::stack<Object::ConstReference> nodes;
     bool list_start;
     const char* next_variant_label;
     std::vector<std::uint8_t> data_temp;
 };
 
 template <readable T>
-T read_object(ConstObject object) {
+T read_object(Object::ConstReference object) {
     T result;
     ObjectReader(object).value(result);
     return result;

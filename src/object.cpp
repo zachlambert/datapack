@@ -1,14 +1,13 @@
 #include "datapack/object.hpp"
 #include <stack>
 #include <assert.h>
-#include <iostream> // TEMP
 
+#if 0
 
 namespace datapack {
 
-
 template <bool IsConst>
-Object_<IsConst> Object_<IsConst>::insert(const std::string& key, const value_t& value) const {
+Object_<IsConst> Object_<IsConst>::insert(const std::string& key, const value_t& value) {
     if (!get_if<map_t>()) {
         throw ObjectException("Not in a map");
     }
@@ -35,7 +34,7 @@ Object_<IsConst> Object_<IsConst>::operator[](const std::string& key) const {
     while (iter && iter.key() != key) {
         iter = iter.next();
     }
-    insert(key, null);
+    insert(key, std::nullopt);
     return iter;
 }
 template Object Object::operator[](const std::string&) const;
@@ -188,7 +187,7 @@ template void Object::clear() const;
 
 
 template <bool IsConst>
-Object_<IsConst> Object_<IsConst>::create_node(const Node& node) const {
+Object_<IsConst> Object_<IsConst>::create_node(const Node& node) {
     static_assert(!IsConst);
     int index;
     if (state->free.empty()) {
@@ -322,11 +321,13 @@ Object object_diff(const ConstObject& base, const ConstObject& modified) {
 
 } // namespace datapack
 
-std::ostream& operator<<(std::ostream& os, datapack::ConstObject object) {
+#endif
+
+std::ostream& operator<<(std::ostream& os, datapack::Object::ConstReference object) {
     using namespace datapack;
 
-    std::stack<datapack::ConstObject> nodes;
-    nodes.push(object);
+    std::stack<datapack::Object::ConstPointer> nodes;
+    nodes.push(object.ptr());
     int depth = 0;
     bool first = true;
 
@@ -347,35 +348,35 @@ std::ostream& operator<<(std::ostream& os, datapack::ConstObject object) {
             os << "    ";
         }
         if (depth > 0) {
-            if (!node.key().empty()) {
-                os << node.key() << ": ";
+            if (!node->key().empty()) {
+                os << node->key() << ": ";
             } else {
                 os << "- ";
             }
         }
 
-        if (node.get_if<Object::map_t>()) {
+        if (node->get_if<Object::map_t>()) {
             os << "map:";
         }
-        else if (node.get_if<Object::list_t>()) {
+        else if (node->get_if<Object::list_t>()) {
             os << "list:";
         }
-        else if (auto value = node.get_if<Object::int_t>()) {
+        else if (auto value = node->get_if<Object::int_t>()) {
             os << *value << "";
         }
-        else if (auto value = node.get_if<Object::float_t>()) {
+        else if (auto value = node->get_if<Object::float_t>()) {
             os << *value;
         }
-        else if (auto value = node.get_if<Object::bool_t>()) {
+        else if (auto value = node->get_if<Object::bool_t>()) {
             os << (*value ? "true" : "false");
         }
-        else if (auto value = node.get_if<Object::str_t>()) {
+        else if (auto value = node->get_if<Object::str_t>()) {
             os << *value;
         }
-        else if (node.get_if<Object::null_t>()) {
+        else if (node->get_if<Object::null_t>()) {
             os << "null";
         }
-        else if (auto value = node.get_if<Object::binary_t>()) {
+        else if (auto value = node->get_if<Object::binary_t>()) {
             os << "binary (size=" << value->size() << ")";
         }
 
@@ -383,7 +384,7 @@ std::ostream& operator<<(std::ostream& os, datapack::ConstObject object) {
             nodes.push(node.next());
         }
 
-        if (node.get_if<Object::map_t>() || node.get_if<Object::list_t>()) {
+        if (node->get_if<Object::map_t>() || node->get_if<Object::list_t>()) {
             nodes.push(node.child());
             depth++;
         }

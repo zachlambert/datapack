@@ -4,5 +4,6 @@ function(create_demo group name)
 endfunction()
 
 create_demo(binary benchmark)
-create_demo(json dump)
-create_demo(json load)
+# create_demo(json dump)
+# create_demo(json load)
+create_demo(object api)

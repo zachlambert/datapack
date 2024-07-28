@@ -17,9 +17,13 @@ build_stm32:
 	cmake -E chdir build/$(MCU) cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/opt/stm32/toolchain/$(MCU).cmake ../..
 	cmake --build build/$(MCU)
 
-.PHONY: test
-test:
+.PHONY: test_debug
+test_debug:
 	cd build/debug && ctest --output-on-failure
+
+.PHONY: test_release
+test_release:
+	cd build/release && ctest --output-on-failure
 
 .PHONY: install
 install:

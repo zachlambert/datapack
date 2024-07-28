@@ -26,7 +26,7 @@ static const std::string entity_json = R"({
     "physics": "kinematic",
     "hitbox": {
         "type": "circle",
-        "value": {
+        "value_circle": {
             "radius": 1
         }
     },

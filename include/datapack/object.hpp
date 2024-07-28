@@ -215,7 +215,40 @@ private:
 using Object = Object_<false>;
 using ConstObject = Object_<true>;
 
-bool compare(const ConstObject& lhs, const ConstObject& rhs, double float_threshold=1e-12);
+bool operator==(const ConstObject& lhs, const ConstObject& rhs);
+
+// How merge and diff work:
+// - merge(base, diff) applies "diff" on top of "base"
+// - diff(base, modified) returns the difference between the two, such that
+//   merge(base, diff(base, modified)) == modified
+//   AND
+//   diff(base, merge(base, diff)) == diff
+//   (assuming diff doesn't contain redundant changes)
+// - A diff object has the following properties:
+//   - Value at the same address as the base overwrites this value
+//   - If a key is present in the diff but not base, it is appended,
+//     including parent maps.
+//   - For the base/modified, a null value is treated equivalent to if the key
+//     is not present. Similarly, if a map only contains null values, it is
+//     treated the same as if it wasn't present.
+//   - When a null value is in the diff, this means the value is overwritten to
+//     null, but instead of setting to null, erases the key/value, since this is
+//     treated as equivalent.
+//   - Null values in lists will be retained if they aren't at the end of the list
+//   - For lists, the diff will contain a map with the following properties:
+//     - The keys are the indices in the base object
+//     - If an index doesn't have a matching key, then it isn't modified
+//     - Indices past the end of the original list will append. If there are gaps,
+//       these will be set to null.
+//     - If the modified list has fewer elements, then corresponding keys
+//       for the erased indices will have null values.
+//     - If an element is erased not at the end of the list, this is equivalent
+//       to modifying all the subsequent elements to shift them down, and erasing
+//       the last element. There is no wasy for diff(base, modified) to distinguish
+//       between the two.
+
+Object object_merge(const ConstObject& base, const ConstObject& diff);
+Object object_diff(const ConstObject& base, const ConstObject& modified);
 
 } // namespace datapack
 

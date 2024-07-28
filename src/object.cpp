@@ -35,6 +35,7 @@ Object_<IsConst> Object_<IsConst>::operator[](const std::string& key) const {
     while (iter && iter.key() != key) {
         iter = iter.next();
     }
+    insert(key, null);
     return iter;
 }
 template Object Object::operator[](const std::string&) const;
@@ -203,7 +204,8 @@ Object_<IsConst> Object_<IsConst>::create_node(const Node& node) const {
 template Object Object::create_node(const Node&) const;
 
 
-bool compare(const ConstObject& lhs, const ConstObject& rhs, double float_threshold) {
+bool operator==(const ConstObject& lhs, const ConstObject& rhs) {
+    static constexpr double float_threshold = 1e-12;
     std::stack<ConstObject> nodes_lhs;
     std::stack<ConstObject> nodes_rhs;
     nodes_lhs.push(lhs);
@@ -249,7 +251,7 @@ bool compare(const ConstObject& lhs, const ConstObject& rhs, double float_thresh
             continue;
         }
 
-        bool values_equal = std::visit([&rhs, float_threshold](const auto& lhs_value) -> bool {
+        bool values_equal = std::visit([&rhs](const auto& lhs_value) -> bool {
             using T = std::decay_t<decltype(lhs_value)>;
             auto rhs_value_ptr = rhs.get_if<T>();
             if (!rhs_value_ptr) {
@@ -295,6 +297,27 @@ bool compare(const ConstObject& lhs, const ConstObject& rhs, double float_thresh
         }
     }
     return true;
+}
+
+Object object_merge(const ConstObject& base, const ConstObject& diff) {
+    Object merged = Object(Object::map_t());
+
+    std::stack<datapack::ConstObject> base_nodes;
+    std::stack<datapack::ConstObject> diff_nodes;
+    std::stack<datapack::Object> merged_nodes;
+
+    diff_nodes.push(diff.root());
+
+    while (!diff_nodes.empty()) {
+
+    }
+
+    return merged;
+}
+
+Object object_diff(const ConstObject& base, const ConstObject& modified) {
+    Object diff = Object(Object::map_t());
+    return diff;
 }
 
 } // namespace datapack

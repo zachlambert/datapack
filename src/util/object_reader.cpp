@@ -100,7 +100,8 @@ void ObjectReader::variant_begin(const std::span<const char*>& labels) {
 bool ObjectReader::variant_match(const char* label) {
     if (auto x = node.get_if<Object::str_t>()){
         if (*x == label) {
-            object_next("value");
+            std::string value_key = "value_" + std::string(label);
+            object_next(value_key.c_str());
             return true;
         }
         return false;

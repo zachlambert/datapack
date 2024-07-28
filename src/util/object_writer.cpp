@@ -64,7 +64,8 @@ void ObjectWriter::variant_begin(const char* label, const std::span<const char*>
     object_begin(0);
     object_next("type");
     value_string(label);
-    object_next("value");
+    std::string value_key = "value_" + std::string(label);
+    object_next(value_key.c_str());
 }
 
 void ObjectWriter::variant_end() {

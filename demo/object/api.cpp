@@ -8,6 +8,9 @@ int main() {
     object["a"] = 1.0;
     object["a"] = 2.0;
     object["b"] = "hello";
+    object["c"]["first"] = "first";
+    object["c"]["second"] = "second";
+    object["d"].append(100);
 
     std::cout << object << std::endl;
 }

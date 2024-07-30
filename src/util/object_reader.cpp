@@ -4,8 +4,8 @@
 
 namespace datapack {
 
-ObjectReader::ObjectReader(ConstObject object):
-    node(object),
+ObjectReader::ObjectReader(Object::ConstReference object):
+    node(object.ptr()),
     list_start(false),
     next_variant_label(nullptr)
 {}
@@ -50,7 +50,7 @@ void ObjectReader::value_f64(double& value) {
 
 
 const char* ObjectReader::value_string() {
-    if (auto x = node.get_if<Object::str_t>()){
+    if (auto x = node->get_string()) {
         return x->c_str();
     }
     set_error("Incorrect value type (string)");
@@ -58,7 +58,7 @@ const char* ObjectReader::value_string() {
 }
 
 void ObjectReader::value_bool(bool& value) {
-    if (auto x = node.get_if<Object::bool_t>()){
+    if (auto x = node->get_bool()) {
         value = *x;
         return;
     }
@@ -67,7 +67,7 @@ void ObjectReader::value_bool(bool& value) {
 
 
 int ObjectReader::enumerate(const std::span<const char*>& labels) {
-    auto x = node.get_if<Object::str_t>();
+    auto x = node->get_string();
     if (!x) {
         set_error("Incorrect value type (enumerate)");
         return 0;
@@ -82,7 +82,7 @@ int ObjectReader::enumerate(const std::span<const char*>& labels) {
 }
 
 bool ObjectReader::optional_begin() {
-    if (node.get_if<Object::null_t>()) {
+    if (node->is_null()) {
         return false;
     }
     return true;
@@ -98,7 +98,7 @@ void ObjectReader::variant_begin(const std::span<const char*>& labels) {
 }
 
 bool ObjectReader::variant_match(const char* label) {
-    if (auto x = node.get_if<Object::str_t>()){
+    if (auto x = node->get_string()) {
         if (*x == label) {
             std::string value_key = "value_" + std::string(label);
             object_next(value_key.c_str());
@@ -120,7 +120,7 @@ std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data(
     const std::uint8_t* data = nullptr;
     std::size_t size = 0;
 
-    if (auto x = node.get_if<Object::binary_t>()) {
+    if (auto x = node->get_binary()) {
         if (x->size() % stride != 0) {
             set_error("Invalid binary, size not a multiple of stride");
         }
@@ -130,7 +130,7 @@ std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data(
         data = x->data();
         size = x->size();
     }
-    else if (auto x = node.get_if<Object::str_t>()) {
+    else if (auto x = node->get_string()) {
         data_temp = base64_decode(*x);
         data = data_temp.data();
         size = data_temp.size();
@@ -153,7 +153,7 @@ std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data(
 }
 
 void ObjectReader::object_begin(std::size_t size) {
-    if (!node.get_if<Object::map_t>()) {
+    if (!node->is_map()) {
         set_error("Incorrect value type");
     }
     nodes.push(node);
@@ -171,11 +171,11 @@ void ObjectReader::object_next(const char* key) {
         set_error("Not in a map");
         return;
     }
-    if (!parent.get_if<Object::map_t>()) {
+    if (!parent->is_map()) {
         set_error("Not in a map");
         return;
     }
-    auto next = parent[std::string(key)];
+    auto next = parent->find(std::string(key));
     if (!next) {
         set_error("Key not found");
         return;
@@ -185,7 +185,7 @@ void ObjectReader::object_next(const char* key) {
 
 
 void ObjectReader::tuple_begin(std::size_t size) {
-    if (!node.get_if<Object::list_t>()) {
+    if (!node->is_list()) {
         set_error("Incorrect value type");
     }
     list_start = true;
@@ -211,7 +211,7 @@ void ObjectReader::tuple_next() {
 
 
 void ObjectReader::list_begin(bool is_trivial) {
-    if (!node.get_if<Object::list_t>()) {
+    if (!node->is_list()) {
         set_error("Incorrect value type");
     }
     list_start = true;

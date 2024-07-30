@@ -3,16 +3,16 @@
 #include <datapack/examples/entity.hpp>
 #include <cmath>
 
-bool compare_map(datapack::ConstObject object, datapack::ConstObject expected) {
+bool compare_map(datapack::Object::ConstReference a, datapack::Object::ConstReference b) {
     // Special case: Unordered map with key != string, uses list of lists
     // and does not know that the order doesn't matter
-    auto iter1 = object["flags"][0];
+    auto iter1 = a[0].ptr();
     bool found_all = true;
     while (iter1) {
         bool found = false;
-        auto iter2 = expected["flags"][0];
+        auto iter2 = b[0].ptr();
         while (iter2) {
-            if (compare(iter1, iter2)) {
+            if (*iter1 == *iter2) {
                 found = true;
             }
             iter2 = iter2.next();
@@ -29,87 +29,92 @@ TEST(Object, Writer) {
     using namespace datapack;
 
     Entity entity = Entity::example();
-    Object object = write_object(entity);
+    const Object object = write_object(entity);
 
-    Object expected = Object(Object::map_t());
+    const Object expected = []() -> Object {
+        Object expected;
 
-    expected.insert("index", 5);
-    EXPECT_TRUE(compare(object["index"], expected["index"]));
+        expected["index"] = 5;
+        expected["name"] = "player";
+        expected["enabled"] = true;
 
-    expected.insert("name", "player");
-    EXPECT_TRUE(compare(object["name"], expected["name"]));
+        auto pose = expected["pose"];
+        pose["x"] = 1.0;
+        pose["y"] = 1.0;
+        pose["angle"] = M_PI/2;
 
-    expected.insert("enabled", true);
-    EXPECT_TRUE(compare(object["enabled"], expected["enabled"]));
+        expected["physics"] = "kinematic";
 
-    [](Object object) {
-        object.insert("x", 1.0);
-        object.insert("y", 2.0);
-        object.insert("z", M_PI/2);
-    }(expected.insert("pose", Object::map_t()));
-    EXPECT_TRUE(compare(object["pose"], expected["pose"]));
+        auto hitbox = expected["hitbox"];
+        hitbox["type"] = "circle";
+        hitbox["value"]["radius"] = 1.0;
 
-    expected.insert("physics", "kinematic");
-    EXPECT_TRUE(compare(object["physics"], expected["physics"]));
-
-    expected.insert("hitbox", Object::map_t());
-    expected["hitbox"].insert("type", "circle");
-    expected["hitbox"].insert("value", Object::map_t());
-    expected["hitbox"]["value"].insert("radius", 1.0);
-    EXPECT_TRUE(compare(object["hitbox"], expected["hitbox"]));
-
-    [](Object object) {
-        object.insert("width", 2);
-        object.insert("height", 2);
-
-        auto data = object.insert("data", Object::list_t());
+        auto sprite = expected["sprite"];
+        sprite["width"] = 2;
+        sprite["height"] = 2;
+        auto sprite_data = sprite["data"];
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
-                auto pixel = data.append(Object::map_t());
-                pixel.insert("r", ((double)i + 0.5) / 2);
-                pixel.insert("g", ((double)j + 0.5) / 2);
-                pixel.insert("b", 0.0);
+                auto pixel = sprite_data.append(Object::map_t());
+                pixel["r"] = (i + 0.5) / 2;
+                pixel["g"] = (j + 0.5) / 2;
+                pixel["b"] = 0.0;
             }
         }
-    }(expected.insert("sprite", Object::map_t()));
-    EXPECT_TRUE(compare(object["sprite"], expected["sprite"]));
 
-    [](Object object) {
-        auto add_item = [&object](int count, const std::string& name) {
-            auto item = object.append(Object::map_t());
-            item.insert("count", count);
-            item.insert("name", name);
+        auto items = expected["items"];
+        auto add_item = [&items](int count, const std::string& name) {
+            auto item = items.append(Object::map_t());
+            item["count"] = count;
+            item["name"] = name;
         };
         add_item(5, "hp_potion");
         add_item(1, "sword");
         add_item(1, "map");
         add_item(120, "gold");
-    }(expected.insert("items", Object::list_t()));
-    EXPECT_TRUE(compare(object["items"], expected["items"]));
 
-    [](Object object) {
-        object.insert("strength", 10.5);
-        object.insert("agility", 5.0);
-    }(expected.insert("properties", Object::map_t()));
+        auto properties = expected["properties"];
+        auto add_property = [&items](const std::string& name, double value) {
+            auto property = items.append(Object::list_t());
+            property.append(name);
+            property.append(value);
+        };
+        add_property("strength", 10.5);
+        add_property("agility", 5.0);
 
-    EXPECT_TRUE(compare_map(object["properties"], expected["properties"]));
-    object["properties"].erase();
-    expected["properties"].erase();
-
-    [](Object object) {
-        auto add_flag = [&object](int index, bool value) {
-            auto flag = object.append(Object::list_t());
+        auto objects = expected["objects"];
+        auto add_flag = [&objects](int index, bool value) {
+            auto flag = objects.append(Object::list_t());
             flag.append(index);
             flag.append(value);
         };
         add_flag(0, true);
         add_flag(1, false);
         add_flag(2, true);
-    }(expected.insert("flags", Object::list_t()));
 
-    EXPECT_TRUE(compare_map(object["flags"], expected["properties"]));
-    object["flags"].erase();
-    expected["flags"].erase();
+        return expected;
+    }();
 
-    EXPECT_TRUE(compare(object, expected));
+    EXPECT_TRUE(object.at("index") == expected.at("index"));
+    EXPECT_TRUE(object.at("name") == expected.at("name"));
+    EXPECT_TRUE(object.at("enabled") == expected.at("enabled"));
+    EXPECT_TRUE(object.at("pose") == expected.at("pose"));
+    EXPECT_TRUE(object.at("physics") == expected.at("physics"));
+    EXPECT_TRUE(object.at("hitbox") == expected.at("hitbox"));
+    EXPECT_TRUE(object.at("sprite") == expected.at("sprite"));
+    EXPECT_TRUE(object.at("items") == expected.at("items"));
+    EXPECT_TRUE(compare_map(object.at("properties"), expected.at("properties")));
+    EXPECT_TRUE(compare_map(object.at("flags"), expected.at("flags")));
+
+    Object object_temp = object.clone();
+    EXPECT_TRUE(object == object_temp);
+    Object expected_temp = object.clone();
+    EXPECT_TRUE(expected == expected_temp);
+
+    object_temp.at("properties").erase();
+    object_temp.at("flags").erase();
+    expected_temp.at("properties").erase();
+    expected_temp.at("flags").erase();
+
+    EXPECT_TRUE(object == expected);
 }

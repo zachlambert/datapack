@@ -95,56 +95,100 @@ private:
     public:
         const Reference_& operator=(const value_t& value) const {
             static_assert(!IsConst);
-            parent->assign(index, value);
+            parent->node_assign(index, value);
             return *this;
         }
 
         Reference_ operator[](const std::string& key) const {
             static_assert(!IsConst);
-            if (parent->template get_value<null_t>(index)) {
-                parent->assign(index, map_t());
-            } else if (!parent->template get_value<map_t>(index)){
+            if (is_null()) {
+                parent->node_assign(index, map_t());
+            } else if (!is_map()) {
                 throw ObjectException("Tried to access value by key on a non-map node");
             }
 
             int result = parent->map_access(index, key);
             if (result == -1) {
-                result = parent->node_insert(index, key);
+                result = parent->add_child(index, key);
             }
             return Reference_(parent, result);
         }
 
         Reference_ operator[](std::size_t list_index) const {
-            int result = parent->list_access(index, list_index);
-            return Reference(parent, result);
+            return Reference_(parent, parent->list_access(index, list_index));
         }
 
-        Reference_ at(const std::string key) {
-            return parent->map_access(index, key);
+        Pointer_<IsConst> find(const std::string key) const;
+        Reference_<IsConst> at(const std::string key) const {
+            if (!is_map()) {
+                throw ObjectException("Tried to access value by key on a non-map node");
+            }
+            int child_index = parent->map_access(index, key);
+            if (child_index == -1) {
+                throw ObjectException("Could not find key '" + key + "'");
+            }
+            return ConstReference(this, child_index);
         }
 
-        Reference_ insert(const std::string& key, const value_t& value) {
-            int value_index = parent->node_insert(index, key);
-            parent->assign(value_index, value);
+        Reference_ insert(const std::string& key, const value_t& value) const {
+            static_assert(!IsConst);
+            if (is_null()) {
+                parent->node_assign(index, map_t());
+            } else if (!is_map()) {
+                throw ObjectException("Tried to access value by key on a non-map node");
+            }
+
+            int value_index = parent->add_child(index, key);
+            parent->node_assign(value_index, value);
+            return Reference_(parent, value_index);
         }
 
-        Reference_ append(const value_t& value) {
-            if (parent->template get_value<null_t>(index)) {
-                parent->assign(index, list_t());
-            } else {
+        Reference_ append(const value_t& value) const {
+            static_assert(!IsConst);
+            if (is_null()) {
+                parent->node_assign(index, list_t());
+            } else if (!is_list()) {
                 throw ObjectException("Tried to append to a non-list node");
             }
 
-            int value_index = parent->node_append(index, index);
-            parent->assign(value_index, value);
+            int value_index = parent->add_child(index);
+            parent->node_assign(value_index, value);
+            return Reference_(parent, value_index);
         }
 
+        void erase() const {
+            static_assert(!IsConst);
+            parent->node_erase(index);
+        }
+
+        Object clone() const {
+            return parent->clone(index);
+        }
+
+        std::conditional_t<IsConst, const value_t&, value_t&> value() const {
+            return parent->nodes[index].value;
+        }
         const std::string& key() const {
             return parent->nodes[index].key;
         }
 
+
+        bool is_map() const { return get_value<map_t>(); }
+        bool is_list() const { return get_value<list_t>(); }
+        bool is_null() const { return get_value<null_t>(); }
+        std::conditional_t<IsConst, const int_t*, int_t>
+            get_int() const { return get_value<int_t>(); }
+        std::conditional_t<IsConst, const float_t*, float_t*>
+            get_float() const { return get_value<float_t>(); }
+        std::conditional_t<IsConst, const bool_t*, bool_t*>
+            get_bool() const { return get_value<bool_t>(); }
+        std::conditional_t<IsConst, const str_t*, str_t*>
+            get_string() const { return get_value<str_t>(); }
+        std::conditional_t<IsConst, const binary_t*, binary_t*>
+            get_binary() const { return get_value<binary_t>(); }
+
         template <typename T>
-        std::conditional_t<IsConst, const T*, T*> get_if() const {
+        std::conditional_t<IsConst, const T*, T*> get_value() const {
             return parent->template get_value<T>(index);
         }
 
@@ -183,21 +227,29 @@ private:
             return index != -1;
         }
         Pointer_ parent() const {
+            if (!object) return Pointer_();
             return Pointer_(object, object->get_parent(index));
         }
         Pointer_ child() const {
+            if (!object) return Pointer_();
             return Pointer_(object, object->get_child(index));
         }
         Pointer_ prev() const {
+            if (!object) return Pointer_();
             return Pointer_(object, object->get_prev(index));
         }
         Pointer_ next() const {
+            if (!object) return Pointer_();
             return Pointer_(object, object->get_next(index));
         }
 
         template <bool OtherConst, typename = std::enable_if_t<!OtherConst || IsConst>>
         Pointer_(const Pointer_<OtherConst>& other):
             object(other.object), index(other.index)
+        {}
+
+        Pointer_():
+            object(nullptr), index(-1), reference(nullptr, -1)
         {}
 
     private:
@@ -234,20 +286,20 @@ public:
     }
 
     Reference operator=(const value_t& value) {
-        assign(root_index, value);
+        node_assign(root_index, value);
         return Reference(this, root_index);
     }
 
     Reference operator[](const std::string& key) {
-        if (get_value<null_t>(root_index)) {
-            assign(root_index, map_t());
-        } else if (!get_value<map_t>(root_index)) {
+        if (is_null()) {
+            node_assign(root_index, map_t());
+        } else if (!is_map()) {
             throw ObjectException("Tried to access value by key on a non-map node");
         }
 
         int result = map_access(root_index, key);
         if (result == -1) {
-            result = node_insert(root_index, key);
+            result = add_child(root_index, key);
         }
         return Reference(this, result);
     }
@@ -259,23 +311,84 @@ public:
         return ConstReference(this, list_access(root_index, list_index));
     }
 
-    ConstReference at(const std::string key) {
-        if (!get_value<map_t>(root_index)) {
+    ConstPointer find(const std::string key) const {
+        if (!is_map()) {
             throw ObjectException("Tried to access value by key on a non-map node");
         }
-        return ConstReference(this, map_access(root_index, key));
+        return ConstPointer(this, map_access(root_index, key));
+    }
+
+    ConstReference at(const std::string key) const {
+        if (!is_map()) {
+            throw ObjectException("Tried to access value by key on a non-map node");
+        }
+        int child_index = map_access(root_index, key);
+        if (child_index == -1) {
+            throw ObjectException("Could not find key '" + key + "'");
+        }
+        return ConstReference(this, child_index);
+    }
+
+    Reference at(const std::string key) {
+        if (!is_map()) {
+            throw ObjectException("Tried to access value by key on a non-map node");
+        }
+        int child_index = map_access(root_index, key);
+        if (child_index == -1) {
+            throw ObjectException("Could not find key '" + key + "'");
+        }
+        return Reference(this, child_index);
     }
 
     Reference insert(const std::string& key, const value_t& value) {
-        int value_index = node_insert(root_index, key);
-        assign(value_index, value);
+        if (is_null()) {
+            node_assign(root_index, map_t());
+        } else if (!is_map()) {
+            throw ObjectException("Tried to insert value on non-map node");
+        }
+        int value_index = add_child(root_index, key);
+        node_assign(value_index, value);
         return Reference(this, value_index);
     }
 
     Reference append(const value_t& value) {
-        int value_index = node_append(root_index);
-        assign(value_index, value);
+        if (is_null()) {
+            node_assign(root_index, list_t());
+        } else if (!is_list()) {
+            throw ObjectException("Tried to append to a non-list node");
+        }
+        int value_index = add_child(root_index);
+        node_assign(value_index, value);
         return Reference(this, value_index);
+    }
+
+    void erase() {
+        node_erase(root_index);
+    }
+
+    Object clone() const {
+        return clone(root_index);
+    }
+
+    bool is_map() const { return get_value<map_t>(root_index); }
+    bool is_list() const { return get_value<list_t>(root_index); }
+    bool is_null() const { return get_value<null_t>(root_index); }
+    int_t* get_int() { return get_value<int_t>(root_index); }
+    const int_t* get_int() const { return get_value<int_t>(root_index); }
+    float_t* get_float() { return get_value<float_t>(root_index); }
+    const float_t* get_float() const { return get_value<float_t>(root_index); }
+    bool_t* get_bool() { return get_value<bool_t>(root_index); }
+    const bool_t* get_bool() const { return get_value<bool_t>(root_index); }
+    str_t* get_string() { return get_value<str_t>(root_index); }
+    const str_t* get_string() const { return get_value<str_t>(root_index); }
+    binary_t* get_binary() { return get_value<binary_t>(root_index); }
+    const binary_t* get_binary() const { return get_value<binary_t>(root_index); }
+
+    Pointer ptr() {
+        return Pointer(this, root_index);
+    }
+    ConstPointer ptr() const {
+        return ConstPointer(this, root_index);
     }
 
 private:
@@ -317,12 +430,15 @@ private:
         return last_child;
     }
 
-    int node_insert(int parent, const std::string& key) {
-        return add_node(Node(null, key, parent, get_last_child(parent)));
-    }
-
-    int node_append(int parent) {
-        return add_node(Node(null, "", parent, get_last_child(parent)));
+    int add_child(int parent, const std::string& key = "") {
+        int last_child = get_last_child(parent);
+        int node = add_node(Node(null, key, parent, last_child));
+        if (last_child == -1) {
+            nodes[parent].child = node;
+        } else {
+            nodes[last_child].next = node;
+        }
+        return node;
     }
 
     int map_access(int parent, const std::string& key) const {
@@ -348,13 +464,13 @@ private:
         return iter;
     }
 
-    void assign(int index, const value_t& value) {
-        clear(index);
+    void node_assign(int index, const value_t& value) {
+        node_clear(index);
         nodes[index].value = value;
     }
 
-    void erase(int index) {
-        clear(index);
+    void node_erase(int index) {
+        node_clear(index);
         if (int prev = get_prev(index); prev != -1) {
             nodes[prev].next = get_next(index);
         }
@@ -372,13 +488,59 @@ private:
         }
     }
 
-    void clear(int index) {
+    void node_clear(int index) {
         int iter = get_child(index);
         while (iter != -1) {
             int prev = iter;
             iter = get_next(iter);
-            erase(prev);
+            node_erase(prev);
         }
+    }
+
+    Object clone(int index) const {
+        Object result;
+        result = nodes[index].value;
+
+        if (!get_value<map_t>(index) && !get_value<list_t>(index)) {
+            return result;
+        }
+        if (get_child(index) == -1) {
+            return result;
+        }
+
+        std::stack<ConstPointer> from_stack;
+        from_stack.push(ConstPointer(this, get_child(index)));
+        std::stack<Pointer> to_stack;
+        to_stack.push(result.ptr());
+
+        while (!from_stack.empty()) {
+            auto from = from_stack.top();
+            from_stack.pop();
+            if (!from){
+                to_stack.pop();
+                continue;
+            }
+            from_stack.push(from.next());
+
+            auto to = to_stack.top();
+            Pointer new_to;
+            if (to->is_map()) {
+                new_to = to->insert(from->key(), from->value()).ptr();
+            }
+            else if (to->is_list()) {
+                new_to = to->append(from->value()).ptr();
+            }
+            else {
+                assert(false);
+            }
+
+            if (from->is_map() || from->is_list()) {
+                from_stack.push(from.child());
+                to_stack.push(new_to);
+            }
+        }
+
+        return result;
     }
 
     template <typename T>
@@ -416,6 +578,11 @@ private:
 template <bool IsConst>
 Object::Pointer_<IsConst> Object::Reference_<IsConst>::ptr() const {
     return Pointer_<IsConst>(parent, index);
+}
+
+template <bool IsConst>
+Object::Pointer_<IsConst> Object::Reference_<IsConst>::find(const std::string key) const {
+    return Pointer_<IsConst>(parent, parent->map_access(index, key));
 }
 
 
@@ -548,8 +715,6 @@ using Object = Object_<false>;
 using ConstObject = Object_<true>;
 #endif
 
-bool operator==(Object::ConstReference lhs, Object::ConstReference rhs);
-
 // How merge and diff work:
 // - merge(base, diff) applies "diff" on top of "base"
 // - diff(base, modified) returns the difference between the two, such that
@@ -580,9 +745,16 @@ bool operator==(Object::ConstReference lhs, Object::ConstReference rhs);
 //       the last element. There is no wasy for diff(base, modified) to distinguish
 //       between the two.
 
-Object object_merge(Object::ConstReference base, Object::ConstReference diff);
-Object object_diff(Object::ConstReference base, Object::ConstReference modified);
+Object merge(Object::ConstReference base, Object::ConstReference diff);
+Object diff(Object::ConstReference base, Object::ConstReference modified);
+
+bool operator==(const Object::ConstReference& lhs, const Object::ConstReference& rhs);
+inline bool operator==(const Object::Reference& lhs, const Object::Reference& rhs) {
+    return Object::ConstReference(lhs) == Object::ConstReference(rhs);
+}
+inline bool operator==(const Object& lhs, const Object& rhs) {
+    return Object::ConstReference(lhs) == Object::ConstReference(rhs);
+}
+std::ostream& operator<<(std::ostream& os, Object::ConstReference object);
 
 } // namespace datapack
-
-std::ostream& operator<<(std::ostream& os, datapack::Object::ConstReference object);

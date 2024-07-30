@@ -46,7 +46,7 @@ public:
 private:
     template <typename T>
     bool value_obj_int(T& value) {
-        if (auto x = node.get_if<Object::int_t>()) {
+        if (auto x = node->get_int()) {
             value = *x;
             return true;
         }
@@ -54,15 +54,15 @@ private:
     }
     template <typename T>
     bool value_obj_float(T& value) {
-        if (auto x = node.get_if<Object::float_t>()) {
+        if (auto x = node->get_float()) {
             value = *x;
             return true;
         }
         return false;
     }
 
-    Object::ConstReference node;
-    std::stack<Object::ConstReference> nodes;
+    Object::ConstPointer node;
+    std::stack<Object::ConstPointer> nodes;
     bool list_start;
     const char* next_variant_label;
     std::vector<std::uint8_t> data_temp;

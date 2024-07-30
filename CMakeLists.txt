@@ -22,8 +22,8 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/encode/float_string.cpp
 
         src/object.cpp
-        # src/util/object_writer.cpp
-        # src/util/object_reader.cpp
+        src/util/object_writer.cpp
+        src/util/object_reader.cpp
 
         src/format/binary_reader.cpp
         # src/format/json.cpp
@@ -82,8 +82,8 @@ if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
 
     add_executable(test_object
         test/object/object.cpp
-        # test/object/writer.cpp
-        # test/object/reader.cpp
+        test/object/writer.cpp
+        test/object/reader.cpp
     )
     target_link_libraries(test_object datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_object)

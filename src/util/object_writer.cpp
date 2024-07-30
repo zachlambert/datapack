@@ -5,7 +5,7 @@
 
 namespace datapack {
 
-ObjectWriter::ObjectWriter(Object& object):
+ObjectWriter::ObjectWriter(Object::Reference object):
     object(object),
     next_stride(0)
 {}
@@ -120,23 +120,23 @@ void ObjectWriter::list_next() {
 
 
 void ObjectWriter::set_value(const Object::value_t& value) {
-    Object next;
+    Object::Pointer next;
 
     if (nodes.empty()) {
-        object = Object(value);
-        next = object.root();
+        object = value;
+        next = object.ptr();
     } else {
         const auto& node = nodes.top();
-        if (node.get_if<Object::map_t>()) {
-            next = node.insert(next_key, value);
-        } else if (node.get_if<Object::list_t>()) {
-            next = node.append(value);
+        if (node->is_map()) {
+            next = node->insert(next_key, value).ptr();
+        } else if (node->is_list()) {
+            next = node->append(value).ptr();
         } else {
             throw std::runtime_error("Shouldn't reach here");
         }
     }
 
-    if (next.get_if<Object::map_t>() || next.get_if<Object::list_t>()) {
+    if (next->is_map() || next->is_list()) {
         nodes.push(next);
     }
 }

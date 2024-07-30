@@ -47,7 +47,7 @@ private:
     void set_value(const Object::value_t& value);
 
     Object::Reference object;
-    std::stack<Object> nodes;
+    std::stack<Object::Pointer> nodes;
     std::string next_key;
     std::size_t next_stride;
 };

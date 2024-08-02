@@ -61,8 +61,8 @@ private:
         return false;
     }
 
-    Object::ConstPointer node;
-    std::stack<Object::ConstPointer> nodes;
+    Object::ConstIterator node;
+    std::stack<Object::ConstIterator> nodes;
     bool list_start;
     const char* next_variant_label;
     std::vector<std::uint8_t> data_temp;

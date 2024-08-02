@@ -120,17 +120,17 @@ void ObjectWriter::list_next() {
 
 
 void ObjectWriter::set_value(const Object::value_t& value) {
-    Object::Pointer next;
+    Object::Iterator next;
 
     if (nodes.empty()) {
         object = value;
-        next = object.ptr();
+        next = object.iter();
     } else {
         const auto& node = nodes.top();
         if (node->is_map()) {
-            next = node->insert(next_key, value).ptr();
+            next = node->insert(next_key, value).iter();
         } else if (node->is_list()) {
-            next = node->append(value).ptr();
+            next = node->append(value).iter();
         } else {
             throw std::runtime_error("Shouldn't reach here");
         }

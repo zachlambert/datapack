@@ -6,11 +6,11 @@
 bool compare_map(datapack::Object::ConstReference a, datapack::Object::ConstReference b) {
     // Special case: Unordered map with key != string, uses list of lists
     // and does not know that the order doesn't matter
-    auto iter1 = a[0].ptr();
+    auto iter1 = a[0].iter();
     bool found_all = true;
     while (iter1) {
         bool found = false;
-        auto iter2 = b[0].ptr();
+        auto iter2 = b[0].iter();
         while (iter2) {
             if (*iter1 == *iter2) {
                 found = true;
@@ -74,17 +74,17 @@ TEST(Object, Writer) {
         add_item(120, "gold");
 
         auto properties = expected["properties"];
-        auto add_property = [&items](const std::string& name, double value) {
-            auto property = items.append(Object::list_t());
+        auto add_property = [&properties](const std::string& name, double value) {
+            auto property = properties.append(Object::list_t());
             property.append(name);
             property.append(value);
         };
         add_property("strength", 10.5);
         add_property("agility", 5.0);
 
-        auto objects = expected["objects"];
-        auto add_flag = [&objects](int index, bool value) {
-            auto flag = objects.append(Object::list_t());
+        auto flags = expected["flags"];
+        auto add_flag = [&flags](int index, bool value) {
+            auto flag = flags.append(Object::list_t());
             flag.append(index);
             flag.append(value);
         };

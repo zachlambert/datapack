@@ -49,6 +49,7 @@ private:
     std::string message;
 };
 
+
 class Object {
 public:
     using int_t = std::int64_t;
@@ -86,44 +87,44 @@ private:
     };
 
     template <bool IsConst>
-    class Pointer_;
+    class Iterator_;
 
     template <bool IsConst>
     class Reference_ {
-        using parent_t = std::conditional_t<IsConst, const Object*, Object*>;
+        using object_t = std::conditional_t<IsConst, const Object*, Object*>;
 
     public:
         const Reference_& operator=(const value_t& value) const {
             static_assert(!IsConst);
-            parent->node_assign(index, value);
+            object->node_assign(index, value);
             return *this;
         }
 
         Reference_ operator[](const std::string& key) const {
             static_assert(!IsConst);
             if (is_null()) {
-                parent->node_assign(index, map_t());
+                object->node_assign(index, map_t());
             } else if (!is_map()) {
                 throw ObjectException("Tried to access value by key on a non-map node");
             }
 
-            int result = parent->map_access(index, key);
+            int result = object->map_access(index, key);
             if (result == -1) {
-                result = parent->add_child(index, key);
+                result = object->add_child(index, key);
             }
-            return Reference_(parent, result);
+            return Reference_(object, result);
         }
 
         Reference_ operator[](std::size_t list_index) const {
-            return Reference_(parent, parent->list_access(index, list_index));
+            return Reference_(object, object->list_access(index, list_index));
         }
 
-        Pointer_<IsConst> find(const std::string key) const;
+        Iterator_<IsConst> find(const std::string key) const;
         Reference_<IsConst> at(const std::string key) const {
             if (!is_map()) {
                 throw ObjectException("Tried to access value by key on a non-map node");
             }
-            int child_index = parent->map_access(index, key);
+            int child_index = object->map_access(index, key);
             if (child_index == -1) {
                 throw ObjectException("Could not find key '" + key + "'");
             }
@@ -133,43 +134,43 @@ private:
         Reference_ insert(const std::string& key, const value_t& value) const {
             static_assert(!IsConst);
             if (is_null()) {
-                parent->node_assign(index, map_t());
+                object->node_assign(index, map_t());
             } else if (!is_map()) {
                 throw ObjectException("Tried to access value by key on a non-map node");
             }
 
-            int value_index = parent->add_child(index, key);
-            parent->node_assign(value_index, value);
-            return Reference_(parent, value_index);
+            int value_index = object->add_child(index, key);
+            object->node_assign(value_index, value);
+            return Reference_(object, value_index);
         }
 
         Reference_ append(const value_t& value) const {
             static_assert(!IsConst);
             if (is_null()) {
-                parent->node_assign(index, list_t());
+                object->node_assign(index, list_t());
             } else if (!is_list()) {
                 throw ObjectException("Tried to append to a non-list node");
             }
 
-            int value_index = parent->add_child(index);
-            parent->node_assign(value_index, value);
-            return Reference_(parent, value_index);
+            int value_index = object->add_child(index);
+            object->node_assign(value_index, value);
+            return Reference_(object, value_index);
         }
 
         void erase() const {
             static_assert(!IsConst);
-            parent->node_erase(index);
+            object->node_erase(index);
         }
 
         Object clone() const {
-            return parent->clone(index);
+            return object->clone(index);
         }
 
         std::conditional_t<IsConst, const value_t&, value_t&> value() const {
-            return parent->nodes[index].value;
+            return object->nodes[index].value;
         }
         const std::string& key() const {
-            return parent->nodes[index].key;
+            return object->nodes[index].key;
         }
 
 
@@ -189,30 +190,34 @@ private:
 
         template <typename T>
         std::conditional_t<IsConst, const T*, T*> get_value() const {
-            return parent->template get_value<T>(index);
+            return object->template get_value<T>(index);
         }
 
-        Pointer_<IsConst> ptr() const;
+        Iterator_<IsConst> iter() const;
 
         template <bool OtherConst, typename = std::enable_if_t<!OtherConst || IsConst>>
         Reference_(const Reference_<OtherConst>& other):
-            parent(other.parent), index(other.index)
+            object(other.object), index(other.index)
         {}
 
     private:
-        Reference_(parent_t parent, int index):
-            parent(parent), index(index)
-        {}
-        parent_t parent;
+        Reference_(object_t object, int index, bool from_iter = false):
+            object(object), index(index)
+        {
+            if (!from_iter) {
+                assert(index != -1);
+            }
+        }
+        object_t object;
         int index;
 
         template <bool OtherConst>
-        friend class Pointer_;
+        friend class Iterator_;
         friend class Object;
     };
 
     template <bool IsConst>
-    class Pointer_ {
+    class Iterator_ {
         using object_t = std::conditional_t<IsConst, const Object*, Object*>;
 
     public:
@@ -226,30 +231,30 @@ private:
         operator bool() const {
             return index != -1;
         }
-        Pointer_ parent() const {
-            if (!object) return Pointer_();
-            return Pointer_(object, object->get_parent(index));
+        Iterator_ parent() const {
+            if (!object) return Iterator_();
+            return Iterator_(object, object->get_parent(index));
         }
-        Pointer_ child() const {
-            if (!object) return Pointer_();
-            return Pointer_(object, object->get_child(index));
+        Iterator_ child() const {
+            if (!object) return Iterator_();
+            return Iterator_(object, object->get_child(index));
         }
-        Pointer_ prev() const {
-            if (!object) return Pointer_();
-            return Pointer_(object, object->get_prev(index));
+        Iterator_ prev() const {
+            if (!object) return Iterator_();
+            return Iterator_(object, object->get_prev(index));
         }
-        Pointer_ next() const {
-            if (!object) return Pointer_();
-            return Pointer_(object, object->get_next(index));
+        Iterator_ next() const {
+            if (!object) return Iterator_();
+            return Iterator_(object, object->get_next(index));
         }
 
         template <bool OtherConst, typename = std::enable_if_t<!OtherConst || IsConst>>
-        Pointer_(const Pointer_<OtherConst>& other):
+        Iterator_(const Iterator_<OtherConst>& other):
             object(other.object), index(other.index)
         {}
 
-        Pointer_():
-            object(nullptr), index(-1), reference(nullptr, -1)
+        Iterator_():
+            object(nullptr), index(-1), reference(nullptr, -1, true)
         {}
 
     private:
@@ -257,8 +262,8 @@ private:
             return object->nodes[index];
         }
 
-        Pointer_(object_t object, int index):
-            object(object), index(index), reference(object, index)
+        Iterator_(object_t object, int index):
+            object(object), index(index), reference(object, index, true)
         {}
         object_t object;
         int index;
@@ -269,8 +274,8 @@ private:
 public:
     using Reference = Reference_<false>;
     using ConstReference = Reference_<true>;
-    using Pointer = Pointer_<false>;
-    using ConstPointer = Pointer_<true>;
+    using Iterator = Iterator_<false>;
+    using ConstIterator = Iterator_<true>;
 
     Object():
         root_index(0)
@@ -311,11 +316,11 @@ public:
         return ConstReference(this, list_access(root_index, list_index));
     }
 
-    ConstPointer find(const std::string key) const {
+    ConstIterator find(const std::string key) const {
         if (!is_map()) {
             throw ObjectException("Tried to access value by key on a non-map node");
         }
-        return ConstPointer(this, map_access(root_index, key));
+        return ConstIterator(this, map_access(root_index, key));
     }
 
     ConstReference at(const std::string key) const {
@@ -384,11 +389,11 @@ public:
     binary_t* get_binary() { return get_value<binary_t>(root_index); }
     const binary_t* get_binary() const { return get_value<binary_t>(root_index); }
 
-    Pointer ptr() {
-        return Pointer(this, root_index);
+    Iterator iter() {
+        return Iterator(this, root_index);
     }
-    ConstPointer ptr() const {
-        return ConstPointer(this, root_index);
+    ConstIterator iter() const {
+        return ConstIterator(this, root_index);
     }
 
 private:
@@ -508,10 +513,10 @@ private:
             return result;
         }
 
-        std::stack<ConstPointer> from_stack;
-        from_stack.push(ConstPointer(this, get_child(index)));
-        std::stack<Pointer> to_stack;
-        to_stack.push(result.ptr());
+        std::stack<ConstIterator> from_stack;
+        from_stack.push(ConstIterator(this, get_child(index)));
+        std::stack<Iterator> to_stack;
+        to_stack.push(result.iter());
 
         while (!from_stack.empty()) {
             auto from = from_stack.top();
@@ -523,12 +528,12 @@ private:
             from_stack.push(from.next());
 
             auto to = to_stack.top();
-            Pointer new_to;
+            Iterator new_to;
             if (to->is_map()) {
-                new_to = to->insert(from->key(), from->value()).ptr();
+                new_to = to->insert(from->key(), from->value()).iter();
             }
             else if (to->is_list()) {
-                new_to = to->append(from->value()).ptr();
+                new_to = to->append(from->value()).iter();
             }
             else {
                 assert(false);
@@ -576,144 +581,14 @@ private:
 };
 
 template <bool IsConst>
-Object::Pointer_<IsConst> Object::Reference_<IsConst>::ptr() const {
-    return Pointer_<IsConst>(parent, index);
+Object::Iterator_<IsConst> Object::Reference_<IsConst>::iter() const {
+    return Iterator_<IsConst>(object, index);
 }
 
 template <bool IsConst>
-Object::Pointer_<IsConst> Object::Reference_<IsConst>::find(const std::string key) const {
-    return Pointer_<IsConst>(parent, parent->map_access(index, key));
+Object::Iterator_<IsConst> Object::Reference_<IsConst>::find(const std::string key) const {
+    return Iterator_<IsConst>(object, object->map_access(index, key));
 }
-
-
-// ================================= OLD ============================
-
-#if 0
-
-template <bool IsConst>
-class Object_ {
-public:
-    using int_t = _object::int_t;
-    using float_t = _object::float_t;
-    using bool_t = _object::bool_t;
-    using str_t = _object::str_t;
-    using null_t = _object::null_t;
-    static constexpr null_t null = _object::null;
-    using binary_t = _object::binary_t;
-    using map_t = _object::map_t;
-    using list_t = _object::list_t;
-    using value_t = _object::value_t;
-    using Node = _object::Node;
-
-private:
-    using State = _object::State;
-    using state_t = std::conditional_t<
-        IsConst,
-        std::shared_ptr<const State>,
-        std::shared_ptr<State>
-    >;
-
-public:
-    Object_():
-        index(-1)
-    {}
-
-    Object_(const value_t& root_value):
-        state(std::make_shared<State>()),
-        index(0)
-    {
-        static_assert(!IsConst);
-        state->nodes.push_back(Node(root_value, "", -1, -1));
-    }
-
-    template <bool OtherConst, typename = std::enable_if_t<IsConst || !OtherConst>>
-    Object_(const Object_<OtherConst>& other):
-        state(other.state),
-        index(other.index)
-    {}
-
-    Object_ root() const {
-        return Object_(state, 0);
-    }
-    Object_<true> const_root() const {
-        return root();
-    }
-
-    operator bool() const {
-        return index != -1;
-    }
-    std::conditional_t<IsConst, const value_t&, value_t&> value() const {
-        return node().value;
-    }
-    const std::string& key() const {
-        return node().key;
-    }
-
-    template <typename T>
-    std::conditional_t<IsConst, const T&, T&> get() const {
-        return std::get<T>(node().value);
-    }
-
-    template <typename T>
-    std::conditional_t<IsConst, const T*, T*> get_if() const {
-        if (!(*this)) return nullptr;
-        return std::get_if<T>(&node().value);
-    }
-
-    Object_ prev() const {
-        return Object_(state, node().prev);
-    }
-    Object_ next() const {
-        return Object_(state, node().next);
-    }
-    Object_ parent() const {
-        return Object_(state, node().parent);
-    }
-    Object_ child() const {
-        return Object_(state, node().child);
-    }
-
-    Object_ insert(const std::string& key, const value_t& value);
-    Object_ operator[](const std::string& key) const;
-    Object_ operator[](const char* key) const {
-        return (*this)[std::string(key)];
-    }
-
-    Object_ append(const value_t& value) const;
-    Object_ operator[](std::size_t index) const;
-    Object_ operator[](int index) const {
-        return (*this)[(std::size_t)index];
-    }
-
-    std::size_t size() const;
-
-    Object_ clone() const;
-
-    void set(const value_t& value) const;
-    void erase() const;
-    void clear() const;
-
-private:
-    Object_(state_t state, int index):
-        state(state), index(index)
-    {}
-
-    std::conditional_t<IsConst, const Node&, Node&> node() const {
-        return state->nodes[index];
-    }
-
-    Object_ create_node(const Node& node);
-
-    state_t state;
-    int index;
-
-    template <bool OtherConst>
-    friend class Object_;
-};
-
-using Object = Object_<false>;
-using ConstObject = Object_<true>;
-#endif
 
 // How merge and diff work:
 // - merge(base, diff) applies "diff" on top of "base"

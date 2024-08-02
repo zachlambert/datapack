@@ -5,7 +5,7 @@
 namespace datapack {
 
 ObjectReader::ObjectReader(Object::ConstReference object):
-    node(object.ptr()),
+    node(object.iter()),
     list_start(false),
     next_variant_label(nullptr)
 {}

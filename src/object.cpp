@@ -7,11 +7,11 @@ namespace datapack {
 Object merge(const Object::ConstReference& base, const Object::ConstReference& diff) {
     Object merged;
 
-    std::stack<Object::ConstPointer> base_nodes;
-    std::stack<Object::ConstPointer> diff_nodes;
-    std::stack<Object::Pointer> merged_nodes;
+    std::stack<Object::ConstIterator> base_nodes;
+    std::stack<Object::ConstIterator> diff_nodes;
+    std::stack<Object::Iterator> merged_nodes;
 
-    diff_nodes.push(diff.ptr());
+    diff_nodes.push(diff.iter());
 
     while (!diff_nodes.empty()) {
 
@@ -29,10 +29,10 @@ Object diff(const Object::ConstReference& base, const Object::ConstReference& mo
 
 bool operator==(const Object::ConstReference& lhs, const Object::ConstReference& rhs) {
     static constexpr double float_threshold = 1e-12;
-    std::stack<Object::ConstPointer> nodes_lhs;
-    std::stack<Object::ConstPointer> nodes_rhs;
-    nodes_lhs.push(lhs.ptr());
-    nodes_rhs.push(rhs.ptr());
+    std::stack<Object::ConstIterator> nodes_lhs;
+    std::stack<Object::ConstIterator> nodes_rhs;
+    nodes_lhs.push(lhs.iter());
+    nodes_rhs.push(rhs.iter());
 
     while (!nodes_lhs.empty()) {
         auto lhs = nodes_lhs.top();
@@ -76,11 +76,11 @@ bool operator==(const Object::ConstReference& lhs, const Object::ConstReference&
 
         bool values_equal = std::visit([&rhs](const auto& lhs_value) -> bool {
             using T = std::decay_t<decltype(lhs_value)>;
-            auto rhs_value_ptr = rhs->get_value<T>();
-            if (!rhs_value_ptr) {
+            auto rhs_value_iter = rhs->get_value<T>();
+            if (!rhs_value_iter) {
                 return false;
             }
-            const auto& rhs_value = *rhs_value_ptr;
+            const auto& rhs_value = *rhs_value_iter;
 
             if constexpr(std::is_same_v<Object::int_t, T>) {
                 return (rhs_value == lhs_value);
@@ -124,8 +124,8 @@ bool operator==(const Object::ConstReference& lhs, const Object::ConstReference&
 
 
 std::ostream& operator<<(std::ostream& os, Object::ConstReference object) {
-    std::stack<datapack::Object::ConstPointer> nodes;
-    nodes.push(object.ptr());
+    std::stack<datapack::Object::ConstIterator> nodes;
+    nodes.push(object.iter());
     int depth = 0;
     bool first = true;
 

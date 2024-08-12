@@ -13,45 +13,7 @@
 
 namespace datapack {
 
-class LoadException: public std::exception {
-public:
-    LoadException(const std::string& message):
-        message(message)
-    {}
-private:
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-    std::string message;
-};
-
-class DumpException: public std::exception {
-public:
-    DumpException(const std::string& message):
-        message(message)
-    {}
-private:
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-    std::string message;
-};
-
-class ObjectException: public std::exception {
-public:
-    ObjectException(const std::string& message):
-        message(message)
-    {}
-private:
-    const char* what() const noexcept override {
-        return message.c_str();
-    }
-    std::string message;
-};
-
-
 class Object {
-public:
     using int_t = std::int64_t;
     using float_t = double;
     using bool_t = bool;
@@ -72,6 +34,31 @@ public:
         map_t,
         list_t
     >;
+
+public:
+    class LookupException: public std::exception {
+    public:
+        LookupException(const std::string& message):
+            message(message)
+        {}
+    private:
+        const char* what() const noexcept override {
+            return message.c_str();
+        }
+        std::string message;
+    };
+
+    class ValueException: public std::exception {
+    public:
+        ValueException(const std::string& message):
+            message(message)
+        {}
+    private:
+        const char* what() const noexcept override {
+            return message.c_str();
+        }
+        std::string message;
+    };
 
 private:
     struct Node {
@@ -96,23 +83,13 @@ private:
     public:
         const Reference_& operator=(const value_t& value) const {
             static_assert(!IsConst);
-            object->node_assign(index, value);
+            object->assign(index, value);
             return *this;
         }
 
         Reference_ operator[](const std::string& key) const {
             static_assert(!IsConst);
-            if (is_null()) {
-                object->node_assign(index, map_t());
-            } else if (!is_map()) {
-                throw ObjectException("Tried to access value by key on a non-map node");
-            }
-
-            int result = object->map_access(index, key);
-            if (result == -1) {
-                result = object->add_child(index, key);
-            }
-            return Reference_(object, result);
+            return Reference_(object, object->map_access_mutable(index, key));
         }
 
         Reference_ operator[](std::size_t list_index) const {
@@ -120,41 +97,17 @@ private:
         }
 
         Iterator_<IsConst> find(const std::string key) const;
+
         Reference_<IsConst> at(const std::string key) const {
-            if (!is_map()) {
-                throw ObjectException("Tried to access value by key on a non-map node");
-            }
-            int child_index = object->map_access(index, key);
-            if (child_index == -1) {
-                throw ObjectException("Could not find key '" + key + "'");
-            }
-            return ConstReference(this, child_index);
+            return Reference_(object, object->map_access(index, key, false));
         }
 
         Reference_ insert(const std::string& key, const value_t& value) const {
-            static_assert(!IsConst);
-            if (is_null()) {
-                object->node_assign(index, map_t());
-            } else if (!is_map()) {
-                throw ObjectException("Tried to access value by key on a non-map node");
-            }
-
-            int value_index = object->add_child(index, key);
-            object->node_assign(value_index, value);
-            return Reference_(object, value_index);
+            return Reference_(object, object->insert(index, key, value));
         }
 
         Reference_ append(const value_t& value) const {
-            static_assert(!IsConst);
-            if (is_null()) {
-                object->node_assign(index, list_t());
-            } else if (!is_list()) {
-                throw ObjectException("Tried to append to a non-list node");
-            }
-
-            int value_index = object->add_child(index);
-            object->node_assign(value_index, value);
-            return Reference_(object, value_index);
+            return Reference_(object, object->append(index, value));
         }
 
         void erase() const {
@@ -169,29 +122,24 @@ private:
         std::conditional_t<IsConst, const value_t&, value_t&> value() const {
             return object->nodes[index].value;
         }
+
         const std::string& key() const {
             return object->nodes[index].key;
         }
 
-
-        bool is_map() const { return get_value<map_t>(); }
-        bool is_list() const { return get_value<list_t>(); }
-        bool is_null() const { return get_value<null_t>(); }
-        std::conditional_t<IsConst, const int_t*, int_t>
-            get_int() const { return get_value<int_t>(); }
+        bool is_map() const { return object->is_map(index); }
+        bool is_list() const { return object->is_list(index); }
+        bool is_null() const { return object->is_null(index); }
+        std::conditional_t<IsConst, const int_t*, int_t*>
+            get_int() { return object->get_int(index); }
         std::conditional_t<IsConst, const float_t*, float_t*>
-            get_float() const { return get_value<float_t>(); }
+            get_float() { return object->get_float(index); }
         std::conditional_t<IsConst, const bool_t*, bool_t*>
-            get_bool() const { return get_value<bool_t>(); }
+            get_bool() { return object->get_bool(index); }
         std::conditional_t<IsConst, const str_t*, str_t*>
-            get_string() const { return get_value<str_t>(); }
+            get_string() { return object->get_int(index); }
         std::conditional_t<IsConst, const binary_t*, binary_t*>
-            get_binary() const { return get_value<binary_t>(); }
-
-        template <typename T>
-        std::conditional_t<IsConst, const T*, T*> get_value() const {
-            return object->template get_value<T>(index);
-        }
+            get_binary() { return object->get_binary(index); }
 
         Iterator_<IsConst> iter() const;
 
@@ -201,13 +149,9 @@ private:
         {}
 
     private:
-        Reference_(object_t object, int index, bool from_iter = false):
+        Reference_(object_t object, int index):
             object(object), index(index)
-        {
-            if (!from_iter) {
-                assert(index != -1);
-            }
-        }
+        {}
         object_t object;
         int index;
 
@@ -216,58 +160,61 @@ private:
         friend class Object;
     };
 
+
     template <bool IsConst>
     class Iterator_ {
         using object_t = std::conditional_t<IsConst, const Object*, Object*>;
 
     public:
-        Reference_<IsConst> operator*() const {
-            return Reference_<IsConst>(object, index);
+        const Reference_<IsConst>& operator*() const {
+            return ref;
         }
         const Reference_<IsConst>* operator->() const {
-            return &reference;
+            return &ref;
         }
 
         operator bool() const {
-            return index != -1;
+            return valid();
         }
+
         Iterator_ parent() const {
-            if (!object) return Iterator_();
-            return Iterator_(object, object->get_parent(index));
+            if (!valid()) return Iterator_();
+            return Iterator_(ref.object, node().parent);
         }
         Iterator_ child() const {
-            if (!object) return Iterator_();
-            return Iterator_(object, object->get_child(index));
+            if (!valid()) return Iterator_();
+            return Iterator_(ref.object, node().child);
         }
         Iterator_ prev() const {
-            if (!object) return Iterator_();
-            return Iterator_(object, object->get_prev(index));
+            if (!valid()) return Iterator_();
+            return Iterator_(ref.object, node().prev);
         }
         Iterator_ next() const {
-            if (!object) return Iterator_();
-            return Iterator_(object, object->get_next(index));
+            if (!valid()) return Iterator_();
+            return Iterator_(ref.object, node().next);
         }
 
         template <bool OtherConst, typename = std::enable_if_t<!OtherConst || IsConst>>
         Iterator_(const Iterator_<OtherConst>& other):
-            object(other.object), index(other.index)
+            ref(other.ref)
         {}
 
         Iterator_():
-            object(nullptr), index(-1), reference(nullptr, -1, true)
+            ref(nullptr, 0)
         {}
 
     private:
-        std::conditional_t<IsConst, const Node&, Node&> node() {
-            return object->nodes[index];
+        bool valid() const {
+            return ref.object != nullptr && ref.index != -1;
+        }
+        const Node& node() const {
+            return ref.object->nodes[ref.index];
         }
 
         Iterator_(object_t object, int index):
-            object(object), index(index), reference(object, index, true)
+            ref(object, index)
         {}
-        object_t object;
-        int index;
-        Reference_<IsConst> reference;
+        const Reference_<IsConst> ref;
         friend class Object;
     };
 
@@ -291,103 +238,67 @@ public:
     }
 
     Reference operator=(const value_t& value) {
-        node_assign(root_index, value);
+        assign(root_index, value);
         return Reference(this, root_index);
     }
 
     Reference operator[](const std::string& key) {
-        if (is_null()) {
-            node_assign(root_index, map_t());
-        } else if (!is_map()) {
-            throw ObjectException("Tried to access value by key on a non-map node");
-        }
-
-        int result = map_access(root_index, key);
-        if (result == -1) {
-            result = add_child(root_index, key);
-        }
-        return Reference(this, result);
+        return Reference(this, map_access_mutable(root_index, key));
     }
 
     ConstReference operator[](std::size_t list_index) const {
-        if (!get_value<list_t>(root_index)) {
-            throw ObjectException("Tried to access value by index on a non-list node");
-        }
         return ConstReference(this, list_access(root_index, list_index));
     }
 
+    Reference operator[](std::size_t list_index) {
+        return Reference(this, list_access(root_index, list_index));
+    }
+
     ConstIterator find(const std::string key) const {
-        if (!is_map()) {
-            throw ObjectException("Tried to access value by key on a non-map node");
-        }
-        return ConstIterator(this, map_access(root_index, key));
+        return ConstIterator(this, map_access(root_index, key, false));
+    }
+
+    Iterator find(const std::string key) {
+        return Iterator(this, map_access(root_index, key, false));
     }
 
     ConstReference at(const std::string key) const {
-        if (!is_map()) {
-            throw ObjectException("Tried to access value by key on a non-map node");
-        }
-        int child_index = map_access(root_index, key);
-        if (child_index == -1) {
-            throw ObjectException("Could not find key '" + key + "'");
-        }
-        return ConstReference(this, child_index);
+        return ConstReference(this, map_access(root_index, key, true));
     }
 
     Reference at(const std::string key) {
-        if (!is_map()) {
-            throw ObjectException("Tried to access value by key on a non-map node");
-        }
-        int child_index = map_access(root_index, key);
-        if (child_index == -1) {
-            throw ObjectException("Could not find key '" + key + "'");
-        }
-        return Reference(this, child_index);
+        return Reference(this, map_access(root_index, key, true));
     }
 
     Reference insert(const std::string& key, const value_t& value) {
-        if (is_null()) {
-            node_assign(root_index, map_t());
-        } else if (!is_map()) {
-            throw ObjectException("Tried to insert value on non-map node");
-        }
-        int value_index = add_child(root_index, key);
-        node_assign(value_index, value);
-        return Reference(this, value_index);
+        return Reference(this, insert(root_index, key, value));
     }
 
     Reference append(const value_t& value) {
-        if (is_null()) {
-            node_assign(root_index, list_t());
-        } else if (!is_list()) {
-            throw ObjectException("Tried to append to a non-list node");
-        }
-        int value_index = add_child(root_index);
-        node_assign(value_index, value);
-        return Reference(this, value_index);
+        return Reference(this, append(root_index, value));
     }
 
     void erase() {
-        node_erase(root_index);
+        erase(root_index);
     }
 
     Object clone() const {
         return clone(root_index);
     }
 
-    bool is_map() const { return get_value<map_t>(root_index); }
-    bool is_list() const { return get_value<list_t>(root_index); }
-    bool is_null() const { return get_value<null_t>(root_index); }
-    int_t* get_int() { return get_value<int_t>(root_index); }
-    const int_t* get_int() const { return get_value<int_t>(root_index); }
-    float_t* get_float() { return get_value<float_t>(root_index); }
-    const float_t* get_float() const { return get_value<float_t>(root_index); }
-    bool_t* get_bool() { return get_value<bool_t>(root_index); }
-    const bool_t* get_bool() const { return get_value<bool_t>(root_index); }
-    str_t* get_string() { return get_value<str_t>(root_index); }
-    const str_t* get_string() const { return get_value<str_t>(root_index); }
-    binary_t* get_binary() { return get_value<binary_t>(root_index); }
-    const binary_t* get_binary() const { return get_value<binary_t>(root_index); }
+    bool is_map() const { return is_map(root_index); }
+    bool is_list() const { return is_list(root_index); }
+    bool is_null() const { return is_null(root_index); }
+    int_t* get_int() { return get_int(root_index); }
+    const int_t* get_int() const { return get_int(root_index); }
+    float_t* get_float() { return get_float(root_index); }
+    const float_t* get_float() const { return get_float(root_index); }
+    bool_t* get_bool() { return get_bool(root_index); }
+    const bool_t* get_bool() const { return get_bool(root_index); }
+    str_t* get_string() { return get_string(root_index); }
+    const str_t* get_string() const { return get_string(root_index); }
+    binary_t* get_binary() { return get_binary(root_index); }
+    const binary_t* get_binary() const { return get_binary(root_index); }
 
     Iterator iter() {
         return Iterator(this, root_index);
@@ -397,40 +308,62 @@ public:
     }
 
 private:
-    int get_parent(int node) const {
-        if (node == -1) {
-            return -1;
-        }
-        return nodes[node].parent;
+    bool is_map(int index) const {
+        return get_value<map_t>(index);
+    }
+    bool is_list(int index) const {
+        return get_value<list_t>(index);
+    }
+    bool is_null(int index) const {
+        return get_value<null_t>(index);
+    }
+    int_t* get_int(int index) {
+        return get_value<int_t>(index);
+    }
+    const int_t* get_int(int index) const {
+        return get_value<int_t>(index);
+    }
+    float_t* get_float(int index) {
+        return get_value<float_t>(index);
+    }
+    const float_t* get_float(int index) const {
+        return get_value<float_t>(index);
+    }
+    bool_t* get_bool(int index) {
+        return get_value<bool_t>(index);
+    }
+    const bool_t* get_bool(int index) const {
+        return get_value<bool_t>(index);
+    }
+    str_t* get_string(int index) {
+        return get_value<str_t>(index);
+    }
+    const str_t* get_string(int index) const {
+        return get_value<str_t>(index);
+    }
+    binary_t* get_binary(int index) {
+        return get_value<binary_t>(index);
+    }
+    const binary_t* get_binary(int index) const {
+        return get_value<binary_t>(index);
     }
 
-    int get_child(int node) const {
-        if (node == -1) {
-            return -1;
-        }
-        return nodes[node].child;
+    template <typename T>
+    const T* get_value(std::size_t index) const {
+        return get_value<T>(index);
     }
 
-    int get_next(int node) const {
-        if (node == -1) {
-            return -1;
-        }
-        return nodes[node].next;
-    }
-
-    int get_prev(int node) const {
-        if (node == -1) {
-            return -1;
-        }
-        return nodes[node].prev;
+    template <typename T>
+    T* get_value(std::size_t index) {
+        return get_value<T>(index);
     }
 
     int get_last_child(int node) const {
-        int iter = get_child(node);
+        int iter = nodes[node].child;
         int last_child = iter;
         while (iter != -1) {
             last_child = iter;
-            iter = get_next(iter);
+            iter = nodes[iter].next;
         }
         return last_child;
     }
@@ -446,44 +379,65 @@ private:
         return node;
     }
 
-    int map_access(int parent, const std::string& key) const {
-        assert(get_value<map_t>(parent));
-        int iter = get_child(parent);
-        while (iter != -1) {
-            if (nodes[iter].key == key) {
-                return iter;
+    int map_access(int parent, const std::string& key, bool required) const {
+        if (!std::get_if<map_t>(&nodes[parent].value)) {
+            throw ValueException("Tried to access value by key on a non-map node");
+        }
+        int child = nodes[parent].child;
+        while (child != -1) {
+            if (nodes[child].key == key) {
+                return child;
             }
-            iter = get_next(iter);
+            child = nodes[child].next;
+        }
+        if (required) {
+            throw LookupException("Could not find key '" + key + "'");
         }
         return -1;
     }
 
+    int map_access_mutable(int parent, const std::string& key) {
+        if (std::get_if<null_t>(&nodes[parent].value)) {
+            nodes[parent].value = map_t();
+        } else if (!std::get_if<map_t>(&nodes[parent].value)) {
+            throw ValueException("Tried to access value by key on a non-map node");
+        }
+
+        int child_index = map_access(parent, key, false);
+        if (!child_index) {
+            child_index = add_child(parent, key);
+        }
+        return child_index;
+    }
+
     int list_access(int parent, std::size_t index) const {
         assert(get_value<list_t>(parent));
-        int iter = get_child(parent);
+        int iter = nodes[parent].child;
         std::size_t i = 0;
         while (iter != -1 && i != index) {
-            iter = get_next(iter);
+            iter = nodes[iter].next;
             i++;
         }
         return iter;
     }
 
-    void node_assign(int index, const value_t& value) {
-        node_clear(index);
+    void assign(int index, const value_t& value) {
+        clear(index);
         nodes[index].value = value;
     }
 
-    void node_erase(int index) {
-        node_clear(index);
-        if (int prev = get_prev(index); prev != -1) {
-            nodes[prev].next = get_next(index);
+    void erase(int index) {
+        clear(index);
+        if (int prev = nodes[index].prev; prev != -1) {
+            nodes[prev].next = nodes[index].next;
         }
-        if (int next = get_next(index); next != -1) {
-            nodes[next].prev = get_prev(index);
+        if (int next = nodes[index].next; next != -1) {
+            nodes[next].prev = nodes[index].prev;
         }
-        if (int parent = get_parent(index); parent != -1 && nodes[parent].child == index) {
-            nodes[parent].child = get_next(index);
+        if (int parent = nodes[index].parent; parent != -1
+            && nodes[parent].child == index)
+        {
+            nodes[parent].child = nodes[index].next;
         }
 
         if (index == nodes.size() - 1) {
@@ -493,13 +447,35 @@ private:
         }
     }
 
-    void node_clear(int index) {
-        int iter = get_child(index);
+    void clear(int index) {
+        int iter = nodes[index].child;
         while (iter != -1) {
             int prev = iter;
-            iter = get_next(iter);
-            node_erase(prev);
+            iter = nodes[iter].next;
+            erase(prev);
         }
+    }
+
+    int insert(int parent, const std::string& key, const value_t& value) {
+        if (std::get_if<null_t>(&nodes[parent].value)) {
+            assign(parent, map_t());
+        } else if (!std::get_if<map_t>()) {
+            throw ValueException("Tried to insert with a non-map node");
+        }
+        int child = add_child(parent, key);
+        assign(child, value);
+        return child;
+    }
+
+    int append(int parent, const value_t& value) {
+        if (std::get_if<null_t>(&nodes[parent].value)) {
+            assign(parent, list_t());
+        } else if (!is_list()) {
+            throw ValueException("Tried to append with a non-list node");
+        }
+        int child = add_child(parent);
+        assign(child, value);
+        return child;
     }
 
     Object clone(int index) const {

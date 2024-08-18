@@ -34,7 +34,7 @@ inline void read(Reader& reader, T& value) {
 #endif
 
 template <typename T>
-concept readable = impl<T, MODE_READ>;
+concept readable = has_impl<MODE_READ, T>;
 
 template <>
 class Packer<MODE_READ> {
@@ -52,7 +52,7 @@ public:
             auto [data, length] = binary_data(1, sizeof(T));
             value = *(const T*)data;
         } else {
-            pack<MODE_READ>(value, *this);
+            pack<MODE_READ, T>(*this, value);
         }
     }
 

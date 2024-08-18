@@ -12,31 +12,45 @@ static constexpr int MODE_WRITE = 1;
 using Reader = Packer<MODE_READ>;
 using Writer = Packer<MODE_WRITE>;
 
-template <typename T, int Mode>
+template <int Mode, typename T>
 using packref = std::conditional_t<Mode==MODE_READ, T&, const T&>;
 
-template <typename T, int Mode>
-concept impl = requires(packref<T, Mode> type, Packer<Mode>& packer) {
-    { pack(type, packer) };
+template <int Mode, typename T>
+struct pack_impl {};
+
+template <int Mode, typename T>
+concept has_impl = requires(Packer<Mode>& packer, packref<Mode, T> value) {
+    { pack_impl<Mode, T>::impl(packer, value) };
 };
+
+template <int Mode, typename T>
+inline void pack(Packer<Mode>& packer, packref<Mode, T> value) {
+    pack_impl<Mode, T>::impl(packer, value);
+}
 
 #define DATAPACK(T) \
 template <int Mode> \
-void pack(packref<T, Mode>, Packer<Mode>&)
+struct pack_impl<Mode, T> { \
+    static void impl(Packer<Mode>&, packref<Mode, T>); \
+};
 
-#define DATAPACK_FRIEND(T) \
+#define DATAPACK_INLINE(T, packer_name, value_name) \
 template <int Mode> \
-friend void pack(packref<T, Mode>, Packer<Mode>&)
+struct pack_impl<Mode, T> { \
+    static void impl(Packer<Mode>&, packref<Mode, T>); \
+}; \
+template <int Mode> \
+void pack_impl<Mode, T>::impl(Packer<Mode>& packer_name, packref<Mode, T> value_name)
 
-#define DATAPACK_INLINE(T, VALUE_NAME, PACKER_NAME) \
-template <int Mode> \
-void pack(packref<T, Mode> VALUE_NAME, Packer<Mode>& PACKER_NAME)
+// #define DATAPACK_INLINE(T, VALUE_NAME, PACKER_NAME) \
+// template <int Mode> \
+// void pack(packref<T, Mode> VALUE_NAME, Packer<Mode>& PACKER_NAME)
 
-#define DATAPACK_IMPL(T, value_name, packer_name) \
-template void pack<MODE_READ>(T&, Packer<MODE_READ>&); \
-template void pack<MODE_WRITE>(const T&, Packer<MODE_WRITE>&); \
+#define DATAPACK_IMPL(T, packer_name, value_name) \
+template struct pack_impl<MODE_READ, T>; \
+template struct pack_impl<MODE_WRITE, T>; \
 template <int Mode> \
-void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
+void pack_impl<Mode, T>::impl(Packer<Mode>& packer_name, packref<Mode, T> value_name)
 
 } // namespace datapack
 

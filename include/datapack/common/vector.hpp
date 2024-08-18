@@ -9,26 +9,23 @@
 
 namespace datapack {
 
-#if 0
-template <typename T, int Mode>
-requires impl<T, Mode>
-void pack(packref<std::vector<T>, Mode> value, Packer<Mode>& packer) {
-
-}
-#endif
+template <int Mode, typename T>
+struct pack_impl<Mode, std::vector<T>> {
+    static void impl(Packer<Mode>& packer, packref<Mode, std::vector<T>> value);
+};
 
 template <typename T>
 requires (readable<T> || std::is_trivially_constructible_v<T>)
-void pack(Reader& reader, std::vector<T>& value) {
+void pack_impl<MODE_READ, std::vector<T>>::impl(Reader& packer, std::vector<T>& value) {
     if constexpr (readable<T>) {
-        if (!std::is_trivially_constructible_v<T> || !reader.trivial_as_binary()) {
-            reader.list_begin(std::is_trivially_constructible_v<T>);
+        if (!std::is_trivially_constructible_v<T> || !packer.trivial_as_binary()) {
+            packer.list_begin(std::is_trivially_constructible_v<T>);
             value.clear();
-            while (reader.list_next()) {
+            while (packer.list_next()) {
                 value.emplace_back();
-                reader.value(value.back());
+                packer.value(value.back());
             }
-            reader.list_end();
+            packer.list_end();
             return;
         }
     }

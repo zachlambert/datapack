@@ -49,7 +49,7 @@ private:
 #endif
 
 template <typename T>
-concept writeable = impl<T, MODE_WRITE>;
+concept writeable = has_impl<MODE_WRITE, T>;
 
 template <>
 class Packer<MODE_WRITE> {
@@ -63,7 +63,7 @@ public:
         if (std::is_trivially_constructible_v<T> && !std::is_arithmetic_v<T> && trivial_as_binary_) {
             binary_data((const std::uint8_t*)&value, 1, sizeof(T), true);
         } else {
-            pack<MODE_WRITE>(value, *this);
+            pack<MODE_WRITE, T>(*this, value);
         }
     }
 

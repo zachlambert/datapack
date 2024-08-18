@@ -6,15 +6,11 @@
 #include <span>
 #include <optional>
 #include <string>
-
-#include "datapack/packer.hpp"
-#include "datapack/primitive.hpp"
 #include "datapack/constraint.hpp"
 
 
 namespace datapack {
 
-#if 0
 class Reader;
 
 template <typename T>
@@ -31,15 +27,10 @@ template <readable_class T>
 inline void read(Reader& reader, T& value) {
     value.read(reader);
 }
-#endif
 
-template <typename T>
-concept readable = impl<T, MODE_READ>;
-
-template <>
-class Packer<MODE_READ> {
+class Reader {
 public:
-    Packer(bool trivial_as_binary=false, bool use_constraints=true, bool is_exhaustive=false):
+    Reader(bool trivial_as_binary=false, bool use_constraints=true, bool is_exhaustive=false):
         trivial_as_binary_(trivial_as_binary),
         use_constraints(use_constraints),
         is_exhaustive_(is_exhaustive),
@@ -52,7 +43,7 @@ public:
             auto [data, length] = binary_data(1, sizeof(T));
             value = *(const T*)data;
         } else {
-            pack<MODE_READ>(value, *this);
+            read(*this, value);
         }
     }
 
@@ -84,9 +75,17 @@ public:
         this->value(value, constraint);
     }
 
-    virtual void primitive(Primitive primitive, void* data) = 0;
-    virtual const char* string() = 0;
-    virtual void boolean(bool& value) = 0;
+    virtual void value_i32(std::int32_t& value) = 0;
+    virtual void value_i64(std::int64_t& value) = 0;
+    virtual void value_u32(std::uint32_t& value) = 0;
+    virtual void value_u64(std::uint64_t& value) = 0;
+
+    virtual void value_f32(float& value) = 0;
+    virtual void value_f64(double& value) = 0;
+
+    virtual const char* value_string() = 0;
+    virtual void value_bool(bool& value) = 0;
+
     virtual int enumerate(const std::span<const char*>& labels) = 0;
 
     virtual bool optional_begin() = 0;

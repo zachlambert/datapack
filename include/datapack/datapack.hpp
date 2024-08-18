@@ -1,47 +1,5 @@
 #pragma once
 
-#include <concepts>
-
-namespace datapack {
-
-template <int Mode>
-class Packer;
-
-static constexpr int MODE_READ = 0;
-static constexpr int MODE_WRITE = 1;
-using Reader = Packer<MODE_READ>;
-using Writer = Packer<MODE_WRITE>;
-
-template <typename T, int Mode>
-using packref = std::conditional_t<Mode==MODE_READ, T&, const T&>;
-
-template <typename T, int Mode>
-concept impl = requires(packref<T, Mode> type, Packer<Mode>& packer) {
-    { pack(type, packer) };
-};
-
-#define DATAPACK(T) \
-template <int Mode> \
-void pack(packref<T, Mode>, Packer<Mode>&)
-
-#define DATAPACK_FRIEND(T) \
-template <int Mode> \
-friend void pack(packref<T, Mode>, Packer<Mode>&)
-
-#define DATAPACK_INLINE(T, VALUE_NAME, PACKER_NAME) \
-template <int Mode> \
-void pack(packref<T, Mode> VALUE_NAME, Packer<Mode>& PACKER_NAME)
-
-#define DATAPACK_IMPL(T, value_name, packer_name) \
-template void pack<MODE_READ>(T&, Packer<MODE_READ>&); \
-template void pack<MODE_WRITE>(const T&, Packer<MODE_WRITE>&); \
-template <int Mode> \
-void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
-
-} // namespace datapack
-
-#if 0
-
 #include "datapack/reader.hpp"
 #include "datapack/writer.hpp"
 
@@ -103,4 +61,3 @@ inline void write(::datapack::Writer& writer, const T& value) { \
     writer.object_begin(); \
     writer.object_end(); \
 }
-#endif

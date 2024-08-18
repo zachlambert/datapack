@@ -1,7 +1,6 @@
 #pragma once
 
-#include "datapack/reader.hpp"
-#include "datapack/writer.hpp"
+#include "datapack/datapack.hpp"
 #include <optional>
 #include <micro_types/optional.hpp>
 
@@ -9,42 +8,42 @@
 namespace datapack {
 
 template <readable T>
-void pack(std::optional<T>& value, Reader& packer) {
-    if (packer.optional_begin()) {
+void read(Reader& reader, std::optional<T>& value) {
+    if (reader.optional_begin()) {
         value.emplace();
-        packer.value(value.value());
-        packer.optional_end();
+        reader.value(value.value());
+        reader.optional_end();
     } else {
         value = std::nullopt;
     }
 }
 
 template <writeable T>
-void pack(const std::optional<T>& value, Writer& packer) {
-    packer.optional_begin(value.has_value());
+void write(Writer& writer, const std::optional<T>& value) {
+    writer.optional_begin(value.has_value());
     if (value.has_value()) {
-        packer.value(value.value());
-        packer.optional_end();
+        writer.value(value.value());
+        writer.optional_end();
     }
 }
 
 template <readable T>
-void pack(mct::optional<T>& value, Reader& packer) {
-    if (packer.optional_begin()) {
+void read(Reader& reader, mct::optional<T>& value) {
+    if (reader.optional_begin()) {
         value.emplace();
-        packer.value(value.value());
-        packer.optional_end();
+        reader.value(value.value());
+        reader.optional_end();
     } else {
         value = std::nullopt;
     }
 }
 
 template <writeable T>
-void pack(const mct::optional<T>& value, Writer& packer) {
-    packer.optional_begin(value.has_value());
+void write(Writer& writer, const mct::optional<T>& value) {
+    writer.optional_begin(value.has_value());
     if (value.has_value()) {
-        packer.value(value.value());
-        packer.optional_end();
+        writer.value(value.value());
+        writer.optional_end();
     }
 }
 

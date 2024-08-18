@@ -12,26 +12,24 @@ class DebugWriter: public Writer {
 public:
     DebugWriter(std::ostream& os);
 
-    void primitive(Primitive primitive, const void* data) override;
-    void string(const char* value) override;
-    void boolean(bool) override;
-    void enumerate(
-        int value,
-        const std::span<const char*>& labels) override;
+    void value_i32(std::int32_t) override;
+    void value_i64(std::int64_t) override;
+    void value_u32(std::uint32_t) override;
+    void value_u64(std::uint64_t) override;
 
+    void value_f32(float) override;
+    void value_f64(double) override;
+
+    void value_string(const char* value) override;
+    void value_bool(bool) override;
+
+    void enumerate(int value, const std::span<const char*>& labels) override;
     void optional_begin(bool has_value) override;
     void optional_end() override;
-
-    void variant_begin(
-        const char* label,
-        const std::span<const char*>& labels) override;
+    void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override;
 
-    void binary_data(
-        const std::uint8_t* data,
-        std::size_t length,
-        std::size_t stride,
-        bool fixed_length) override;
+    void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) override;
 
     void object_begin(std::size_t size) override;
     void object_end(std::size_t size) override;

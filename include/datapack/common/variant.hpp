@@ -1,8 +1,7 @@
 #pragma once
 
 #include "datapack/labelled_variant.hpp"
-#include "datapack/reader.hpp"
-#include "datapack/writer.hpp"
+#include "datapack/datapack.hpp"
 #include <micro_types/variant.hpp>
 
 
@@ -30,22 +29,20 @@ void match_variant_next(Reader& reader, T& value, std::size_t index) {
 
 template <typename ...Args>
 requires labelled_variant<std::variant<Args...>>
-void pack(std::variant<Args...>& value, Reader& packer) {
+void read(Reader& reader, std::variant<Args...>& value) {
     using T = std::variant<Args...>;
-    packer.variant_begin(variant_labels<T>);
-    match_variant_next<T, Args...>(packer, value, 0);
-    packer.variant_end();
+    reader.variant_begin(variant_labels<T>);
+    match_variant_next<T, Args...>(reader, value, 0);
+    reader.variant_end();
 }
 
 template <labelled_variant T>
-void pack(const T& value, Writer& packer) {
-    packer.variant_begin(
-        variant_to_label(value),
-        variant_labels<T>);
+void write(Writer& writer, const T& value) {
+    writer.variant_begin(variant_to_label(value), variant_labels<T>);
     std::visit([&](const auto& value){
-        packer.value(value);
+        writer.value(value);
     }, value);
-    packer.variant_end();
+    writer.variant_end();
 }
 
 } // namespace datapack

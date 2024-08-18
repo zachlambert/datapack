@@ -4,14 +4,13 @@
 #include <stdexcept>
 #include <string>
 #include <span>
-#include "datapack/packer.hpp"
-#include "datapack/primitive.hpp"
 #include "datapack/constraint.hpp"
 
 
 namespace datapack {
 
-#if 0
+class Writer;
+
 template <typename T>
 concept writeable = requires(Writer& writer, const T& value) {
     { write(writer, value) };
@@ -31,9 +30,8 @@ template <writeable_class T>
 inline void write(Writer& writer, const T& value) {
     value.write(writer);
 }
-#endif
 
-#if 0
+#ifndef EMBEDDED
 class WriteException: public std::exception {
 public:
     WriteException(const std::string& message):
@@ -48,13 +46,9 @@ private:
 };
 #endif
 
-template <typename T>
-concept writeable = impl<T, MODE_WRITE>;
-
-template <>
-class Packer<MODE_WRITE> {
+class Writer {
 public:
-    Packer(bool trivial_as_binary = false):
+    Writer(bool trivial_as_binary = false):
         trivial_as_binary_(trivial_as_binary)
     {}
 
@@ -63,7 +57,7 @@ public:
         if (std::is_trivially_constructible_v<T> && !std::is_arithmetic_v<T> && trivial_as_binary_) {
             binary_data((const std::uint8_t*)&value, 1, sizeof(T), true);
         } else {
-            pack<MODE_WRITE>(value, *this);
+            write(*this, value);
         }
     }
 
@@ -86,9 +80,17 @@ public:
         this->value(value);
     }
 
-    virtual void primitive(Primitive primitive, const void* data) = 0;
-    virtual void string(const char* string) = 0;
-    virtual void boolean(bool value) = 0;
+    virtual void value_i32(std::int32_t value) = 0;
+    virtual void value_i64(std::int64_t value) = 0;
+    virtual void value_u32(std::uint32_t value) = 0;
+    virtual void value_u64(std::uint64_t value) = 0;
+
+    virtual void value_f32(float value) = 0;
+    virtual void value_f64(double value) = 0;
+
+    virtual void value_string(const char* string) = 0;
+    virtual void value_bool(bool value) = 0;
+
     virtual void enumerate(int value, const std::span<const char*>& labels) = 0;
 
     virtual void optional_begin(bool has_value) = 0;

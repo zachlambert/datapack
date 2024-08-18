@@ -16,16 +16,16 @@ endif()
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_library(datapack SHARED
         src/util/debug.cpp
-        # src/util/random.cpp
+        src/util/random.cpp
 
-        # src/encode/base64.cpp
-        # src/encode/float_string.cpp
+        src/encode/base64.cpp
+        src/encode/float_string.cpp
 
-        # src/object.cpp
-        # src/util/object_writer.cpp
-        # src/util/object_reader.cpp
+        src/object.cpp
+        src/util/object_writer.cpp
+        src/util/object_reader.cpp
 
-        # src/format/binary_reader.cpp
+        src/format/binary_reader.cpp
         # src/format/json.cpp
 
         # src/schema/token.cpp
@@ -54,7 +54,7 @@ endif()
 
 if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_subdirectory(examples)
-    # add_subdirectory(demo)
+    add_subdirectory(demo)
 
     include(FetchContent)
 
@@ -68,13 +68,10 @@ if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
 
     add_executable(test_util
         test/util/debug.cpp
-        # test/util/random.cpp
+        test/util/random.cpp
     )
     target_link_libraries(test_util datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_util)
-
-    # TEMP
-    return()
 
     add_executable(test_encode
         test/encode/base64.cpp

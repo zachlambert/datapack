@@ -47,7 +47,7 @@ struct enum_details<Physics> { \
     static constexpr std::size_t size = Size; \
     static const std::span<const char*> labels; \
     static const char* labels_array[Size]; \
-};
+}
 
 #define DATAPACK_LABELLED_ENUM_DEF(T) \
 const std::span<const char*> enum_details<T>::labels = std::span( \

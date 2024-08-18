@@ -1,6 +1,7 @@
 #pragma once
 
-#include "datapack/datapack.hpp"
+#include "datapack/reader.hpp"
+#include "datapack/writer.hpp"
 #include <cstring> // For memcpy
 #include <vector>
 #include <micro_types/vector.hpp>
@@ -8,9 +9,17 @@
 
 namespace datapack {
 
+#if 0
+template <typename T, int Mode>
+requires impl<T, Mode>
+void pack(packref<std::vector<T>, Mode> value, Packer<Mode>& packer) {
+
+}
+#endif
+
 template <typename T>
 requires (readable<T> || std::is_trivially_constructible_v<T>)
-void read(Reader& reader, std::vector<T>& value) {
+void pack(Reader& reader, std::vector<T>& value) {
     if constexpr (readable<T>) {
         if (!std::is_trivially_constructible_v<T> || !reader.trivial_as_binary()) {
             reader.list_begin(std::is_trivially_constructible_v<T>);
@@ -31,7 +40,7 @@ void read(Reader& reader, std::vector<T>& value) {
 
 template <typename T>
 requires (writeable<T> || std::is_trivially_constructible_v<T>)
-void write(Writer& writer, const std::vector<T>& value) {
+void pack(Writer& writer, const std::vector<T>& value) {
     if constexpr(writeable<T>) {
         if (!std::is_trivially_constructible_v<T> || !writer.trivial_as_binary()) {
             writer.list_begin(std::is_trivially_constructible_v<T>);
@@ -51,9 +60,11 @@ bool validate(const std::vector<T>& value, const LengthConstraint& constraint) {
     return value.size() == constraint.length;
 }
 
+#if 0
+
 template <typename T>
 requires (readable<T> || std::is_trivially_constructible_v<T>)
-void read(Reader& reader, mct::vector<T>& value) {
+void pack(Reader& reader, mct::vector<T>& value) {
     if constexpr (readable<T>) {
         if (!std::is_trivially_constructible_v<T> || !reader.trivial_as_binary()) {
             reader.list_begin(std::is_trivially_constructible_v<T>);
@@ -74,7 +85,7 @@ void read(Reader& reader, mct::vector<T>& value) {
 
 template <typename T>
 requires (writeable<T> || std::is_trivially_constructible_v<T>)
-void write(Writer& writer, const mct::vector<T>& value) {
+void pack(Writer& writer, const mct::vector<T>& value) {
     if constexpr(writeable<T>) {
         if (!std::is_trivially_constructible_v<T> || !writer.trivial_as_binary()) {
             writer.list_begin(std::is_trivially_constructible_v<T>);
@@ -93,5 +104,7 @@ template <typename T>
 bool validate(const mct::vector<T>& value, const LengthConstraint& constraint) {
     return value.size() == constraint.length;
 }
+
+#endif
 
 } // namespace datapack

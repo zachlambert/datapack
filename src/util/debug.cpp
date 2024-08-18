@@ -7,37 +7,37 @@ DebugWriter::DebugWriter(std::ostream& os):
     depth(0)
 {}
 
-void DebugWriter::value_i32(std::int32_t value) {
+void DebugWriter::primitive(Primitive primitive, const void* data) {
+    switch (primitive) {
+        case I32:
+            os << *(std::int32_t*)data << ",\n";
+            break;
+        case I64:
+            os << *(std::int64_t*)data << ",\n";
+            break;
+        case U32:
+            os << *(std::uint32_t*)data << ",\n";
+            break;
+        case U64:
+            os << *(std::uint64_t*)data << ",\n";
+            break;
+        case F32:
+            os << *(float*)data << ",\n";
+            break;
+        case F64:
+            os << *(double*)data << ",\n";
+            break;
+        case U8:
+            os << *(std::uint8_t*)data << ",\n";
+            break;
+    }
+}
+
+void DebugWriter::string(const char* value) {
     os << value << ",\n";
 }
 
-void DebugWriter::value_i64(std::int64_t value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_u32(std::uint32_t value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_u64(std::uint64_t value) {
-    os << value << ",\n";
-}
-
-
-void DebugWriter::value_f32(float value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_f64(double value) {
-    os << value << ",\n";
-}
-
-
-void DebugWriter::value_string(const char* value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_bool(bool value) {
+void DebugWriter::boolean(bool value) {
     os << (value ? "true" : "false") << ",\n";
 }
 

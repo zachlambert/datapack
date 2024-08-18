@@ -8,13 +8,13 @@
 
 namespace datapack {
 
-DATAPACK_IMPL(Circle, packer, value) {
+DATAPACK_IMPL(Circle, value, packer) {
     packer.object_begin(sizeof(Circle));
     packer.value("radius", value.radius);
     packer.object_end(sizeof(Circle));
 }
 
-DATAPACK_IMPL(Rect, packer, value) {
+DATAPACK_IMPL(Rect, value, packer) {
     packer.object_begin(sizeof(Rect));
     packer.value("width", value.width);
     packer.value("height", value.height);
@@ -30,7 +30,7 @@ DATAPACK_LABELLED_VARIANT_DEF(Shape) = {
     "circle", "rect"
 };
 
-DATAPACK_IMPL(Pose, packer, value) {
+DATAPACK_IMPL(Pose, value, packer) {
     packer.object_begin(sizeof(Pose));
     packer.value("x", value.x);
     packer.value("y", value.y);
@@ -39,25 +39,25 @@ DATAPACK_IMPL(Pose, packer, value) {
     packer.object_end(sizeof(Pose));
 }
 
-DATAPACK_IMPL(Item, packer, value) {
+DATAPACK_IMPL(Item, value, packer) {
     packer.object_begin();
     packer.value("count", value.count);
     packer.value("name", value.name);
     packer.object_end();
 }
 
-DATAPACK_IMPL(Sprite, packer, value) {
+DATAPACK_IMPL(Sprite, value, packer) {
     packer.object_begin();
     packer.value("width", value.width);
     packer.value("height", value.height);
-    packer.value(
-        "data", value.data,
-        datapack::LengthConstraint(value.width * value.height)
-    );
+    // packer.value(
+    //     "data", value.data,
+    //     datapack::LengthConstraint(value.width * value.height)
+    // );
     packer.object_end();
 }
 
-DATAPACK_IMPL(Sprite::Pixel, packer, value) {
+DATAPACK_IMPL(Sprite::Pixel, value, packer) {
     packer.object_begin(sizeof(Sprite::Pixel));
     packer.value("r", value.r);
     packer.value("g", value.g);
@@ -65,7 +65,7 @@ DATAPACK_IMPL(Sprite::Pixel, packer, value) {
     packer.object_end(sizeof(Sprite::Pixel));
 }
 
-DATAPACK_IMPL(Entity, packer, value) {
+DATAPACK_IMPL(Entity, value, packer) {
 #if 0
     packer.object_begin();
     packer.value("index", value.index);

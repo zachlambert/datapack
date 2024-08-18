@@ -10,31 +10,31 @@
 
 namespace datapack {
 
-DATAPACK_INLINE(std::int32_t, packer, value) {
+DATAPACK_INLINE(std::int32_t, value, packer) {
     packer.primitive(I32, &value);
 }
 
-DATAPACK_INLINE(std::int64_t, packer, value) {
+DATAPACK_INLINE(std::int64_t, value, packer) {
     packer.primitive(I64, &value);
 }
 
-DATAPACK_INLINE(std::uint32_t, packer, value) {
+DATAPACK_INLINE(std::uint32_t, value, packer) {
     packer.primitive(U32, &value);
 }
 
-DATAPACK_INLINE(std::uint64_t, packer, value) {
+DATAPACK_INLINE(std::uint64_t, value, packer) {
     packer.primitive(U64, &value);
 }
 
-DATAPACK_INLINE(float, packer, value) {
+DATAPACK_INLINE(float, value, packer) {
     packer.primitive(F32, &value);
 }
 
-DATAPACK_INLINE(double, packer, value) {
+DATAPACK_INLINE(double, value, packer) {
     packer.primitive(F64, &value);
 }
 
-DATAPACK_INLINE(std::string, packer, value) {
+DATAPACK_INLINE(std::string, value, packer) {
     if constexpr(Mode == MODE_READ) {
         if (const char* value_cstr = packer.string()) {
             value = value_cstr;
@@ -47,7 +47,7 @@ DATAPACK_INLINE(std::string, packer, value) {
     }
 }
 
-DATAPACK_INLINE(mct::string, packer, value) {
+DATAPACK_INLINE(mct::string, value, packer) {
     if constexpr(Mode == MODE_READ) {
         if (const char* value_cstr = packer.string()) {
             value = value_cstr;
@@ -60,7 +60,7 @@ DATAPACK_INLINE(mct::string, packer, value) {
     }
 }
 
-DATAPACK_INLINE(bool, packer, value) {
+DATAPACK_INLINE(bool, value, packer) {
     packer.boolean(value);
 }
 

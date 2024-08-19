@@ -28,6 +28,13 @@ inline void read(Reader& reader, T& value) {
     value.read(reader);
 }
 
+enum class ListNext {
+    Next,
+    Remove,
+    Insert,
+    End
+};
+
 class Reader {
 public:
     Reader(bool trivial_as_binary=false, bool use_constraints=true, bool is_exhaustive=false):
@@ -83,12 +90,12 @@ public:
     virtual void value_f32(float& value) = 0;
     virtual void value_f64(double& value) = 0;
 
-    virtual const char* value_string() = 0;
+    virtual const char* value_string(const char* current) = 0;
     virtual void value_bool(bool& value) = 0;
 
     virtual int enumerate(const std::span<const char*>& labels) = 0;
 
-    virtual bool optional_begin() = 0;
+    virtual bool optional_begin(bool current_has_value) = 0;
     virtual void optional_end() = 0;
 
     virtual void variant_begin(const std::span<const char*>& labels) = 0;
@@ -108,7 +115,7 @@ public:
 
     virtual void list_begin(bool is_trivial = false) = 0;
     virtual void list_end() = 0;
-    virtual bool list_next() = 0;
+    virtual ListNext list_next(bool has_next) = 0;
 
     void set_error(const char* error) {
         error_ = std::string(error);

@@ -19,11 +19,11 @@ public:
     void value_f32(float& value) override;
     void value_f64(double& value) override;
 
-    const char* value_string() override;
+    const char* value_string(const char* current_value) override;
     void value_bool(bool& value) override;
 
     int enumerate(const std::span<const char*>& labels) override;
-    bool optional_begin() override;
+    bool optional_begin(bool current_has_value) override;
     void optional_end() override;
     void variant_begin(const std::span<const char*>& labels) override;
     bool variant_match(const char* label) override;
@@ -41,7 +41,7 @@ public:
 
     void list_begin(bool is_trivial) override;
     void list_end() override;
-    bool list_next() override;
+    ListNext list_next(bool has_next) override;
 
 private:
     int list_counter;

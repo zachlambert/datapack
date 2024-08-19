@@ -9,7 +9,7 @@ namespace datapack {
 
 template <readable T>
 void read(Reader& reader, std::optional<T>& value) {
-    if (reader.optional_begin()) {
+    if (reader.optional_begin(value.has_value())) {
         value.emplace();
         reader.value(value.value());
         reader.optional_end();
@@ -29,7 +29,7 @@ void write(Writer& writer, const std::optional<T>& value) {
 
 template <readable T>
 void read(Reader& reader, mct::optional<T>& value) {
-    if (reader.optional_begin()) {
+    if (reader.optional_begin(value.has_value())) {
         value.emplace();
         reader.value(value.value());
         reader.optional_end();

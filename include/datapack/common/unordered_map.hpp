@@ -11,7 +11,8 @@ void read(Reader& reader, std::unordered_map<K, V>& value) {
     std::pair<K, V> pair;
     value.clear();
     reader.list_begin();
-    while (reader.list_next()) {
+    auto iter = value.begin();
+    while (reader.list_next(false) == ListNext::Next) {
         reader.tuple_begin();
         reader.tuple_next();
         reader.value(pair.first);

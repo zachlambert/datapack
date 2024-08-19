@@ -5,7 +5,7 @@
 
 namespace datapack {
 
-const char* BinaryReader::value_string() {
+const char* BinaryReader::value_string(const char*) {
     std::size_t max_len = data.size() - pos;
     std::size_t len = strnlen((char*)&data[pos], max_len);
     if (len == max_len) {
@@ -35,7 +35,7 @@ int BinaryReader::enumerate(const std::span<const char*>& labels) {
     return value;
 }
 
-bool BinaryReader::optional_begin() {
+bool BinaryReader::optional_begin(bool) {
     bool has_value;
     value_bool(has_value);
     return has_value;
@@ -123,17 +123,17 @@ void BinaryReader::list_end() {
     assert(binary_depth == 0);
 }
 
-bool BinaryReader::list_next() {
+ListNext BinaryReader::list_next(bool) {
     if (binary_depth > 0) {
         if (trivial_list_remaining == 0) {
-            return false;
+            return ListNext::End;
         }
         trivial_list_remaining--;
-        return true;
+        return ListNext::Next;
     }
     bool has_next;
     value_bool(has_next);
-    return has_next;
+    return has_next ? ListNext::Next : ListNext::End;
 }
 
 } // namespace datapack

@@ -49,7 +49,7 @@ void ObjectReader::value_f64(double& value) {
 }
 
 
-const char* ObjectReader::value_string() {
+const char* ObjectReader::value_string(const char*) {
     if (auto x = node->get_string()) {
         return x->c_str();
     }
@@ -81,7 +81,7 @@ int ObjectReader::enumerate(const std::span<const char*>& labels) {
     return 0;
 }
 
-bool ObjectReader::optional_begin() {
+bool ObjectReader::optional_begin(bool) {
     if (node->is_null()) {
         return false;
     }
@@ -225,12 +225,12 @@ void ObjectReader::list_end() {
     nodes.pop();
 }
 
-bool ObjectReader::list_next() {
+ListNext ObjectReader::list_next(bool) {
     if (!list_start) {
         node = node.next();
     }
     list_start = false;
-    return bool(node);
+    return bool(node) ? ListNext::Next : ListNext::End;
 }
 
 } // namespace datapack

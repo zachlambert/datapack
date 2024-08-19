@@ -31,7 +31,7 @@ inline void read(Reader& reader, double& value) {
 }
 
 inline void read(Reader& reader, std::string& value) {
-    if (const char* value_cstr = reader.value_string()) {
+    if (const char* value_cstr = reader.value_string(value.c_str())) {
         value = value_cstr;
     } else {
         value.clear();
@@ -39,7 +39,7 @@ inline void read(Reader& reader, std::string& value) {
 }
 
 inline void read(Reader& reader, mct::string& value) {
-    if (const char* value_cstr = reader.value_string()) {
+    if (const char* value_cstr = reader.value_string(value.c_str())) {
         value = value_cstr;
     } else {
         value.clear();

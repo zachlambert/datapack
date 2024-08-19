@@ -14,12 +14,27 @@ void read(Reader& reader, std::vector<T>& value) {
     if constexpr (readable<T>) {
         if (!std::is_trivially_constructible_v<T> || !reader.trivial_as_binary()) {
             reader.list_begin(std::is_trivially_constructible_v<T>);
-            value.clear();
-            while (reader.list_next()) {
-                value.emplace_back();
-                reader.value(value.back());
+            std::size_t i = 0;
+            while (true) {
+                auto result = reader.list_next(i < value.size());
+                if (result == ListNext::End) {
+                    break;
+                }
+                if (result == ListNext::Remove) {
+                    value.erase(value.begin() + i);
+                    continue;
+                }
+                if (result == ListNext::Insert) {
+                    value.insert(value.begin() + i, T());
+                }
+                if (i >= value.size()) {
+                    value.emplace_back();
+                }
+                reader.value(value[i]);
+                i++;
             }
             reader.list_end();
+            value.resize(i);
             return;
         }
     }
@@ -57,12 +72,24 @@ void read(Reader& reader, mct::vector<T>& value) {
     if constexpr (readable<T>) {
         if (!std::is_trivially_constructible_v<T> || !reader.trivial_as_binary()) {
             reader.list_begin(std::is_trivially_constructible_v<T>);
-            value.clear();
-            while (reader.list_next()) {
-                value.emplace_back();
-                reader.value(value.back());
+            std::size_t i = 0;
+            while (true) {
+                auto result = reader.list_next(i < value.size());
+                if (result == ListNext::End) {
+                    break;
+                }
+                if (result == ListNext::Remove) {
+                    value.erase(value.begin() + i);
+                    continue;
+                }
+                if (i >= value.size()) {
+                    value.emplace_back();
+                }
+                reader.value(value[i]);
+                i++;
             }
             reader.list_end();
+            value.resize(i);
             return;
         }
     }

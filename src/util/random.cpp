@@ -64,7 +64,7 @@ void RandomReader::value_f64(double& value) {
 }
 
 
-const char* RandomReader::value_string() {
+const char* RandomReader::value_string(const char*) {
     // Length: [4, 20]
     // Characters ~ { a, ..., z }
     if (auto c = constraint<LengthConstraint>()) {
@@ -87,7 +87,7 @@ int RandomReader::enumerate(const std::span<const char*>& labels) {
     return rand() % labels.size();
 }
 
-bool RandomReader::optional_begin() {
+bool RandomReader::optional_begin(bool) {
     return rand() % 2 == 1;
 }
 
@@ -164,12 +164,12 @@ void RandomReader::list_end() {
 
 }
 
-bool RandomReader::list_next() {
+ListNext RandomReader::list_next(bool) {
     if (list_counter == 0) {
-        return false;
+        return ListNext::End;
     }
     list_counter--;
-    return true;
+    return ListNext::Next;
 }
 
 

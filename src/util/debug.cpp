@@ -7,40 +7,39 @@ DebugWriter::DebugWriter(std::ostream& os):
     depth(0)
 {}
 
-void DebugWriter::value_i32(std::int32_t value) {
+void DebugWriter::primitive(Primitive primitive, const void* value) {
+    switch (primitive) {
+        case Primitive::I32:
+            os << *(const std::int32_t*)value;
+            break;
+        case Primitive::I64:
+            os << *(const std::int64_t*)value;
+            break;
+        case Primitive::U32:
+            os << *(const std::uint32_t*)value;
+            break;
+        case Primitive::U64:
+            os << *(const std::uint64_t*)value;
+            break;
+        case Primitive::F32:
+            os << *(const float*)value;
+            break;
+        case Primitive::F64:
+            os << *(const double*)value;
+            break;
+        case Primitive::U8:
+            os << *(const std::uint8_t*)value;
+            break;
+        case Primitive::BOOL:
+            os << (*(const bool*)value ? "true" : "false");
+            break;
+    };
+    os << ",\n";
+}
+
+void DebugWriter::string(const char* value) {
     os << value << ",\n";
 }
-
-void DebugWriter::value_i64(std::int64_t value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_u32(std::uint32_t value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_u64(std::uint64_t value) {
-    os << value << ",\n";
-}
-
-
-void DebugWriter::value_f32(float value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_f64(double value) {
-    os << value << ",\n";
-}
-
-
-void DebugWriter::value_string(const char* value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_bool(bool value) {
-    os << (value ? "true" : "false") << ",\n";
-}
-
 
 void DebugWriter::enumerate(int value, const std::span<const char*>& labels) {
     os << "(enum, " << labels[value] << "),\n";

@@ -1,5 +1,4 @@
 #pragma once
-#ifndef EMBEDDED
 
 #include "datapack/writer.hpp"
 #include <iostream>
@@ -12,20 +11,13 @@ class DebugWriter: public Writer {
 public:
     DebugWriter(std::ostream& os);
 
-    void value_i32(std::int32_t) override;
-    void value_i64(std::int64_t) override;
-    void value_u32(std::uint32_t) override;
-    void value_u64(std::uint64_t) override;
-
-    void value_f32(float) override;
-    void value_f64(double) override;
-
-    void value_string(const char* value) override;
-    void value_bool(bool) override;
-
+    void primitive(Primitive primitive, const void* value) override;
+    void string(const char* value) override;
     void enumerate(int value, const std::span<const char*>& labels) override;
+
     void optional_begin(bool has_value) override;
     void optional_end() override;
+
     void variant_begin(const char* label, const std::span<const char*>& labels) override;
     void variant_end() override;
 
@@ -70,4 +62,3 @@ template <datapack::writeable T>
 std::ostream& operator<<(std::ostream& os, datapack::debug<T> manipulator) {
     return manipulator(os);
 }
-#endif

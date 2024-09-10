@@ -12,10 +12,10 @@
 
 namespace datapack {
 
-enum class ListAction {
-    Next,
-    Remove,
-    Insert
+enum class ContainerAction {
+    None,
+    Push,
+    Pop
 };
 
 template <>
@@ -64,35 +64,43 @@ public:
     virtual void optional_end() = 0;
 
     virtual int variant_begin(int value, const std::span<const char*>& labels) = 0;
-    virtual bool variant_next(int index) = 0;
+    virtual void variant_tokenize(int index) {}; // Only used by tokenizer
     virtual void variant_end() = 0;
 
-    virtual std::tuple<const std::uint8_t*, std::size_t>
-        binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride) = 0;
+    virtual void binary_data(
+        std::uint8_t* data,
+        std::size_t length,
+        std::size_t stride,
+        bool fixed_length) = 0;
 
-    virtual void object_begin() = 0;
-    virtual void object_end() = 0;
+    virtual void object_begin(std::size_t=0) = 0;
+    virtual void object_end(std::size_t=0) = 0;
     virtual void object_next(const char* key) = 0;
 
-    virtual void tuple_begin() = 0;
-    virtual void tuple_end() = 0;
+    virtual void tuple_begin(std::size_t=0) = 0;
+    virtual void tuple_end(std::size_t=0) = 0;
     virtual void tuple_next() = 0;
 
-    virtual void list_begin() = 0;
-    virtual void list_end() = 0;
-    virtual bool list_next(bool has_next, ListAction& action) = 0;
+    virtual void list_begin(bool=false) = 0;
+    virtual void list_next() = 0;
+    virtual ContainerAction list_end() = 0;
 
     virtual void map_begin() = 0;
     virtual void map_key() = 0;
     virtual void map_value() = 0;
     virtual void map_end() = 0;
-    virtual void map_insert_begin() = 0;
-    virtual bool map_insert_end() = 0;
+    virtual bool map_action_begin() = 0;
+    virtual ContainerAction map_action_end() = 0;
 
     void invalidate() { valid_ = false; }
     bool valid() const { return valid_; }
     bool is_tokenizer() const { return is_tokenizer_; }
-    const ConstraintBase* constraint() const { return constraint_; }
+
+    template <typename Constraint>
+    requires std::is_base_of_v<ConstraintBase, Constraint>
+    const Constraint* constraint() const {
+        return dynamic_cast<const Constraint*>(constraint_);
+    }
 
 private:
     bool valid_;

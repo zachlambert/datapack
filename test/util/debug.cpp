@@ -25,9 +25,9 @@ TEST(Util, Debug) {
         y: 2,
         angle: 3,
     },
-    physics: (enum, kinematic),
+    physics: (enum, 1 = kinematic),
     hitbox: (optional, has_value) {
-        (variant, circle) {
+        (variant, 0 = circle) {
             (object, trivial size = 8) {
                 radius: 1,
             },
@@ -82,29 +82,19 @@ TEST(Util, Debug) {
         2,
         -1,
     },
-    properties: (list) {
-        (tuple) {
-            agility,
-            5,
-        },
-        (tuple) {
-            strength,
-            10.5,
-        },
+    properties: (map) {
+        key: agility,
+        value: 5,
+        key: strength,
+        value: 10.5,
     },
-    flags: (list) {
-        (tuple) {
-            2,
-            true,
-        },
-        (tuple) {
-            1,
-            false,
-        },
-        (tuple) {
-            0,
-            true,
-        },
+    flags: (map) {
+        key: 2,
+        value: true,
+        key: 1,
+        value: false,
+        key: 0,
+        value: true,
     },
 },
 )";

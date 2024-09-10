@@ -59,25 +59,21 @@ void pack(std::vector<T>& value, Reader& reader) {
 template <typename T>
 requires editable<T>
 void pack(std::vector<T>& value, Editor& editor) {
-    ListAction action;
     editor.list_begin();
-
-    auto iter = value.begin();
-    while (editor.list_next(iter != value.end(), action)) {
-        if (action == ListAction::Insert) {
-            iter = value.emplace(iter+1);
-            continue;
-        }
-        if (action == ListAction::Remove) {
-            int index = iter - value.begin();
-            value.erase(iter);
-            iter = value.begin() + index;
-            continue;
-        }
-        // Otherwise, ListAction::Next
-        editor.value(*iter);
+    for (auto& element: value) {
+        editor.list_next();
+        editor.value(element);
     }
-    editor.list_end();
+    switch (editor.list_end()) {
+        case ContainerAction::Push:
+            value.emplace_back();
+            break;
+        case ContainerAction::Pop:
+            value.pop_back();
+            break;
+        default:
+            break;
+    }
 }
 
 } // namespace datapack

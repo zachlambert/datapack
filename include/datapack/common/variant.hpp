@@ -52,13 +52,12 @@ template <labelled_variant T, typename Next, typename... Args>
 void edit_variant_next(Editor& editor, T& value, int value_index, int index) {
     if (editor.is_tokenizer()) {
         Next next;
-        editor.variant_next(index);
+        editor.variant_tokenize(index);
         editor.value(next);
 
     } else if (value_index == index) {
-        editor.variant_next(index);
         if (value.index() == value_index) {
-            editor.value(value.value());
+            editor.value(std::get<Next>(value));
         } else {
             Next next;
             editor.value(next);
@@ -73,8 +72,8 @@ template <typename ...Args>
 requires labelled_variant<std::variant<Args...>>
 void pack(std::variant<Args...>& value, Editor& editor) {
     using T = std::variant<Args...>;
-    int value_int = editor.variant_begin(value.index(), variant_labels<T>[value.index()]);
-    read_variant_next<T, Args...>(editor, value, value_int, 0);
+    int value_int = editor.variant_begin(value.index(), variant_labels<T>);
+    edit_variant_next<T, Args...>(editor, value, value_int, 0);
     editor.variant_end();
 }
 

@@ -34,25 +34,33 @@ void pack(std::unordered_map<K, V>& value, Reader& reader) {
 
 template <readable K, readable V>
 void pack(std::unordered_map<K, V>& value, Editor& editor) {
-    std::pair<K, V> pair;
-    ListAction action;
-
     editor.map_begin();
-    for (auto& [key, value]: value) {
+    for (auto& pair: value) {
         editor.map_key();
-        editor.value(key);
+        // TODO: Handle this more nicely, the key is fixed so
+        // should disable editing
+        K temp = pair.first;
+        editor.value(temp);
         editor.map_value();
-        editor.value(value);
-    }
-    if constexpr(std::is_default_constructible_v<V>) {
-        K key;
-        editor.map_insert_begin();
-        editor.value(key);
-        if (editor.map_insert_end()) {
-            value.emplace(key, V());
-        }
+        editor.value(pair.second);
     }
     editor.map_end();
+    if (!editor.map_action_begin()) {
+        return;
+    }
+
+    K temp;
+    editor.value(temp);
+    switch (editor.map_action_end()) {
+        case ContainerAction::None:
+            break;
+        case ContainerAction::Push:
+            value.emplace(temp, V());
+            break;
+        case ContainerAction::Pop:
+            value.erase(temp);
+            break;
+    }
 }
 
 } // namespace datapack

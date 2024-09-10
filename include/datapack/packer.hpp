@@ -38,13 +38,12 @@ void pack(packref<T, Mode> value, Packer<Mode>& packer)
 #define DATAPACK_IMPL(T, value_name, packer_name) \
 template void pack(packref<T, MODE_WRITE>, Packer<MODE_WRITE>&); \
 template void pack(packref<T, MODE_READ>, Packer<MODE_READ>&); \
+template void pack(packref<T, MODE_EDIT>, Packer<MODE_EDIT>&); \
 template <int Mode> \
 void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
 
 #define DATAPACK_INLINE(T, value_name, packer_name) \
 template <int Mode> \
 void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
-
-// template void pack(packref<T, MODE_EDIT>, Packer<MODE_EDIT>&); \
 
 } // namespace datapack

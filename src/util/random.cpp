@@ -3,68 +3,73 @@
 
 namespace datapack {
 
-RandomReader::RandomReader():
-    list_counter(0),
-    next_variant_label(nullptr)
+RandomReader::RandomReader()
 {}
 
-void RandomReader::value_i32(std::int32_t& value) {
-    if (auto c = constraint<RangeConstraint>()) {
-        value = std::int32_t(c->lower) + rand() % std::int32_t(c->upper - c->lower);
+void RandomReader::primitive(Primitive primitive, void* value) {
+    if (primitive == Primitive::BOOL) {
+        *(bool*)value = rand() % 2;
         return;
     }
-    value = rand() % 100;
-}
 
-void RandomReader::value_i64(std::int64_t& value) {
     if (auto c = constraint<RangeConstraint>()) {
-        value = std::int64_t(c->lower) + rand() % std::int64_t(c->upper - c->lower);
-        return;
-    }
-    value = rand() % 100;
-}
-
-void RandomReader::value_u32(std::uint32_t& value) {
-    if (auto c = constraint<RangeConstraint>()) {
-        if (c->lower < 0 || c->upper < 0) {
-            set_error("Invalid range constraint");
+        double value_double = c->lower + (double)rand() * (c->upper - c->lower) / RAND_MAX;
+        switch (primitive) {
+            case Primitive::I32:
+                *(std::int32_t*)value = value_double;
+                break;
+            case Primitive::I64:
+                *(std::int64_t*)value = value_double;
+                break;
+            case Primitive::U32:
+                *(std::uint32_t*)value = value_double;
+                break;
+            case Primitive::U64:
+                *(std::uint64_t*)value = value_double;
+                break;
+            case Primitive::F32:
+                *(float*)value = value_double;
+                break;
+            case Primitive::F64:
+                *(double*)value = value_double;
+                break;
+            case Primitive::U8:
+                *(std::uint8_t*)value = value_double;
+                break;
+            case Primitive::BOOL:
+                break;
         }
-        value = std::uint32_t(c->lower) + rand() % std::uint32_t(c->upper - c->lower);
         return;
     }
-    value = rand() & 100;
-}
 
-void RandomReader::value_u64(std::uint64_t& value) {
-    if (auto c = constraint<RangeConstraint>()) {
-        if (c->lower < 0 || c->upper < 0) {
-            set_error("Invalid range constraint");
-        }
-        value = std::uint64_t(c->lower) + rand() % std::uint64_t(c->upper - c->lower);
-        return;
+    switch (primitive) {
+        case Primitive::I32:
+            *(std::int32_t*)value = rand() % 100;
+            break;
+        case Primitive::I64:
+            *(std::int64_t*)value = rand() % 100;
+            break;
+        case Primitive::U32:
+            *(std::uint32_t*)value = rand() % 100;
+            break;
+        case Primitive::U64:
+            *(std::uint64_t*)value = rand() % 100;
+            break;
+        case Primitive::F32:
+            *(float*)value = (float)rand() / (float)RAND_MAX;
+            break;
+        case Primitive::F64:
+            *(double*)value = (double)rand() / (double)RAND_MAX;
+            break;
+        case Primitive::U8:
+            *(std::uint8_t*)value = (rand() % 256);
+            break;
+        case Primitive::BOOL:
+            break;
     }
-    value = rand() & 100;
 }
 
-
-void RandomReader::value_f32(float& value) {
-    if (auto c = constraint<RangeConstraint>()) {
-        value = c->lower + ((float)rand() / (float)RAND_MAX) * (c->upper - c->lower);
-        return;
-    }
-    value = (float)rand() / (float)RAND_MAX;
-}
-
-void RandomReader::value_f64(double& value) {
-    if (auto c = constraint<RangeConstraint>()) {
-        value = c->lower + ((double)rand() / (double)RAND_MAX) * (c->upper - c->lower);
-        return;
-    }
-    value = (double)rand() / (double)RAND_MAX;
-}
-
-
-const char* RandomReader::value_string(const char*) {
+const char* RandomReader::string(const char*) {
     // Length: [4, 20]
     // Characters ~ { a, ..., z }
     if (auto c = constraint<LengthConstraint>()) {
@@ -78,12 +83,7 @@ const char* RandomReader::value_string(const char*) {
     return string_temp.c_str();
 }
 
-void RandomReader::value_bool(bool& value) {
-    value = rand() % 2 == 1;
-}
-
-
-int RandomReader::enumerate(const std::span<const char*>& labels) {
+int RandomReader::enumerate(int value, const std::span<const char*>& labels) {
     return rand() % labels.size();
 }
 
@@ -95,82 +95,20 @@ void RandomReader::optional_end() {
     // Do nothing
 }
 
-void RandomReader::variant_begin(const std::span<const char*>& labels) {
-    next_variant_label = labels[rand() % labels.size()];
+int RandomReader::variant_begin(int value, const std::span<const char*>& labels) {
+    return rand() % labels.size();
 }
 
-bool RandomReader::variant_match(const char* label) {
-    if (std::strcmp(label, next_variant_label) == 0) {
-        return true;
-    }
-    return false;
-}
-
-void RandomReader::variant_end() {
-
-}
-
-std::tuple<const std::uint8_t*, std::size_t> RandomReader::binary_data(std::size_t length, std::size_t stride) {
-    if (length == 0) {
-        if (auto c = constraint<LengthConstraint>()){
-            length = c->length;
-        } else {
-            length = rand() % 10;
-        }
-    }
+void RandomReader::binary_data(
+    std::uint8_t* data,
+    std::size_t length,
+    std::size_t stride,
+    bool fixed_length)
+{
     std::size_t size = length * stride;
-    data_temp.resize(size);
     for (std::size_t i = 0; i < size; i++) {
-        data_temp[i] = rand() % 256;
+        data[i] = rand() % 256;
     }
-    return std::make_tuple(data_temp.data(), data_temp.size());
 }
-
-void RandomReader::object_begin(std::size_t size) {
-    // Do nothing
-}
-
-void RandomReader::object_end(std::size_t size) {
-    // Do nothing
-}
-
-void RandomReader::object_next(const char* key) {
-    // Do nothing
-}
-
-
-void RandomReader::tuple_begin(std::size_t size) {
-    // Do nothing
-}
-
-void RandomReader::tuple_end(std::size_t size) {
-    // Do nothing
-}
-
-void RandomReader::tuple_next() {
-    // Do nothing
-}
-
-
-void RandomReader::list_begin(bool is_trivial) {
-    if (auto c = constraint<LengthConstraint>()) {
-        list_counter = c->length;
-        return;
-    }
-    list_counter = rand() % 10;
-}
-
-void RandomReader::list_end() {
-
-}
-
-ListNext RandomReader::list_next(bool) {
-    if (list_counter == 0) {
-        return ListNext::End;
-    }
-    list_counter--;
-    return ListNext::Next;
-}
-
 
 } // namespace datapack

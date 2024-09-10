@@ -8,8 +8,8 @@ namespace datapack {
 
 class BinaryReader : public Reader {
 public:
-    BinaryReader(const std::span<const std::uint8_t>& data):
-        Reader(true),
+    BinaryReader(const std::span<const std::uint8_t>& data, bool trivial_as_binary=true):
+        Reader(trivial_as_binary),
         data(data),
         pos(0),
         binary_depth(0),

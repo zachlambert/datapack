@@ -222,7 +222,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
                 labels_cstr.push_back(label.c_str());
             }
 
-            reader.variant_begin(labels_cstr);
+            int variant_index = reader.variant_begin(labels_cstr);
 
             bool found_match = false;
             std::size_t variant_start;
@@ -231,13 +231,13 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
                 const auto& token = schema.tokens[token_pos];
                 token_pos++;
                 if (auto value = std::get_if<token::VariantNext>(&token)) {
-                    if (reader.variant_match(value->type.c_str())) {
+                    if (value->index == variant_index) {
                         if (found_match) {
                             throw std::runtime_error("Repeated variant labels");
                         }
                         found_match = true;
                         variant_start = token_pos;
-                        writer.variant_begin(value->type.c_str(), labels_cstr);
+                        writer.variant_begin(variant_index, labels_cstr[variant_index]);
                     }
                     token_pos = get_tokens_end(schema.tokens, token_pos);
                     continue;
@@ -255,45 +255,15 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             continue;
         }
 
-        if (std::get_if<std::int32_t>(&token)) {
-            std::int32_t value;
-            reader.value_i32(value);
-            writer.value_i32(value);
-        }
-        else if (std::get_if<std::int64_t>(&token)) {
-            std::int64_t value;
-            reader.value_i64(value);
-            writer.value_i64(value);
-        }
-        else if (std::get_if<std::uint32_t>(&token)) {
-            std::uint32_t value;
-            reader.value_u32(value);
-            writer.value_u32(value);
-        }
-        else if (std::get_if<std::uint64_t>(&token)) {
-            std::uint64_t value;
-            reader.value_u64(value);
-            writer.value_u64(value);
-        }
-        else if (std::get_if<float>(&token)) {
-            float value;
-            reader.value_f32(value);
-            writer.value_f32(value);
-        }
-        else if (std::get_if<double>(&token)) {
-            double value;
-            reader.value_f64(value);
-            writer.value_f64(value);
-        }
-        else if (std::get_if<bool>(&token)) {
-            bool value;
-            reader.value_bool(value);
-            writer.value_bool(value);
+        if (auto x = std::get_if<Primitive>(&token)) {
+            std::uint64_t dummy; // (joint) largest type
+            reader.primitive(*x, &dummy);
+            writer.primitive(*x, &dummy);
         }
         else if (std::get_if<std::string>(&token)) {
             std::string value;
-            const char* string = reader.value_string();
-            writer.value_string(string);
+            const char* string = reader.string();
+            writer.string(string);
         }
         else if (auto value = std::get_if<token::Enumerate>(&token)) {
             std::vector<const char*> labels_cstr;
@@ -301,7 +271,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
                 labels_cstr.push_back(label.c_str());
             }
             int enum_value = reader.enumerate(labels_cstr);
-            writer.enumerate(enum_value, labels_cstr);
+            writer.enumerate(enum_value, labels_cstr[enum_value]);
         }
         else if (auto value = std::get_if<token::BinaryData>(&token)) {
             auto [data, length] = reader.binary_data(value->length, value->stride);
@@ -317,10 +287,10 @@ bool operator==(const Schema& lhs, const Schema& rhs) {
     return lhs == rhs;
 }
 
-DATAPACK_IMPL(Schema) {
-    visitor.object_begin();
-    visitor.value("tokens", value.tokens);
-    visitor.object_end();
+DATAPACK_IMPL(Schema, value, packer) {
+    packer.object_begin();
+    packer.value("tokens", value.tokens);
+    packer.object_end();
 }
 
 } // namespace datapack

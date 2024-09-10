@@ -30,7 +30,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
 
         src/schema/token.cpp
         src/schema/tokenizer.cpp
-        # src/schema/schema.cpp
+        src/schema/schema.cpp
         # src/schema/binary.cpp
     )
     target_include_directories(datapack PUBLIC
@@ -87,21 +87,21 @@ if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     target_link_libraries(test_object datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_object)
 
-    # add_executable(test_format
-    #     test/format/binary.cpp
-    #     test/format/binary_array.cpp
-    #     # test/format/json.cpp
-    # )
-    # target_link_libraries(test_format datapack datapack_examples GTest::gtest_main)
-    # gtest_discover_tests(test_format)
+    add_executable(test_format
+        test/format/binary.cpp
+        # test/format/binary_array.cpp
+        # test/format/json.cpp
+    )
+    target_link_libraries(test_format datapack datapack_examples GTest::gtest_main)
+    gtest_discover_tests(test_format)
 
-    # add_executable(test_schema
-    #     test/schema/tokenizer.cpp
-    #     test/schema/schema.cpp
-    #     test/schema/binary.cpp
-    # )
-    # target_link_libraries(test_schema datapack datapack_examples GTest::gtest_main)
-    # gtest_discover_tests(test_schema)
+    add_executable(test_schema
+        test/schema/tokenizer.cpp
+        test/schema/schema.cpp
+        # test/schema/binary.cpp
+    )
+    target_link_libraries(test_schema datapack datapack_examples GTest::gtest_main)
+    gtest_discover_tests(test_schema)
 endif()
 
 

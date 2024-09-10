@@ -2,6 +2,7 @@
 
 #include "datapack/schema/token.hpp"
 #include "datapack/schema/tokenizer.hpp"
+#include "datapack/packer.hpp"
 
 
 namespace datapack {

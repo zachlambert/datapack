@@ -1,9 +1,11 @@
 #pragma once
-#ifndef EMBEDDED
 
-#include "datapack/datapack.hpp"
+#include "datapack/packer.hpp"
+#include "datapack/primitive.hpp"
+#include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
 #include <vector>
+#include <string>
 
 
 namespace datapack {
@@ -34,17 +36,18 @@ struct VariantBegin {
 };
 struct VariantEnd {};
 struct VariantNext {
-    std::string type;
+    int index;
     VariantNext() {}
-    VariantNext(const std::string& type): type(type) {}
+    VariantNext(int index): index(index) {}
 };
 
 struct BinaryData {
     std::size_t length;
     std::size_t stride;
-    BinaryData(): length(0), stride(0) {}
-    BinaryData(std::size_t length, std::size_t stride):
-        length(length), stride(stride)
+    bool fixed_length;
+    BinaryData(): length(0), stride(0), fixed_length(false) {}
+    BinaryData(std::size_t length, std::size_t stride, bool fixed_length):
+        length(length), stride(stride), fixed_length(fixed_length)
     {}
 };
 
@@ -85,16 +88,10 @@ struct List {
 } // namespace dtoken
 
 using Token = std::variant<
-    std::int32_t,
-    std::int64_t,
-    std::uint32_t,
-    std::uint64_t,
-    float,
-    double,
+    Primitive,
     std::string,
-    bool,
-    token::Optional,
     token::Enumerate,
+    token::Optional,
     token::VariantBegin,
     token::VariantEnd,
     token::VariantNext,
@@ -108,6 +105,7 @@ using Token = std::variant<
     token::List
 >;
 
+DATAPACK_LABELLED_ENUM(Primitive, 8);
 DATAPACK(token::Enumerate);
 DATAPACK(token::VariantBegin);
 DATAPACK(token::VariantNext);
@@ -127,4 +125,3 @@ DATAPACK_EMPTY(token::TupleNext);
 bool operator==(const Token& lhs, const Token& rhs);
 
 } // namespace datpack
-#endif

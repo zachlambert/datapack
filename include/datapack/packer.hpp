@@ -46,4 +46,11 @@ void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
 template <int Mode> \
 void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
 
+#define DATAPACK_EMPTY(T) \
+template <int Mode> \
+void pack(packref<T, Mode>, Packer<Mode>& packer) { \
+    packer.object_begin(); \
+    packer.object_end(); \
+}
+
 } // namespace datapack

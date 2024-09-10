@@ -43,7 +43,7 @@ const char* enum_to_label(const T& value) {
 
 #define DATAPACK_LABELLED_ENUM(T, Size) \
 template <> \
-struct enum_details<Physics> { \
+struct enum_details<T> { \
     static constexpr std::size_t size = Size; \
     static const std::span<const char*> labels; \
     static const char* labels_array[Size]; \

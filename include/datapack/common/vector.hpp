@@ -59,6 +59,14 @@ void pack(std::vector<T>& value, Reader& reader) {
 template <typename T>
 requires editable<T>
 void pack(std::vector<T>& value, Editor& editor) {
+    if (editor.is_tokenizer()) {
+        editor.list_begin();
+        T temp;
+        editor.value(temp);
+        editor.list_end();
+        return;
+    }
+
     editor.list_begin();
     for (auto& element: value) {
         editor.list_next();

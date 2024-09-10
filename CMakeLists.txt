@@ -25,11 +25,11 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/util/object_writer.cpp
         src/util/object_reader.cpp
 
-        # src/format/binary_reader.cpp
+        src/format/binary_reader.cpp
         # src/format/json.cpp
 
-        # src/schema/token.cpp
-        # src/schema/tokenizer.cpp
+        src/schema/token.cpp
+        src/schema/tokenizer.cpp
         # src/schema/schema.cpp
         # src/schema/binary.cpp
     )

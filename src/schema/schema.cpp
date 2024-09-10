@@ -1,5 +1,6 @@
 #include "datapack/schema/schema.hpp"
 #include "datapack/common.hpp"
+#include <stdexcept>
 
 #include <stack>
 

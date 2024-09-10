@@ -1,36 +1,27 @@
 #pragma once
-#ifndef EMBEDDED
 
+#include "datapack/packers.hpp"
 #include "datapack/schema/token.hpp"
+
 
 namespace datapack {
 
-class Tokenizer: public Reader {
+class Tokenizer: public Editor {
 public:
     Tokenizer(std::vector<Token>& tokens);
 
-    void value_i32(std::int32_t& value) override;
-    void value_i64(std::int64_t& value) override;
-    void value_u32(std::uint32_t& value) override;
-    void value_u64(std::uint64_t& value) override;
-    void value_f32(float& value) override;
-    void value_f64(double& value) override;
+    void primitive(Primitive primtive, void* value) override;
+    const char* string(const char*) override;
+    int enumerate(int value, const std::span<const char*>& labels) override;
 
-    const char* value_string() override;
-    void value_bool(bool& value) override;
-
-    int enumerate(const std::span<const char*>& labels) override;
-
-    bool optional_begin() override;
+    bool optional_begin(bool has_value) override;
     void optional_end() override;
 
-    void variant_begin(const std::span<const char*>& labels) override;
-
-    bool variant_match(const char* label) override;
-
+    int variant_begin(int value, const std::span<const char*>& labels) override;
+    void variant_tokenize(int index) override;
     void variant_end() override;
 
-    std::tuple<const std::uint8_t*, std::size_t> binary_data(std::size_t length, std::size_t stride) override;
+    void binary_data(std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) override;
 
     void object_begin(std::size_t size) override;
     void object_end(std::size_t size) override;
@@ -41,8 +32,8 @@ public:
     void tuple_next() override;
 
     void list_begin(bool is_trivial) override;
-    void list_end() override;
-    bool list_next() override;
+    void list_next() override;
+    ContainerAction list_end() override;
 
 private:
     std::vector<Token>& tokens;
@@ -50,4 +41,3 @@ private:
 };
 
 } // namespace datapack
-#endif

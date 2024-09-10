@@ -27,15 +27,35 @@ public:
         trivial_list_length(0)
     {}
 
-    void value_i32(std::int32_t value) override { value_number(value); }
-    void value_i64(std::int64_t value) override { value_number(value); }
-    void value_u32(std::uint32_t value) override { value_number(value); }
-    void value_u64(std::uint64_t value) override { value_number(value); }
+    void primitive(Primitive primitive, const void* value) override {
+        switch (primitive) {
+            case Primitive::I32:
+                value_number(*(const std::int32_t*)value);
+                break;
+            case Primitive::I64:
+                value_number(*(const std::int64_t*)value);
+                break;
+            case Primitive::U32:
+                value_number(*(const std::uint32_t*)value);
+                break;
+            case Primitive::U64:
+                value_number(*(const std::uint64_t*)value);
+                break;
+            case Primitive::F32:
+                value_number(*(const float*)value);
+                break;
+            case Primitive::F64:
+                value_number(*(const double*)value);
+                break;
+            case Primitive::U8:
+                value_number(*(const std::uint8_t*)value);
+                break;
+            case Primitive::BOOL:
+                value_bool(*(const bool*)value);
+        }
+    }
 
-    void value_f32(float value) override { value_number(value); }
-    void value_f64(double value) override { value_number(value); }
-
-    void value_string(const char* value) override {
+    void string(const char* value) override {
         std::size_t size = std::strlen(value) + 1;
         if (!resize(pos + size)) {
             return;
@@ -43,15 +63,8 @@ public:
         strncpy((char*)&data[pos], value, size);
         pos += size;
     }
-    void value_bool(bool value) override {
-        if (!resize(pos + 1)) {
-            return;
-        }
-        data[pos] = (value ? 0x01 : 0x00);
-        pos++;
-    }
 
-    void enumerate(int value, const std::span<const char*>& labels) override {
+    void enumerate(int value, const char* label) override {
         value_number(value);
     }
 
@@ -60,8 +73,8 @@ public:
     }
     void optional_end() override {}
 
-    void variant_begin(const char* label, const std::span<const char*>& labels) override {
-        value_string(label);
+    void variant_begin(int value, const char* label) override {
+        value_number(value);
     }
     void variant_end() override {}
 
@@ -178,6 +191,14 @@ private:
 
         *((T*)&data[pos]) = value;
         pos += sizeof(T);
+    }
+
+    void value_bool(bool value) {
+        if (!resize(pos + 1)) {
+            return;
+        }
+        data[pos] = (value ? 0x01 : 0x00);
+        pos++;
     }
 
     data_t& data;

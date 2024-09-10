@@ -20,11 +20,7 @@ public:
 
     template <writeable T>
     void value(const T& value) {
-        if (std::is_trivially_constructible_v<T> && !std::is_arithmetic_v<T> && trivial_as_binary_) {
-            binary_data((const std::uint8_t*)&value, 1, sizeof(T), true);
-        } else {
-            pack(value, *this);
-        }
+        pack(value, *this);
     }
 
     template <writeable T>
@@ -35,12 +31,12 @@ public:
 
     virtual void primitive(Primitive primitive, const void* value) = 0;
     virtual void string(const char* string) = 0;
-    virtual void enumerate(int value, const std::span<const char*>& labels) = 0;
+    virtual void enumerate(int value, const char* label) = 0;
 
     virtual void optional_begin(bool has_value) = 0;
     virtual void optional_end() = 0;
 
-    virtual void variant_begin(const char* label, const std::span<const char*>& labels) = 0;
+    virtual void variant_begin(int value, const char* label) = 0;
     virtual void variant_end() = 0;
 
     virtual void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) = 0;
@@ -56,6 +52,11 @@ public:
     virtual void list_begin(bool is_trivial = false) = 0;
     virtual void list_end() = 0;
     virtual void list_next() = 0;
+
+    virtual void map_begin() = 0;
+    virtual void map_key() = 0;
+    virtual void map_value() = 0;
+    virtual void map_end() = 0;
 
     bool trivial_as_binary() const {
         return trivial_as_binary_;

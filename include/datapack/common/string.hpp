@@ -17,4 +17,12 @@ inline void pack(std::string& value, Reader& reader) {
     }
 }
 
+inline void pack(std::string& value, Editor& editor) {
+    if (auto str = editor.string(value.c_str())) {
+        value = str;
+    } else {
+        value.clear();
+    }
+}
+
 } // namespace datapack

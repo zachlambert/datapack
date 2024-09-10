@@ -41,8 +41,8 @@ void DebugWriter::string(const char* value) {
     os << value << ",\n";
 }
 
-void DebugWriter::enumerate(int value, const std::span<const char*>& labels) {
-    os << "(enum, " << labels[value] << "),\n";
+void DebugWriter::enumerate(int value, const char* label) {
+    os << "(enum, " << value << " = " << label << "),\n";
 }
 
 void DebugWriter::optional_begin(bool has_value) {
@@ -61,8 +61,8 @@ void DebugWriter::optional_end() {
     os << "},\n";
 }
 
-void DebugWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
-    os << "(variant, " << label << ") {\n";
+void DebugWriter::variant_begin(int value, const char* label) {
+    os << "(variant, " << value << " = " << label << ") {\n";
     depth++;
     indent();
 }
@@ -142,6 +142,26 @@ void DebugWriter::list_next() {
     indent();
 }
 
+void DebugWriter::map_begin() {
+    os << "(map) {\n";
+    depth++;
+}
+
+void DebugWriter::map_key() {
+    indent();
+    os << "key: ";
+}
+
+void DebugWriter::map_value() {
+    indent();
+    os << "value: ";
+}
+
+void DebugWriter::map_end() {
+    depth--;
+    indent();
+    os << "},\n";
+}
 
 void DebugWriter::indent() {
     for (int i = 0; i < depth; i++) {

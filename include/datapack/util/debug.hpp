@@ -13,12 +13,12 @@ public:
 
     void primitive(Primitive primitive, const void* value) override;
     void string(const char* value) override;
-    void enumerate(int value, const std::span<const char*>& labels) override;
+    void enumerate(int value, const char* label) override;
 
     void optional_begin(bool has_value) override;
     void optional_end() override;
 
-    void variant_begin(const char* label, const std::span<const char*>& labels) override;
+    void variant_begin(int value, const char* label) override;
     void variant_end() override;
 
     void binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) override;
@@ -34,6 +34,11 @@ public:
     void list_begin(bool is_trivial) override;
     void list_end() override;
     void list_next() override;
+
+    void map_begin() override;
+    void map_key() override;
+    void map_value() override;
+    void map_end() override;
 
 private:
     void indent();

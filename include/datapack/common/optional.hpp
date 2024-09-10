@@ -26,4 +26,15 @@ void pack(std::optional<T>& value, Reader& reader) {
     }
 }
 
+template <editable T>
+void pack(std::optional<T>& value, Editor& editor) {
+    if (editor.optional_begin(value.has_value())) {
+        value.emplace();
+        editor.value(value.value());
+        editor.optional_end();
+    } else {
+        value = std::nullopt;
+    }
+}
+
 } // namespace datapack

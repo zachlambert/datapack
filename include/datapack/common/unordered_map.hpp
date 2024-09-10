@@ -8,35 +8,51 @@ namespace datapack {
 
 template <writeable K, writeable V>
 void pack(const std::unordered_map<K, V>& value, Writer& writer) {
-    writer.list_begin();
+    writer.map_begin();
     for (const auto& pair: value) {
-        writer.list_next();
-        writer.tuple_begin();
-        writer.tuple_next();
+        writer.map_key();
         writer.value(pair.first);
-        writer.tuple_next();
+        writer.map_value();
         writer.value(pair.second);
-        writer.tuple_end();
     }
-    writer.list_end();
+    writer.map_end();
 }
 
 template <readable K, readable V>
 void pack(std::unordered_map<K, V>& value, Reader& reader) {
     std::pair<K, V> pair;
     value.clear();
-    reader.list_begin();
+    reader.map_begin();
     auto iter = value.begin();
-    while (reader.list_next()) {
-        reader.tuple_begin();
-        reader.tuple_next();
+    while (reader.map_key()) {
         reader.value(pair.first);
-        reader.tuple_next();
+        reader.map_value();
         reader.value(pair.second);
-        reader.tuple_end();
-        value.insert(pair);
     }
-    reader.list_end();
+    reader.map_end();
+}
+
+template <readable K, readable V>
+void pack(std::unordered_map<K, V>& value, Editor& editor) {
+    std::pair<K, V> pair;
+    ListAction action;
+
+    editor.map_begin();
+    for (auto& [key, value]: value) {
+        editor.map_key();
+        editor.value(key);
+        editor.map_value();
+        editor.value(value);
+    }
+    if constexpr(std::is_default_constructible_v<V>) {
+        K key;
+        editor.map_insert_begin();
+        editor.value(key);
+        if (editor.map_insert_end()) {
+            value.emplace(key, V());
+        }
+    }
+    editor.map_end();
 }
 
 } // namespace datapack

@@ -39,13 +39,6 @@ public:
     void list_next() override {}
     ContainerAction list_end() override { return ContainerAction::None; }
 
-    void map_begin() override {};
-    void map_key() override {};
-    void map_value() override {};
-    void map_end() override {};
-    bool map_action_begin() override { return false; }
-    ContainerAction map_action_end() override { return ContainerAction::None; }
-
 private:
     std::string string_temp;
 };

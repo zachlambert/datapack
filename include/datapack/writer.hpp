@@ -53,11 +53,6 @@ public:
     virtual void list_end() = 0;
     virtual void list_next() = 0;
 
-    virtual void map_begin() = 0;
-    virtual void map_key() = 0;
-    virtual void map_value() = 0;
-    virtual void map_end() = 0;
-
     bool trivial_as_binary() const {
         return trivial_as_binary_;
     }

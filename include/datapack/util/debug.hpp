@@ -35,11 +35,6 @@ public:
     void list_end() override;
     void list_next() override;
 
-    void map_begin() override;
-    void map_key() override;
-    void map_value() override;
-    void map_end() override;
-
 private:
     void indent();
 

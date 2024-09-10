@@ -142,27 +142,6 @@ void DebugWriter::list_next() {
     indent();
 }
 
-void DebugWriter::map_begin() {
-    os << "(map) {\n";
-    depth++;
-}
-
-void DebugWriter::map_key() {
-    indent();
-    os << "key: ";
-}
-
-void DebugWriter::map_value() {
-    indent();
-    os << "value: ";
-}
-
-void DebugWriter::map_end() {
-    depth--;
-    indent();
-    os << "},\n";
-}
-
 void DebugWriter::indent() {
     for (int i = 0; i < depth; i++) {
         os << "    ";

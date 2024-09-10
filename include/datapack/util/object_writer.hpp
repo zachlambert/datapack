@@ -12,21 +12,13 @@ class ObjectWriter: public Writer {
 public:
     ObjectWriter(Object::Reference object);
 
-    void value_i32(std::int32_t value) override;
-    void value_i64(std::int64_t value) override;
-    void value_u32(std::uint32_t value) override;
-    void value_u64(std::uint64_t value) override;
+    void primitive(Primitive primtive, const void* value) override;
+    void string(const char* value) override;
+    void enumerate(int value, const char* label) override;
 
-    void value_f32(float value) override;
-    void value_f64(double value) override;
-
-    void value_string(const char* value) override;
-    void value_bool(bool value) override;
-
-    void enumerate(int value, const std::span<const char*>& labels) override;
     void optional_begin(bool has_value) override;
     void optional_end() override;
-    void variant_begin(const char* label, const std::span<const char*>& labels) override;
+    void variant_begin(int value, const char* label) override;
     void variant_end() override;
 
     void binary_data(const std::uint8_t* data, std::size_t size, std::size_t stride, bool fixed_length) override;

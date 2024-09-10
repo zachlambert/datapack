@@ -58,8 +58,6 @@ struct Entity {
     Sprite sprite;               // Binary
     std::vector<Item> items;     // List
     std::array<int, 3> assigned_items; // Tuple
-    std::unordered_map<std::string, double> properties;  // Map with key=string
-    std::unordered_map<int, bool> flags; // Map with key!=string -> list of tuples
 
     static Entity example();
 };

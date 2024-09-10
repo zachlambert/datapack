@@ -73,8 +73,6 @@ DATAPACK_IMPL(Entity, value, packer) {
     packer.value("sprite", value.sprite);
     packer.value("items", value.items);
     packer.value("assigned_items", value.assigned_items);
-    packer.value("properties", value.properties);
-    packer.value("flags", value.flags);
     packer.object_end();
 }
 
@@ -112,19 +110,6 @@ Entity Entity::example() {
         return items;
     }();
     result.assigned_items = { 1, 2, -1 };
-    result.properties = []() {
-        std::unordered_map<std::string, double> properties;
-        properties["strength"] = 10.5;
-        properties["agility"] = 5.0;
-        return properties;
-    }();
-    result.flags = []() {
-        std::unordered_map<int, bool> flags;
-        flags[0] = true;
-        flags[1] = false;
-        flags[2] = true;
-        return flags;
-    }();
     return result;
 }
 
@@ -171,20 +156,6 @@ bool compare(const Entity& a, const Entity& b, double float_threshold) {
         const auto& b_item = b.items[i];
         if (a_item.name != b_item.name) return false;
         if (a_item.count != b_item.count) return false;
-    }
-
-    for (const auto& a_pair: a.properties) {
-        auto b_iter = b.properties.find(a_pair.first);
-        if (b_iter == b.properties.end()) return false;
-        const auto& b_pair = *b_iter;
-        if (std::abs(a_pair.second - b_pair.second) > float_threshold) return false;
-    }
-
-    for (const auto& a_pair: a.flags) {
-        auto b_iter = b.flags.find(a_pair.first);
-        if (b_iter == b.flags.end()) return false;
-        const auto& b_pair = *b_iter;
-        if (a_pair.second != b_pair.second) return false;
     }
 
     return true;

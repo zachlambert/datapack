@@ -11,43 +11,41 @@ ObjectWriter::ObjectWriter(Object::Reference object):
 {}
 
 
-void ObjectWriter::value_i32(std::int32_t value) {
-    set_value((Object::int_t)value);
+void ObjectWriter::primitive(Primitive primitive, const void* value) {
+    switch (primitive) {
+        case Primitive::I32:
+            set_value((Object::int_t)(*(std::int32_t*)value));
+            break;
+        case Primitive::I64:
+            set_value((Object::int_t)(*(std::int64_t*)value));
+            break;
+        case Primitive::U32:
+            set_value((Object::int_t)(*(std::uint32_t*)value));
+            break;
+        case Primitive::U64:
+            set_value((Object::int_t)(*(std::uint64_t*)value));
+            break;
+        case Primitive::F32:
+            set_value((Object::float_t)(*(float*)value));
+            break;
+        case Primitive::F64:
+            set_value((Object::float_t)(*(double*)value));
+            break;
+        case Primitive::U8:
+            set_value((Object::int_t)(*(uint8_t*)value));
+            break;
+        case Primitive::BOOL:
+            set_value(*(bool*)value);
+            break;
+    }
 }
 
-void ObjectWriter::value_i64(std::int64_t value) {
-    set_value((Object::int_t)value);
-}
-
-void ObjectWriter::value_u32(std::uint32_t value) {
-    set_value((Object::int_t)value);
-}
-
-void ObjectWriter::value_u64(std::uint64_t value) {
-    set_value((Object::int_t)value);
-}
-
-
-void ObjectWriter::value_f32(float value) {
-    set_value((Object::float_t)value);
-}
-
-void ObjectWriter::value_f64(double value) {
-    set_value((Object::float_t)value);
-}
-
-
-void ObjectWriter::value_string(const char* value) {
+void ObjectWriter::string(const char* value) {
     set_value(std::string(value));
 }
 
-void ObjectWriter::value_bool(bool value) {
-    set_value(value);
-}
-
-
-void ObjectWriter::enumerate(int value, const std::span<const char*>& labels) {
-    set_value(std::string(labels[value]));
+void ObjectWriter::enumerate(int value, const char* label) {
+    set_value(std::string(label));
 }
 
 void ObjectWriter::optional_begin(bool has_value) {
@@ -60,10 +58,10 @@ void ObjectWriter::optional_end() {
     // Do nothing
 }
 
-void ObjectWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
+void ObjectWriter::variant_begin(int value, const char* label) {
     object_begin(0);
     object_next("type");
-    value_string(label);
+    string(label);
     std::string value_key = "value_" + std::string(label);
     object_next(value_key.c_str());
 }

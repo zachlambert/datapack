@@ -10,45 +10,59 @@ ObjectReader::ObjectReader(Object::ConstReference object):
     next_variant_label(nullptr)
 {}
 
-
-void ObjectReader::primitive(Primitive primitive, void* value) {
-    bool valid = true;
-    switch (primitive) {
-        case Primitive::I32:
-            valid = value_obj_int(*(std::uint32_t*)value);
-            break;
-        case Primitive::I64:
-            valid = value_obj_int(*(std::uint32_t*)value);
-            break;
-        case Primitive::U32:
-            valid = value_obj_int(*(std::uint32_t*)value);
-            break;
-        case Primitive::U64:
-            valid = value_obj_int(*(std::uint32_t*)value);
-            break;
-        case Primitive::F32:
-            valid =
-                value_obj_float(*(float*)value)
-                || value_obj_int(*(float*)value);
-            break;
-        case Primitive::F64:
-            valid =
-                value_obj_float(*(float*)value)
-                || value_obj_int(*(float*)value);
-            break;
-        case Primitive::U8:
-            valid = value_obj_int(*(std::uint8_t*)value);
-            break;
-        case Primitive::BOOL:
-            if (auto x = node->get_bool()) {
-                *(bool*)value = *x;
-            }
-            invalidate();
-            return;
-    }
-    if (!valid) {
+void ObjectReader::integer(IntType type, void* value) {
+    std::int64_t integer_value;
+    if (auto x = node->get_int()) {
+        integer_value = *x;
+    } else {
         invalidate();
+        return;
     }
+    switch (type) {
+        case IntType::I32:
+            *(std::int32_t*)value = integer_value;
+            break;
+        case IntType::I64:
+            *(std::int64_t*)value = integer_value;
+            break;
+        case IntType::U32:
+            *(std::uint32_t*)value = integer_value;
+            break;
+        case IntType::U64:
+            *(std::uint64_t*)value = integer_value;
+            break;
+        case IntType::U8:
+            *(std::uint8_t*)value = integer_value;
+            break;
+    }
+}
+
+void ObjectReader::floating(FloatType type, void* value) {
+    double floating_value;
+    if (auto x = node->get_float()) {
+        floating_value = *x;
+    } else if (auto x = node->get_int()) {
+        floating_value = *x;
+    } else {
+        invalidate();
+        return;
+    }
+    switch (type) {
+        case FloatType::F32:
+            *(float*)value = floating_value;
+            break;
+        case FloatType::F64:
+            *(double*)value = floating_value;
+            break;
+    }
+}
+
+bool ObjectReader::boolean() {
+    if (auto x = node->get_bool()) {
+        return *x;
+    }
+    invalidate();
+    return false;
 }
 
 const char* ObjectReader::string() {
@@ -74,36 +88,7 @@ int ObjectReader::enumerate(const std::span<const char*>& labels) {
     return 0;
 }
 
-bool ObjectReader::optional_begin() {
-    if (node->is_null()) {
-        return false;
-    }
-    return true;
-}
-
-void ObjectReader::optional_end() {
-    // Do nothing
-}
-
-int ObjectReader::variant_begin(const std::span<const char*>& labels) {
-    object_begin(0);
-    object_next("type");
-    if (auto x = node->get_string()) {
-        for (int i = 0; i < labels.size(); i++) {
-            if (labels[i] == *x) {
-                return i;
-            }
-        }
-    }
-    invalidate();
-    return 0;
-}
-
-void ObjectReader::variant_end() {
-    object_end(0);
-}
-
-std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data(
+std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary(
     std::size_t length, std::size_t stride)
 {
     const std::uint8_t* data = nullptr;
@@ -142,6 +127,35 @@ std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary_data(
     }
 
     return std::make_tuple(data, length);
+}
+
+bool ObjectReader::optional_begin() {
+    if (node->is_null()) {
+        return false;
+    }
+    return true;
+}
+
+void ObjectReader::optional_end() {
+    // Do nothing
+}
+
+int ObjectReader::variant_begin(const std::span<const char*>& labels) {
+    object_begin(0);
+    object_next("type");
+    if (auto x = node->get_string()) {
+        for (int i = 0; i < labels.size(); i++) {
+            if (labels[i] == *x) {
+                return i;
+            }
+        }
+    }
+    invalidate();
+    return 0;
+}
+
+void ObjectReader::variant_end() {
+    object_end(0);
 }
 
 void ObjectReader::object_begin(std::size_t size) {
@@ -187,12 +201,6 @@ void ObjectReader::tuple_begin(std::size_t size) {
     node = node.child();
 }
 
-void ObjectReader::tuple_end(std::size_t size) {
-    list_start = false;
-    node = nodes.top();
-    nodes.pop();
-}
-
 void ObjectReader::tuple_next() {
     if (!list_start) {
         node = node.next();
@@ -202,6 +210,12 @@ void ObjectReader::tuple_next() {
         invalidate();
         return;
     }
+}
+
+void ObjectReader::tuple_end(std::size_t size) {
+    list_start = false;
+    node = nodes.top();
+    nodes.pop();
 }
 
 

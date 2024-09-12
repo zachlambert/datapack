@@ -16,9 +16,4 @@ void pack(T& value, Reader& reader) {
     value = (T)reader.enumerate(enum_labels<T>);
 }
 
-template <labelled_enum T>
-void pack(T& value, Editor& editor) {
-    value = (T)editor.enumerate((int)value, enum_labels<T>);
-}
-
 } // namespace datapack

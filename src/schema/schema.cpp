@@ -255,10 +255,18 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             continue;
         }
 
-        if (auto x = std::get_if<Primitive>(&token)) {
-            std::uint64_t dummy; // (joint) largest type
-            reader.primitive(*x, &dummy);
-            writer.primitive(*x, &dummy);
+        if (auto x = std::get_if<IntType>(&token)) {
+            std::uint64_t dummy; // Fits all integer types
+            reader.integer(*x, &dummy);
+            writer.integer(*x, &dummy);
+        }
+        else if (auto x = std::get_if<FloatType>(&token)) {
+            std::uint64_t dummy; // Fits all floating types
+            reader.floating(*x, &dummy);
+            writer.floating(*x, &dummy);
+        }
+        else if (std::get_if<bool>(&token)) {
+            writer.boolean(reader.boolean());
         }
         else if (std::get_if<std::string>(&token)) {
             std::string value;
@@ -273,9 +281,9 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             int enum_value = reader.enumerate(labels_cstr);
             writer.enumerate(enum_value, labels_cstr[enum_value]);
         }
-        else if (auto value = std::get_if<token::BinaryData>(&token)) {
-            auto [data, length] = reader.binary_data(value->length, value->stride);
-            writer.binary_data(data, length, value->stride, value->length!=0);
+        else if (auto value = std::get_if<token::Binary>(&token)) {
+            auto [data, length] = reader.binary(value->length, value->stride);
+            writer.binary(data, length, value->stride, value->length!=0);
         }
         else {
             throw std::runtime_error("Shouldn't be here");

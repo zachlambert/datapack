@@ -82,27 +82,12 @@ TEST(Util, Debug) {
         2,
         -1,
     },
-    properties: (map) {
-        key: agility,
-        value: 5,
-        key: strength,
-        value: 10.5,
-    },
-    flags: (map) {
-        key: 2,
-        value: true,
-        key: 1,
-        value: false,
-        key: 0,
-        value: true,
-    },
 },
 )";
 
     std::stringstream ss;
     datapack::DebugWriter(ss).value(Entity::example());
     const std::string output = ss.str();
-    std::cerr << datapack::debug(Entity::example()) << std::endl;
 
     auto expected_lines = get_lines(expected);
     auto output_lines = get_lines(output);

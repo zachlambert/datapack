@@ -7,34 +7,41 @@ DebugWriter::DebugWriter(std::ostream& os):
     depth(0)
 {}
 
-void DebugWriter::primitive(Primitive primitive, const void* value) {
-    switch (primitive) {
-        case Primitive::I32:
+void DebugWriter::integer(IntType type, const void* value) {
+    switch (type) {
+        case IntType::I32:
             os << *(const std::int32_t*)value;
             break;
-        case Primitive::I64:
+        case IntType::I64:
             os << *(const std::int64_t*)value;
             break;
-        case Primitive::U32:
+        case IntType::U32:
             os << *(const std::uint32_t*)value;
             break;
-        case Primitive::U64:
+        case IntType::U64:
             os << *(const std::uint64_t*)value;
             break;
-        case Primitive::F32:
-            os << *(const float*)value;
-            break;
-        case Primitive::F64:
-            os << *(const double*)value;
-            break;
-        case Primitive::U8:
+        case IntType::U8:
             os << *(const std::uint8_t*)value;
-            break;
-        case Primitive::BOOL:
-            os << (*(const bool*)value ? "true" : "false");
             break;
     };
     os << ",\n";
+}
+
+void DebugWriter::floating(FloatType type, const void* value) {
+    switch (type) {
+        case FloatType::F32:
+            os << *(const float*)value;
+            break;
+        case FloatType::F64:
+            os << *(const double*)value;
+            break;
+    };
+    os << ",\n";
+}
+
+void DebugWriter::boolean(bool value) {
+    os << (value ? "true" : "false") << ",\n";;
 }
 
 void DebugWriter::string(const char* value) {
@@ -43,6 +50,14 @@ void DebugWriter::string(const char* value) {
 
 void DebugWriter::enumerate(int value, const char* label) {
     os << "(enum, " << value << " = " << label << "),\n";
+}
+
+void DebugWriter::binary(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
+    if (fixed_length) {
+        os << "(binary, fixed length = " << length << ", stride = " << stride << "),\n";
+    } else {
+        os << "(binary, variable length = " << length << ", stride = " << stride << "),\n";
+    }
 }
 
 void DebugWriter::optional_begin(bool has_value) {
@@ -72,15 +87,6 @@ void DebugWriter::variant_end() {
     indent();
     os << "},\n";
 }
-
-void DebugWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
-    if (fixed_length) {
-        os << "(binary, fixed length = " << length << ", stride = " << stride << "),\n";
-    } else {
-        os << "(binary, variable length = " << length << ", stride = " << stride << "),\n";
-    }
-}
-
 
 void DebugWriter::object_begin(std::size_t size) {
     if (size == 0) {

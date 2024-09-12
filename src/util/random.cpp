@@ -6,70 +6,58 @@ namespace datapack {
 RandomReader::RandomReader()
 {}
 
-void RandomReader::primitive(Primitive primitive, void* value) {
-    if (primitive == Primitive::BOOL) {
-        *(bool*)value = rand() % 2;
-        return;
-    }
-
+void RandomReader::integer(IntType type, void* value) {
+    std::int64_t integer_value;
     if (auto c = constraint<RangeConstraint>()) {
-        double value_double = c->lower + (double)rand() * (c->upper - c->lower) / RAND_MAX;
-        switch (primitive) {
-            case Primitive::I32:
-                *(std::int32_t*)value = value_double;
-                break;
-            case Primitive::I64:
-                *(std::int64_t*)value = value_double;
-                break;
-            case Primitive::U32:
-                *(std::uint32_t*)value = value_double;
-                break;
-            case Primitive::U64:
-                *(std::uint64_t*)value = value_double;
-                break;
-            case Primitive::F32:
-                *(float*)value = value_double;
-                break;
-            case Primitive::F64:
-                *(double*)value = value_double;
-                break;
-            case Primitive::U8:
-                *(std::uint8_t*)value = value_double;
-                break;
-            case Primitive::BOOL:
-                break;
-        }
-        return;
+        integer_value = std::int64_t(c->lower) + rand() % std::int64_t(c->upper - c->lower);
+    } else if (type == IntType::U8) {
+        integer_value = rand() % 256;
+    } else if (type == IntType::I32 || type == IntType::I64){
+        integer_value = -100 + rand() % 200;
+    } else {
+        integer_value = rand() % 100;
     }
-
-    switch (primitive) {
-        case Primitive::I32:
-            *(std::int32_t*)value = rand() % 100;
+    switch (type) {
+        case IntType::I32:
+            *(std::int32_t*)value = integer_value;
             break;
-        case Primitive::I64:
-            *(std::int64_t*)value = rand() % 100;
+        case IntType::I64:
+            *(std::int64_t*)value = integer_value;
             break;
-        case Primitive::U32:
-            *(std::uint32_t*)value = rand() % 100;
+        case IntType::U32:
+            *(std::uint32_t*)value = integer_value;
             break;
-        case Primitive::U64:
-            *(std::uint64_t*)value = rand() % 100;
+        case IntType::U64:
+            *(std::uint64_t*)value = integer_value;
             break;
-        case Primitive::F32:
-            *(float*)value = (float)rand() / (float)RAND_MAX;
-            break;
-        case Primitive::F64:
-            *(double*)value = (double)rand() / (double)RAND_MAX;
-            break;
-        case Primitive::U8:
-            *(std::uint8_t*)value = (rand() % 256);
-            break;
-        case Primitive::BOOL:
+        case IntType::U8:
+            *(std::uint8_t*)value = integer_value;
             break;
     }
 }
 
-const char* RandomReader::string(const char*) {
+void RandomReader::floating(FloatType type, void* value) {
+    double floating_value;
+    if (auto c = constraint<RangeConstraint>()) {
+        floating_value = c->lower + (c->upper - c->lower) * rand() / RAND_MAX;
+    } else {
+        floating_value = double(rand()) / RAND_MAX;
+    }
+    switch (type) {
+        case FloatType::F32:
+            *(float*)value = floating_value;
+            break;
+        case FloatType::F64:
+            *(double*)value = floating_value;
+            break;
+    }
+}
+
+bool RandomReader::boolean() {
+    return (rand() % 2) == 1;
+}
+
+const char* RandomReader::string() {
     // Length: [4, 20]
     // Characters ~ { a, ..., z }
     if (auto c = constraint<LengthConstraint>()) {
@@ -83,32 +71,47 @@ const char* RandomReader::string(const char*) {
     return string_temp.c_str();
 }
 
-int RandomReader::enumerate(int value, const std::span<const char*>& labels) {
+int RandomReader::enumerate(const std::span<const char*>& labels) {
     return rand() % labels.size();
 }
 
-bool RandomReader::optional_begin(bool) {
+bool RandomReader::optional_begin() {
     return rand() % 2 == 1;
 }
 
-void RandomReader::optional_end() {
-    // Do nothing
-}
-
-int RandomReader::variant_begin(int value, const std::span<const char*>& labels) {
+int RandomReader::variant_begin(const std::span<const char*>& labels) {
     return rand() % labels.size();
 }
 
-void RandomReader::binary_data(
-    std::uint8_t* data,
+std::tuple<const std::uint8_t*, std::size_t> RandomReader::binary(
     std::size_t length,
-    std::size_t stride,
-    bool fixed_length)
+    std::size_t stride)
 {
-    std::size_t size = length * stride;
-    for (std::size_t i = 0; i < size; i++) {
-        data[i] = rand() % 256;
+    if (length == 0) {
+        length = rand() % 100;
     }
+    std::size_t size = length * stride;
+    data_temp.resize(size);
+    for (std::size_t i = 0; i < size; i++) {
+        data_temp[i] = rand() % 256;
+    }
+    return { data_temp.data(), data_temp.size() };
+}
+
+void RandomReader::list_begin(bool is_trivial) {
+    list_counters.push(rand() % 10);
+}
+
+bool RandomReader::list_next() {
+    if (list_counters.top() > 0) {
+        list_counters.top()--;
+        return true;
+    }
+    return false;
+}
+
+void RandomReader::list_end() {
+    list_counters.pop();
 }
 
 } // namespace datapack

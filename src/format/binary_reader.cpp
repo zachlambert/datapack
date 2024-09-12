@@ -5,32 +5,39 @@
 
 namespace datapack {
 
-void BinaryReader::primitive(Primitive primitive, void* value) {
-    switch (primitive) {
-        case Primitive::I32:
+void BinaryReader::integer(IntType type, void* value) {
+    switch (type) {
+        case IntType::I32:
             value_number(*(std::int32_t*)value);
             break;
-        case Primitive::I64:
+        case IntType::I64:
             value_number(*(std::int64_t*)value);
             break;
-        case Primitive::U32:
+        case IntType::U32:
             value_number(*(std::uint32_t*)value);
             break;
-        case Primitive::U64:
+        case IntType::U64:
             value_number(*(std::uint64_t*)value);
             break;
-        case Primitive::F32:
-            value_number(*(float*)value);
-            break;
-        case Primitive::F64:
-            value_number(*(double*)value);
-            break;
-        case Primitive::U8:
+        case IntType::U8:
             value_number(*(std::uint8_t*)value);
             break;
-        case Primitive::BOOL:
-            value_bool(*(bool*)value);
     }
+}
+
+void BinaryReader::floating(FloatType type, void* value) {
+    switch (type) {
+        case FloatType::F32:
+            value_number(*(float*)value);
+            break;
+        case FloatType::F64:
+            value_number(*(double*)value);
+            break;
+    }
+}
+
+bool BinaryReader::boolean() {
+    return value_bool();
 }
 
 const char* BinaryReader::string() {
@@ -52,13 +59,7 @@ int BinaryReader::enumerate(const std::span<const char*>& labels) {
 }
 
 bool BinaryReader::optional_begin() {
-    bool has_value;
-    value_bool(has_value);
-    return has_value;
-}
-
-void BinaryReader::optional_end() {
-    // Nothing required
+    return value_bool();
 }
 
 int BinaryReader::variant_begin(const std::span<const char*>& labels) {
@@ -67,7 +68,7 @@ int BinaryReader::variant_begin(const std::span<const char*>& labels) {
     return value;
 }
 
-std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary_data(
+std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary(
     std::size_t length,
     std::size_t stride)
 {
@@ -128,9 +129,7 @@ bool BinaryReader::list_next() {
         trivial_list_remaining--;
         return true;
     }
-    bool has_next;
-    value_bool(has_next);
-    return has_next;
+    return value_bool();
 }
 
 void BinaryReader::list_end() {
@@ -139,6 +138,40 @@ void BinaryReader::list_end() {
     }
     binary_depth--;
     assert(binary_depth == 0);
+}
+
+void BinaryReader::pad(std::size_t size) {
+    if ((pos-binary_start) % size != 0) {
+        pos += (size - (pos-binary_start) % size);
+    }
+}
+
+template <typename T>
+void BinaryReader::value_number(T& value) {
+    if (binary_depth > 0) {
+        pad(sizeof(T));
+    }
+    if (pos + sizeof(T) > data.size()) {
+        invalidate();
+        return;
+    }
+
+    value = *((T*)&data[pos]);
+    pos += sizeof(T);
+}
+
+bool BinaryReader::value_bool() {
+    if (pos + 1 > data.size()) {
+        invalidate();
+        return false;
+    }
+    std::uint8_t value_int = *((bool*)&data[pos]);
+    if (value_int >= 2) {
+        invalidate();
+        return false;
+    }
+    pos++;
+    return value_int;
 }
 
 } // namespace datapack

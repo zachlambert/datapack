@@ -26,6 +26,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/util/object_reader.cpp
 
         src/format/binary_reader.cpp
+        src/format/binary_writer.cpp
         # src/format/json.cpp
 
         src/schema/token.cpp

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "datapack/packer.hpp"
-#include "datapack/primitive.hpp"
+#include "datapack/number.hpp"
 #include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
 #include <vector>
@@ -41,13 +41,12 @@ struct VariantNext {
     VariantNext(int index): index(index) {}
 };
 
-struct BinaryData {
+struct Binary {
     std::size_t length;
     std::size_t stride;
-    bool fixed_length;
-    BinaryData(): length(0), stride(0), fixed_length(false) {}
-    BinaryData(std::size_t length, std::size_t stride, bool fixed_length):
-        length(length), stride(stride), fixed_length(fixed_length)
+    Binary(): length(0), stride(0) {}
+    Binary(std::size_t length, std::size_t stride):
+        length(length), stride(stride)
     {}
 };
 
@@ -88,28 +87,31 @@ struct List {
 } // namespace dtoken
 
 using Token = std::variant<
-    Primitive,
+    IntType,
+    FloatType,
+    bool,
     std::string,
     token::Enumerate,
+    token::Binary,
     token::Optional,
     token::VariantBegin,
-    token::VariantEnd,
     token::VariantNext,
-    token::BinaryData,
+    token::VariantEnd,
     token::ObjectBegin,
-    token::ObjectEnd,
     token::ObjectNext,
+    token::ObjectEnd,
     token::TupleBegin,
-    token::TupleEnd,
     token::TupleNext,
+    token::TupleEnd,
     token::List
 >;
 
-DATAPACK_LABELLED_ENUM(Primitive, 8);
+DATAPACK_LABELLED_ENUM(IntType, 8);
+DATAPACK_LABELLED_ENUM(FloatType, 8);
 DATAPACK(token::Enumerate);
 DATAPACK(token::VariantBegin);
 DATAPACK(token::VariantNext);
-DATAPACK(token::BinaryData);
+DATAPACK(token::Binary);
 DATAPACK(token::ObjectBegin);
 DATAPACK(token::ObjectEnd);
 DATAPACK(token::ObjectNext);

@@ -64,7 +64,7 @@ struct variant_details<T> { \
     static constexpr std::size_t size = Size; \
     static const std::span<const char*> labels; \
     static const char* labels_array[Size]; \
-};
+}
 
 #define DATAPACK_LABELLED_VARIANT_DEF(T) \
 const std::span<const char*> variant_details<T>::labels = std::span( \

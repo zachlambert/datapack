@@ -3,75 +3,81 @@
 
 namespace datapack {
 
-DATAPACK_IMPL(token::Enumerate) {
-    visitor.object_begin();
-    visitor.value("labels", value.labels);
-    visitor.object_end();
+DATAPACK_LABELLED_ENUM_DEF(IntType) = {
+    "i32", "i64", "u32", "u64", "u8"
+};
+
+DATAPACK_LABELLED_ENUM_DEF(FloatType) = {
+    "f32", "f64"
+};
+
+DATAPACK_IMPL(token::Enumerate, value, packer) {
+    packer.object_begin();
+    packer.value("labels", value.labels);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::VariantBegin) {
-    visitor.object_begin();
-    visitor.value("labels", value.labels);
-    visitor.object_end();
+DATAPACK_IMPL(token::VariantBegin, value, packer) {
+    packer.object_begin();
+    packer.value("labels", value.labels);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::VariantNext) {
-    visitor.object_begin();
-    visitor.value("type", value.type);
-    visitor.object_end();
+DATAPACK_IMPL(token::VariantNext, value, packer) {
+    packer.object_begin();
+    packer.value("index", value.index);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::BinaryData) {
-    visitor.object_begin();
-    visitor.value("length", value.stride);
-    visitor.value("stride", value.length);
-    visitor.object_end();
+DATAPACK_IMPL(token::Binary, value, packer) {
+    packer.object_begin();
+    packer.value("length", value.stride);
+    packer.value("stride", value.length);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::ObjectBegin) {
-    visitor.object_begin();
-    visitor.value("size", value.size);
-    visitor.object_end();
+DATAPACK_IMPL(token::ObjectBegin, value, packer) {
+    packer.object_begin();
+    packer.value("size", value.size);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::ObjectEnd) {
-    visitor.object_begin();
-    visitor.value("size", value.size);
-    visitor.object_end();
+DATAPACK_IMPL(token::ObjectEnd, value, packer) {
+    packer.object_begin();
+    packer.value("size", value.size);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::ObjectNext) {
-    visitor.object_begin();
-    visitor.value("key", value.key);
-    visitor.object_end();
+DATAPACK_IMPL(token::ObjectNext, value, packer) {
+    packer.object_begin();
+    packer.value("key", value.key);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::TupleBegin) {
-    visitor.object_begin();
-    visitor.value("size", value.size);
-    visitor.object_end();
+DATAPACK_IMPL(token::TupleBegin, value, packer) {
+    packer.object_begin();
+    packer.value("size", value.size);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::TupleEnd) {
-    visitor.object_begin();
-    visitor.value("size", value.size);
-    visitor.object_end();
+DATAPACK_IMPL(token::TupleEnd, value, packer) {
+    packer.object_begin();
+    packer.value("size", value.size);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(token::List) {
-    visitor.object_begin();
-    visitor.value("is_trivial", value.is_trivial);
-    visitor.object_end();
+DATAPACK_IMPL(token::List, value, packer) {
+    packer.object_begin();
+    packer.value("is_trivial", value.is_trivial);
+    packer.object_end();
 }
 
 DATAPACK_LABELLED_VARIANT_DEF(Token) = {
-    "i32", "i64", "u32", "u64", "f32", "f64",
-    "string", "boolean",
-    "optional", "enumerate",
-    "variant_begin", "variant_end", "variant_next",
-    "binary_data",
-    "object_begin", "object_end", "object_next",
-    "tuple_begin", "tuple_end", "tuple_next",
+    "integer", "floating", "boolean", "string", "enumerate", "binary",
+    "optional",
+    "variant_begin", "variant_next", "variant_end",
+    "object_begin", "object_next", "object_end",
+    "tuple_begin", "tuple_next", "tuple_end",
     "list"
 };
 
@@ -88,7 +94,7 @@ bool operator==(const Token& lhs, const Token& rhs) {
     }
     if (auto lhs_value = std::get_if<token::VariantNext>(&lhs)) {
         auto rhs_value = std::get_if<token::VariantNext>(&rhs);
-        return lhs_value->type == rhs_value->type;
+        return lhs_value->index == rhs_value->index;
     }
     if (auto lhs_value = std::get_if<token::ObjectBegin>(&lhs)) {
         auto rhs_value = std::get_if<token::ObjectBegin>(&rhs);

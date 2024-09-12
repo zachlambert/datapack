@@ -11,25 +11,18 @@ class ObjectReader: public Reader {
 public:
     ObjectReader(Object::ConstReference object);
 
-    void value_i32(std::int32_t& value) override;
-    void value_i64(std::int64_t& value) override;
-    void value_u32(std::uint32_t& value) override;
-    void value_u64(std::uint64_t& value) override;
-
-    void value_f32(float& value) override;
-    void value_f64(double& value) override;
-
-    const char* value_string() override;
-    void value_bool(bool& value) override;
-
+    void integer(IntType type, void* value) override;
+    void floating(FloatType type, void* value) override;
+    bool boolean() override;
+    const char* string() override;
     int enumerate(const std::span<const char*>& labels) override;
+    std::tuple<const std::uint8_t*, std::size_t> binary(std::size_t length, std::size_t stride) override;
+
     bool optional_begin() override;
     void optional_end() override;
-    void variant_begin(const std::span<const char*>& labels) override;
-    bool variant_match(const char* label) override;
-    void variant_end() override;
 
-    std::tuple<const std::uint8_t*, std::size_t> binary_data(std::size_t length, std::size_t stride) override;
+    int variant_begin(const std::span<const char*>& labels) override;
+    void variant_end() override;
 
     void object_begin(std::size_t size) override;
     void object_end(std::size_t size) override;
@@ -40,8 +33,8 @@ public:
     void tuple_next() override;
 
     void list_begin(bool is_trivial) override;
-    void list_end() override;
     bool list_next() override;
+    void list_end() override;
 
 private:
     template <typename T>

@@ -1,8 +1,8 @@
 #pragma once
-#ifndef EMBEDDED
 
 #include "datapack/schema/token.hpp"
 #include "datapack/schema/tokenizer.hpp"
+#include "datapack/packer.hpp"
 
 
 namespace datapack {
@@ -29,4 +29,3 @@ DATAPACK(Schema);
 bool operator==(const Schema& lhs, const Schema& rhs);
 
 } // namespace datapack
-#endif

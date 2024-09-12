@@ -3,10 +3,9 @@
 #include <array>
 #include <optional>
 #include <unordered_map>
+#include <string>
 
-#include <datapack/datapack.hpp>
-#include <datapack/reader.hpp>
-#include <datapack/writer.hpp>
+#include <datapack/packer.hpp>
 #include <datapack/labelled_enum.hpp>
 #include <datapack/labelled_variant.hpp>
 
@@ -59,25 +58,22 @@ struct Entity {
     Sprite sprite;               // Binary
     std::vector<Item> items;     // List
     std::array<int, 3> assigned_items; // Tuple
-    std::unordered_map<std::string, double> properties;  // Map with key=string
-    std::unordered_map<int, bool> flags; // Map with key!=string -> list of tuples
 
     static Entity example();
-
-    DATAPACK_METHODS(Entity);
 };
 
 bool compare(const Entity& a, const Entity& b, double float_threshold = 1e-12);
 
 namespace datapack {
 
-DATAPACK(Circle)
+DATAPACK(Circle);
 DATAPACK(Rect);
-DATAPACK_LABELLED_ENUM(Physics, 3)
-DATAPACK_LABELLED_VARIANT(Shape, 2)
-DATAPACK(Pose)
-DATAPACK(Item)
-DATAPACK(Sprite)
-DATAPACK(Sprite::Pixel)
+DATAPACK_LABELLED_ENUM(Physics, 3);
+DATAPACK_LABELLED_VARIANT(Shape, 2);
+DATAPACK(Pose);
+DATAPACK(Item);
+DATAPACK(Sprite);
+DATAPACK(Sprite::Pixel);
+DATAPACK(Entity);
 
 } // namespace datapack

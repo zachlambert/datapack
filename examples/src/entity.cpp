@@ -2,21 +2,24 @@
 
 #include <cstring>
 #include <cmath>
-#include <datapack/common.hpp>
+#include "datapack/writer.hpp"
+#include "datapack/reader.hpp"
+#include "datapack/common.hpp"
+
 
 namespace datapack {
 
-DATAPACK_IMPL(Circle) {
-    visitor.object_begin(sizeof(Circle));
-    visitor.value("radius", value.radius);
-    visitor.object_end(sizeof(Circle));
+DATAPACK_IMPL(Circle, value, packer) {
+    packer.object_begin(sizeof(Circle));
+    packer.value("radius", value.radius);
+    packer.object_end(sizeof(Circle));
 }
 
-DATAPACK_IMPL(Rect) {
-    visitor.object_begin(sizeof(Rect));
-    visitor.value("width", value.width);
-    visitor.value("height", value.height);
-    visitor.object_end(sizeof(Rect));
+DATAPACK_IMPL(Rect, value, packer) {
+    packer.object_begin(sizeof(Rect));
+    packer.value("width", value.width);
+    packer.value("height", value.height);
+    packer.object_end(sizeof(Rect));
 }
 
 DATAPACK_LABELLED_ENUM_DEF(Physics) = {
@@ -28,58 +31,52 @@ DATAPACK_LABELLED_VARIANT_DEF(Shape) = {
     "circle", "rect"
 };
 
-DATAPACK_IMPL(Pose) {
-    visitor.object_begin(sizeof(Pose));
-    visitor.value("x", value.x);
-    visitor.value("y", value.y);
-    visitor.value("angle", value.angle,
-        datapack::RangeConstraint(-M_PI, M_PI));
-    visitor.object_end(sizeof(Pose));
+DATAPACK_IMPL(Pose, value, packer) {
+    packer.object_begin(sizeof(Pose));
+    packer.value("x", value.x);
+    packer.value("y", value.y);
+    packer.value("angle", value.angle);
+    packer.object_end(sizeof(Pose));
 }
 
-DATAPACK_IMPL(Item) {
-    visitor.object_begin();
-    visitor.value("count", value.count);
-    visitor.value("name", value.name);
-    visitor.object_end();
+DATAPACK_IMPL(Item, value, packer) {
+    packer.object_begin();
+    packer.value("count", value.count);
+    packer.value("name", value.name);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(Sprite) {
-    visitor.object_begin();
-    visitor.value("width", value.width);
-    visitor.value("height", value.height);
-    visitor.value(
-        "data", value.data,
-        datapack::LengthConstraint(value.width * value.height)
-    );
-    visitor.object_end();
+DATAPACK_IMPL(Sprite, value, packer) {
+    packer.object_begin();
+    packer.value("width", value.width);
+    packer.value("height", value.height);
+    packer.value("data", value.data);
+    packer.object_end();
 }
 
-DATAPACK_IMPL(Sprite::Pixel) {
-    visitor.object_begin(sizeof(Sprite::Pixel));
-    visitor.value("r", value.r);
-    visitor.value("g", value.g);
-    visitor.value("b", value.b);
-    visitor.object_end(sizeof(Sprite::Pixel));
+DATAPACK_IMPL(Sprite::Pixel, value, packer) {
+    packer.object_begin(sizeof(Sprite::Pixel));
+    packer.value("r", value.r);
+    packer.value("g", value.g);
+    packer.value("b", value.b);
+    packer.object_end(sizeof(Sprite::Pixel));
+}
+
+DATAPACK_IMPL(Entity, value, packer) {
+    packer.object_begin();
+    packer.value("index", value.index);
+    packer.value("name", value.name);
+    packer.value("enabled", value.enabled);
+    packer.value("pose", value.pose);
+    packer.value("physics", value.physics);
+    packer.value("hitbox", value.hitbox);
+    packer.value("sprite", value.sprite);
+    packer.value("items", value.items);
+    packer.value("assigned_items", value.assigned_items);
+    packer.object_end();
 }
 
 } // namespace datapack
-
-DATAPACK_METHODS_IMPL(Entity) {
-    visitor.object_begin();
-    visitor.value("index", index);
-    visitor.value("name", name);
-    visitor.value("enabled", enabled);
-    visitor.value("pose", pose);
-    visitor.value("physics", physics);
-    visitor.value("hitbox", hitbox);
-    visitor.value("sprite", sprite);
-    visitor.value("items", items);
-    visitor.value("assigned_items", assigned_items);
-    visitor.value("properties", properties);
-    visitor.value("flags", flags);
-    visitor.object_end();
-}
 
 Entity Entity::example() {
     Entity result;
@@ -113,19 +110,6 @@ Entity Entity::example() {
         return items;
     }();
     result.assigned_items = { 1, 2, -1 };
-    result.properties = []() {
-        std::unordered_map<std::string, double> properties;
-        properties["strength"] = 10.5;
-        properties["agility"] = 5.0;
-        return properties;
-    }();
-    result.flags = []() {
-        std::unordered_map<int, bool> flags;
-        flags[0] = true;
-        flags[1] = false;
-        flags[2] = true;
-        return flags;
-    }();
     return result;
 }
 
@@ -172,20 +156,6 @@ bool compare(const Entity& a, const Entity& b, double float_threshold) {
         const auto& b_item = b.items[i];
         if (a_item.name != b_item.name) return false;
         if (a_item.count != b_item.count) return false;
-    }
-
-    for (const auto& a_pair: a.properties) {
-        auto b_iter = b.properties.find(a_pair.first);
-        if (b_iter == b.properties.end()) return false;
-        const auto& b_pair = *b_iter;
-        if (std::abs(a_pair.second - b_pair.second) > float_threshold) return false;
-    }
-
-    for (const auto& a_pair: a.flags) {
-        auto b_iter = b.flags.find(a_pair.first);
-        if (b_iter == b.flags.end()) return false;
-        const auto& b_pair = *b_iter;
-        if (a_pair.second != b_pair.second) return false;
     }
 
     return true;

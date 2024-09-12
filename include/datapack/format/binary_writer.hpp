@@ -12,13 +12,13 @@ namespace datapack {
 
 
 template <bool Dynamic>
-class BinaryWriterGeneric : public Writer {
+class BinaryWriter_ : public Writer {
 public:
     using data_t = std::conditional_t<Dynamic,
         std::vector<std::uint8_t>,
         mct::vector<std::uint8_t>
     >;
-    BinaryWriterGeneric(data_t& data, bool trivial_as_binary=true):
+    BinaryWriter_(data_t& data, bool trivial_as_binary=true):
         Writer(trivial_as_binary),
         data(data),
         pos(data.size()),
@@ -27,158 +27,45 @@ public:
         trivial_list_length(0)
     {}
 
-    void value_i32(std::int32_t value) override { value_number(value); }
-    void value_i64(std::int64_t value) override { value_number(value); }
-    void value_u32(std::uint32_t value) override { value_number(value); }
-    void value_u64(std::uint64_t value) override { value_number(value); }
-
-    void value_f32(float value) override { value_number(value); }
-    void value_f64(double value) override { value_number(value); }
-
-    void value_string(const char* value) override {
-        std::size_t size = std::strlen(value) + 1;
-        if (!resize(pos + size)) {
-            return;
-        }
-        strncpy((char*)&data[pos], value, size);
-        pos += size;
-    }
-    void value_bool(bool value) override {
-        if (!resize(pos + 1)) {
-            return;
-        }
-        data[pos] = (value ? 0x01 : 0x00);
-        pos++;
-    }
-
-    void enumerate(int value, const std::span<const char*>& labels) override {
-        value_number(value);
-    }
-
-    void optional_begin(bool has_value) override {
-        value_bool(has_value);
-    }
-    void optional_end() override {}
-
-    void variant_begin(const char* label, const std::span<const char*>& labels) override {
-        value_string(label);
-    }
-    void variant_end() override {}
-
-    void binary_data(
+    void integer(IntType type, const void* value) override;
+    void floating(FloatType type, const void* value) override;
+    void boolean(bool value) override;
+    void string(const char* value) override;
+    void enumerate(int value, const char* label) override;
+    void binary(
         const std::uint8_t* input_data,
         std::size_t length,
         std::size_t stride,
-        bool fixed_length) override
-    {
-        std::size_t size = length * stride;
-        if (!fixed_length) {
-            value_number(std::uint64_t(length));
-        }
-        if (!resize(pos + size)) {
-            return;
-        }
-        std::memcpy(&data[pos], input_data, size);
-        pos += size;
-    }
+        bool fixed_length) override;
 
-    void object_begin(std::size_t size) override {
-        if (size == 0){
-            return;
-        }
-        if (binary_depth == 0) {
-            binary_start = pos;
-        }
-        pad(size);
-        binary_depth++;
-    }
+    void optional_begin(bool has_value) override;
+    void optional_end() override {}
 
-    void object_end(std::size_t size) override {
-        if (size == 0) {
-            return;
-        }
-        pad(size);
-        binary_depth--;
-    }
+    void variant_begin(int value, const char* label) override;
+    void variant_end() override {}
 
-    void object_next(const char* key) override {}
+    void object_begin(std::size_t size) override;
+    void object_next(const char* key) override {};
+    void object_end(std::size_t size) override;
 
-    void list_begin(bool is_trivial) override {
-        if (binary_depth != 0) {
-            assert(false);
-            return;
-        }
-        if (!is_trivial) {
-            return;
-        }
-
-        trivial_list_length = 0;
-        value_number(std::uint64_t(0)); // Placeholder
-
-        binary_depth++;
-        binary_start = pos;
-    }
-
-    void list_end() override {
-        if (binary_depth == 0) {
-            value_bool(false);
-            return;
-        }
-
-        *(std::uint64_t*)&data[binary_start - sizeof(std::uint64_t)] = trivial_list_length;
-        binary_depth--;
-        assert(binary_depth == 0);
-    }
-
-    void list_next() override {
-        if (binary_depth == 0) {
-            value_bool(true);
-            return;
-        }
-        trivial_list_length++;
-    }
+    void list_begin(bool is_trivial) override;
+    void list_next() override;
+    void list_end() override;
 
     void tuple_begin(std::size_t size) override { object_begin(size); }
-    void tuple_end(std::size_t size) override { object_end(size); }
     void tuple_next() override {}
+    void tuple_end(std::size_t size) override { object_end(size); }
 
     std::span<std::uint8_t> result() const {
         return std::span(&data[0], pos);
     }
 
 private:
-    bool pad(std::size_t size) {
-        if ((pos-binary_start) % size != 0) {
-            pos += (size - (pos-binary_start) % size);
-            return resize(pos);
-        }
-        return true;
-    }
-
-    bool resize(std::size_t new_size) {
-        if constexpr(Dynamic) {
-            data.resize(new_size);
-            return true;
-        }
-        if constexpr(!Dynamic) {
-            return data.resize(new_size);
-        }
-    }
-
+    bool pad(std::size_t size);
+    bool resize(std::size_t new_size);
     template <typename T>
-    void value_number(T value) {
-        if (binary_depth > 0) {
-            if (!pad(sizeof(T))) {
-                return;
-            }
-        }
-        if (!resize(pos + sizeof(T))) {
-            return;
-        }
-
-        *((T*)&data[pos]) = value;
-        pos += sizeof(T);
-    }
+    void value_number(T value);
+    void value_bool(bool value);
 
     data_t& data;
     std::size_t pos;
@@ -187,8 +74,8 @@ private:
     std::size_t trivial_list_length;
 };
 
-using BinaryWriter = BinaryWriterGeneric<true>;
-using BinaryWriterStatic = BinaryWriterGeneric<false>;
+using BinaryWriter = BinaryWriter_<true>;
+using BinaryWriterStatic = BinaryWriter_<false>;
 
 
 template <writeable T>

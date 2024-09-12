@@ -1,19 +1,19 @@
 #pragma once
 
+#include "datapack/packers.hpp"
 #include "datapack/labelled_enum.hpp"
-#include "datapack/datapack.hpp"
 
 
 namespace datapack {
 
 template <labelled_enum T>
-void read(Reader& reader, T& value) {
-    value = (T)reader.enumerate(enum_labels<T>);
+void pack(const T& value, Writer& writer) {
+    writer.enumerate((int)value, enum_labels<T>[(int)value]);
 }
 
 template <labelled_enum T>
-void write(Writer& writer, const T& value) {
-    writer.enumerate((int)value, enum_labels<T>);
+void pack(T& value, Reader& reader) {
+    value = (T)reader.enumerate(enum_labels<T>);
 }
 
 } // namespace datapack

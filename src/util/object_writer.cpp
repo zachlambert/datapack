@@ -11,43 +11,57 @@ ObjectWriter::ObjectWriter(Object::Reference object):
 {}
 
 
-void ObjectWriter::value_i32(std::int32_t value) {
-    set_value((Object::int_t)value);
+void ObjectWriter::integer(IntType type, const void* value) {
+    std::int64_t integer_value;
+    switch(type) {
+        case IntType::I32:
+            integer_value = *(std::int32_t*)value;
+            break;
+        case IntType::I64:
+            integer_value = *(std::int64_t*)value;
+            break;
+        case IntType::U32:
+            integer_value = *(std::uint32_t*)value;
+            break;
+        case IntType::U64:
+            integer_value = *(std::uint64_t*)value;
+            break;
+        case IntType::U8:
+            integer_value = *(std::uint8_t*)value;
+            break;
+    }
+    set_value(integer_value);
 }
 
-void ObjectWriter::value_i64(std::int64_t value) {
-    set_value((Object::int_t)value);
+void ObjectWriter::floating(FloatType type, const void* value) {
+    double floating_value;
+    switch(type) {
+        case FloatType::F32:
+            floating_value = *(float*)value;
+            break;
+        case FloatType::F64:
+            floating_value = *(double*)value;
+            break;
+    }
+    set_value(floating_value);
 }
 
-void ObjectWriter::value_u32(std::uint32_t value) {
-    set_value((Object::int_t)value);
-}
-
-void ObjectWriter::value_u64(std::uint64_t value) {
-    set_value((Object::int_t)value);
-}
-
-
-void ObjectWriter::value_f32(float value) {
-    set_value((Object::float_t)value);
-}
-
-void ObjectWriter::value_f64(double value) {
-    set_value((Object::float_t)value);
-}
-
-
-void ObjectWriter::value_string(const char* value) {
-    set_value(std::string(value));
-}
-
-void ObjectWriter::value_bool(bool value) {
+void ObjectWriter::boolean(bool value) {
     set_value(value);
 }
 
+void ObjectWriter::string(const char* value) {
+    set_value(std::string(value));
+}
 
-void ObjectWriter::enumerate(int value, const std::span<const char*>& labels) {
-    set_value(std::string(labels[value]));
+void ObjectWriter::enumerate(int value, const char* label) {
+    set_value(std::string(label));
+}
+
+void ObjectWriter::binary(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
+    std::vector<std::uint8_t> vec(length * stride);
+    std::memcpy(vec.data(), data, length * stride);
+    set_value(vec);
 }
 
 void ObjectWriter::optional_begin(bool has_value) {
@@ -60,10 +74,10 @@ void ObjectWriter::optional_end() {
     // Do nothing
 }
 
-void ObjectWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
+void ObjectWriter::variant_begin(int value, const char* label) {
     object_begin(0);
     object_next("type");
-    value_string(label);
+    string(label);
     std::string value_key = "value_" + std::string(label);
     object_next(value_key.c_str());
 }
@@ -71,14 +85,6 @@ void ObjectWriter::variant_begin(const char* label, const std::span<const char*>
 void ObjectWriter::variant_end() {
     object_end(0);
 }
-
-
-void ObjectWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
-    std::vector<std::uint8_t> vec(length * stride);
-    std::memcpy(vec.data(), data, length * stride);
-    set_value(vec);
-}
-
 
 void ObjectWriter::object_begin(std::size_t size) {
     set_value(Object::map_t());

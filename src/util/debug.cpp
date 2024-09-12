@@ -7,43 +7,57 @@ DebugWriter::DebugWriter(std::ostream& os):
     depth(0)
 {}
 
-void DebugWriter::value_i32(std::int32_t value) {
+void DebugWriter::integer(IntType type, const void* value) {
+    switch (type) {
+        case IntType::I32:
+            os << *(const std::int32_t*)value;
+            break;
+        case IntType::I64:
+            os << *(const std::int64_t*)value;
+            break;
+        case IntType::U32:
+            os << *(const std::uint32_t*)value;
+            break;
+        case IntType::U64:
+            os << *(const std::uint64_t*)value;
+            break;
+        case IntType::U8:
+            os << *(const std::uint8_t*)value;
+            break;
+    };
+    os << ",\n";
+}
+
+void DebugWriter::floating(FloatType type, const void* value) {
+    switch (type) {
+        case FloatType::F32:
+            os << *(const float*)value;
+            break;
+        case FloatType::F64:
+            os << *(const double*)value;
+            break;
+    };
+    os << ",\n";
+}
+
+void DebugWriter::boolean(bool value) {
+    os << (value ? "true" : "false") << ",\n";;
+}
+
+void DebugWriter::string(const char* value) {
     os << value << ",\n";
 }
 
-void DebugWriter::value_i64(std::int64_t value) {
-    os << value << ",\n";
+void DebugWriter::enumerate(int value, const char* label) {
+    os << "(enum, " << value << " = " << label << "),\n";
 }
 
-void DebugWriter::value_u32(std::uint32_t value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_u64(std::uint64_t value) {
-    os << value << ",\n";
-}
-
-
-void DebugWriter::value_f32(float value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_f64(double value) {
-    os << value << ",\n";
-}
-
-
-void DebugWriter::value_string(const char* value) {
-    os << value << ",\n";
-}
-
-void DebugWriter::value_bool(bool value) {
-    os << (value ? "true" : "false") << ",\n";
-}
-
-
-void DebugWriter::enumerate(int value, const std::span<const char*>& labels) {
-    os << "(enum, " << labels[value] << "),\n";
+void DebugWriter::binary(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
+    if (fixed_length) {
+        os << "(binary, fixed length = " << length << ", stride = " << stride << "),\n";
+    } else {
+        os << "(binary, variable length = " << length << ", stride = " << stride << "),\n";
+    }
 }
 
 void DebugWriter::optional_begin(bool has_value) {
@@ -62,8 +76,8 @@ void DebugWriter::optional_end() {
     os << "},\n";
 }
 
-void DebugWriter::variant_begin(const char* label, const std::span<const char*>& labels) {
-    os << "(variant, " << label << ") {\n";
+void DebugWriter::variant_begin(int value, const char* label) {
+    os << "(variant, " << value << " = " << label << ") {\n";
     depth++;
     indent();
 }
@@ -73,15 +87,6 @@ void DebugWriter::variant_end() {
     indent();
     os << "},\n";
 }
-
-void DebugWriter::binary_data(const std::uint8_t* data, std::size_t length, std::size_t stride, bool fixed_length) {
-    if (fixed_length) {
-        os << "(binary, fixed length = " << length << ", stride = " << stride << "),\n";
-    } else {
-        os << "(binary, variable length = " << length << ", stride = " << stride << "),\n";
-    }
-}
-
 
 void DebugWriter::object_begin(std::size_t size) {
     if (size == 0) {
@@ -142,7 +147,6 @@ void DebugWriter::list_end() {
 void DebugWriter::list_next() {
     indent();
 }
-
 
 void DebugWriter::indent() {
     for (int i = 0; i < depth; i++) {

@@ -1,9 +1,11 @@
 #pragma once
-#ifndef EMBEDDED
 
-#include "datapack/datapack.hpp"
+#include "datapack/packer.hpp"
+#include "datapack/number.hpp"
+#include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
 #include <vector>
+#include <string>
 
 
 namespace datapack {
@@ -34,16 +36,16 @@ struct VariantBegin {
 };
 struct VariantEnd {};
 struct VariantNext {
-    std::string type;
+    int index;
     VariantNext() {}
-    VariantNext(const std::string& type): type(type) {}
+    VariantNext(int index): index(index) {}
 };
 
-struct BinaryData {
+struct Binary {
     std::size_t length;
     std::size_t stride;
-    BinaryData(): length(0), stride(0) {}
-    BinaryData(std::size_t length, std::size_t stride):
+    Binary(): length(0), stride(0) {}
+    Binary(std::size_t length, std::size_t stride):
         length(length), stride(stride)
     {}
 };
@@ -85,33 +87,31 @@ struct List {
 } // namespace dtoken
 
 using Token = std::variant<
-    std::int32_t,
-    std::int64_t,
-    std::uint32_t,
-    std::uint64_t,
-    float,
-    double,
-    std::string,
+    IntType,
+    FloatType,
     bool,
-    token::Optional,
+    std::string,
     token::Enumerate,
+    token::Binary,
+    token::Optional,
     token::VariantBegin,
-    token::VariantEnd,
     token::VariantNext,
-    token::BinaryData,
+    token::VariantEnd,
     token::ObjectBegin,
-    token::ObjectEnd,
     token::ObjectNext,
+    token::ObjectEnd,
     token::TupleBegin,
-    token::TupleEnd,
     token::TupleNext,
+    token::TupleEnd,
     token::List
 >;
 
+DATAPACK_LABELLED_ENUM(IntType, 8);
+DATAPACK_LABELLED_ENUM(FloatType, 8);
 DATAPACK(token::Enumerate);
 DATAPACK(token::VariantBegin);
 DATAPACK(token::VariantNext);
-DATAPACK(token::BinaryData);
+DATAPACK(token::Binary);
 DATAPACK(token::ObjectBegin);
 DATAPACK(token::ObjectEnd);
 DATAPACK(token::ObjectNext);
@@ -127,4 +127,3 @@ DATAPACK_EMPTY(token::TupleNext);
 bool operator==(const Token& lhs, const Token& rhs);
 
 } // namespace datpack
-#endif

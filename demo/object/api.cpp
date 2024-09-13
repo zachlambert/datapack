@@ -10,7 +10,7 @@ int main() {
     object["b"] = "hello";
     object["c"]["first"] = "first";
     object["c"]["second"] = "second";
-    object["d"].append(100);
+    object["d"].push_back(100);
 
     std::cout << object << std::endl;
 }

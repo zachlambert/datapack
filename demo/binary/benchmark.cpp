@@ -121,31 +121,6 @@ void write_direct(const std::vector<Entity>& values, std::vector<std::uint8_t>& 
         data.resize(pos + sizeof(value.assigned_items));
         std::memcpy(&data[pos], &value.assigned_items, sizeof(value.assigned_items));
         pos = data.size();
-
-        for (const auto& pair: value.properties) {
-            data.push_back(true);
-            pos = data.size();
-
-            data.resize(pos + pair.first.size() + 1);
-            strcpy((char*)&data[pos], pair.first.c_str());
-            pos = data.size();
-
-            data.resize(pos + 8);
-            *((double*)&data[pos]) = pair.second;
-            pos = data.size();
-        }
-
-        for (const auto& pair: value.flags) {
-            data.push_back(true);
-            pos = data.size();
-
-            data.resize(pos + 4);
-            *((int*)&data[pos]) = pair.first;
-            pos = data.size();
-
-            data.push_back(pair.second);
-            pos = data.size();
-        }
     }
     data.push_back(0x00);
     pos = data.size();
@@ -244,38 +219,6 @@ void read_direct(std::vector<Entity>& values, const std::vector<std::uint8_t>& d
 
             std::memcpy((std::uint8_t*)value.assigned_items.data(), &data[pos], size);
             pos += size;
-        }
-
-        value.properties.clear();
-        while (true) {
-            bool has_next = data[pos];
-            pos++;
-            if (!has_next) break;
-
-            std::string first;
-            first = (char*)&data[pos];
-            pos += first.size() + 1;
-
-            double second = *((double*)&data[pos]);
-            pos += sizeof(double);
-
-            value.properties.emplace(first, second);
-        }
-
-        value.flags.clear();
-        while (true) {
-            bool has_next = data[pos];
-            pos++;
-            if (!has_next) break;
-
-            int first;
-            first = *((int*)&data[pos]);
-            pos += sizeof(int);
-
-            bool second = data[pos];
-            pos++;
-
-            value.flags.emplace(first, second);
         }
     }
 }

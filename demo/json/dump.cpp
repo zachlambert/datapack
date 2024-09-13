@@ -8,6 +8,6 @@ int main() {
     const std::string json = datapack::write_json(in);
     std::cout << json << std::endl;
     Entity out = datapack::read_json<Entity>(json);
-    std::cout << "EQUAL ? " << (compare(in, out) ? "yes" : "no") << std::endl;
+    std::cout << "EQUAL ? " << (in == out ? "yes" : "no") << std::endl;
     return 0;
 }

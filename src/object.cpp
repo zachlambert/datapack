@@ -8,21 +8,16 @@ namespace datapack {
 // ===========================================================================
 // Object::Reference_
 
-template <bool IsConst>
-const Object::Reference_<IsConst>& Object::Reference_<IsConst>::operator=(const value_t& value) const {
-    static_assert(!IsConst);
+template <>
+const Object::Reference& Object::Reference::operator=(const value_t& value) const {
     object->index_assign(index, value);
     return *this;
 }
-template const Object::Reference& Object::Reference::operator=(const Object::value_t& value) const;
 
-
-template <bool IsConst>
-Object::Reference_<IsConst> Object::Reference_<IsConst>::operator[](const std::string& key) const {
-    static_assert(!IsConst);
+template <>
+Object::Reference Object::Reference::operator[](const std::string& key) const {
     return Reference_(object, object->index_map_access_or_create(index, key));
 }
-template Object::Reference Object::Reference::operator[](const std::string& key) const;
 
 
 template <bool IsConst>
@@ -53,35 +48,25 @@ template Object::Reference Object::Reference::at(const std::string& key) const;
 template Object::ConstReference Object::ConstReference::at(const std::string& key) const;
 
 
-template <bool IsConst>
-Object::Iterator_<IsConst> Object::Reference_<IsConst>::insert(const std::string& key, const value_t& value) const {
-    static_assert(!IsConst);
-    return Iterator_<IsConst>(object, object->index_insert(index, key, value));
+template <>
+Object::Iterator Object::Reference::insert(const std::string& key, const value_t& value) const {
+    return Iterator(object, object->index_insert(index, key, value));
 }
-template Object::Iterator Object::Reference::insert(const std::string& key, const value_t& value) const;
 
-
-template <bool IsConst>
-Object::Iterator_<IsConst> Object::Reference_<IsConst>::push_back(const value_t& value) const {
-    static_assert(!IsConst);
-    return Iterator_<IsConst>(object, object->index_push_back(index, value));
+template <>
+Object::Iterator Object::Reference::push_back(const value_t& value) const {
+    return Iterator(object, object->index_push_back(index, value));
 }
-template Object::Iterator Object::Reference::push_back(const value_t& value) const;
 
-
-template <bool IsConst>
-Object::Iterator_<IsConst> Object::Reference_<IsConst>::erase() const {
-    static_assert(!IsConst);
+template <>
+Object::Iterator Object::Reference::erase() const {
     return Iterator(object, object->index_erase(index));
 }
-template Object::Iterator Object::Reference::erase() const;
 
-
-template <bool IsConst>
-void Object::Reference_<IsConst>::clear() const {
+template <>
+void Object::Reference::clear() const {
     object->index_clear(index);
 }
-template void Object::Reference::clear() const;
 
 
 template <bool IsConst>

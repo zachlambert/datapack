@@ -17,17 +17,17 @@ Object load_json(const std::string& json) {
     std::size_t pos = 0;
     std::stack<int> states;
     states.push(EXPECT_VALUE);
-    Object object(Object::null);
-    Object node = object;
+    Object object;
+    Object::Iterator iter = object.iter();
 
     while (true) {
         int& state = states.top();
 
         if (pos == json.size()) {
             if (!(state & EXPECT_END) || (state & IS_OBJECT) || (state & IS_ARRAY)) {
-                throw LoadException("Not expecting the document end");
+                throw JsonLoadError("Not expecting the document end");
             }
-            assert(!node);
+            assert(!iter);
             assert(states.size() == 1);
             break;
         }
@@ -37,14 +37,14 @@ Object load_json(const std::string& json) {
             pos++;
             continue;
         }
-        assert(node);
+        assert(iter);
 
         if (c == '"' && (state & IS_OBJECT) && (state & EXPECT_ELEMENT)) {
             pos++;
             std::size_t begin = pos;
             while (true) {
                 if (pos == json.size()) {
-                    throw LoadException("Key missing terminating '\"'");
+                    throw JsonLoadError("Key missing terminating '\"'");
                 }
                 const char c = json[pos];
                 if (c == '"') {
@@ -57,7 +57,7 @@ Object load_json(const std::string& json) {
 
             while (true) {
                 if (pos == json.size()) {
-                    throw LoadException("Expected ':' following key");
+                    throw JsonLoadError("Expected ':' following key");
                 }
                 const char c = json[pos];
                 pos++;
@@ -67,43 +67,43 @@ Object load_json(const std::string& json) {
                 if (c == ':') {
                     break;
                 }
-                throw LoadException("Expected ':' following key");
+                throw JsonLoadError("Expected ':' following key");
             }
             state &= ~EXPECT_ELEMENT;
             state |= EXPECT_VALUE;
             std::string key = json.substr(begin, end-begin);
-            node = node.insert(key, Object::null);
+            iter = iter->insert(key, Object::null_t());
             continue;
         }
 
         if ((state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
             state &= ~EXPECT_ELEMENT;
             state |= EXPECT_VALUE;
-            node = node.append(Object::null);
+            iter = iter->push_back(Object::null_t());
             continue;
         }
 
         if (c == '{') {
             if (!(state | EXPECT_VALUE)) {
-                throw LoadException("Unexpected character '{'");
+                throw JsonLoadError("Unexpected character '{'");
             }
             pos++;
             states.push(IS_OBJECT | EXPECT_ELEMENT | EXPECT_END);
-            node.set(Object::map_t());
+            *iter = Object::map_t();
             continue;
         }
         if (c == '[') {
             if (!(state & EXPECT_VALUE)) {
-                throw LoadException("Unexpected character '['");
+                throw JsonLoadError("Unexpected character '['");
             }
             pos++;
             states.push(IS_ARRAY | EXPECT_ELEMENT | EXPECT_END);
-            node.set(Object::list_t());
+            *iter = Object::list_t();
             continue;
         }
         if (c == '}') {
             if (!(state & IS_OBJECT) || !(state & EXPECT_END)) {
-                throw LoadException("Unexpected character '}'");
+                throw JsonLoadError("Unexpected character '}'");
             }
             pos++;
             states.pop();
@@ -111,12 +111,12 @@ Object load_json(const std::string& json) {
             int& new_state = states.top();
             new_state &= ~EXPECT_VALUE;
             new_state |= EXPECT_NEXT | EXPECT_END;
-            node = node.parent();
+            iter = iter.parent();
             continue;
         }
         if (c == ']') {
             if (!(state & IS_ARRAY) | !(state & EXPECT_END)) {
-                throw LoadException("Unexpected character ']'");
+                throw JsonLoadError("Unexpected character ']'");
             }
             pos++;
             states.pop();
@@ -124,14 +124,14 @@ Object load_json(const std::string& json) {
             int& new_state = states.top();
             new_state &= ~EXPECT_VALUE;
             new_state |= EXPECT_NEXT | EXPECT_END;
-            node = node.parent();
+            iter = iter.parent();
             continue;
         }
         if (c == ',') {
             pos++;
 
             if (!(state & EXPECT_NEXT)) {
-                throw LoadException("Unexpected character ','");
+                throw JsonLoadError("Unexpected character ','");
             }
             state &= ~EXPECT_NEXT;
             state |= EXPECT_ELEMENT;
@@ -139,7 +139,7 @@ Object load_json(const std::string& json) {
         }
 
         if (!(state & EXPECT_VALUE)) {
-            throw LoadException("Not expecting a value");
+            throw JsonLoadError("Not expecting a value");
         }
 
         state &= ~EXPECT_VALUE;
@@ -150,7 +150,7 @@ Object load_json(const std::string& json) {
             std::size_t begin = pos;
             while (true) {
                 if (pos == json.size()) {
-                    throw LoadException("String missing terminating '\"'");
+                    throw JsonLoadError("String missing terminating '\"'");
                 }
                 if (json[pos] == '"') {
                     break;
@@ -159,8 +159,8 @@ Object load_json(const std::string& json) {
             }
             std::size_t end = pos;
             pos++;
-            node.set(json.substr(begin, end-begin));
-            node = node.parent();
+            *iter = json.substr(begin, end-begin);
+            iter = iter.parent();
             continue;
         }
 
@@ -179,54 +179,54 @@ Object load_json(const std::string& json) {
 
         std::string value = json.substr(begin, end-begin);
         if (value == "true") {
-            node.set(true);
-            node = node.parent();
+            *iter = true;
+            iter = iter.parent();
             continue;
         }
         if (value == "false") {
-            node.set(false);
-            node = node.parent();
+            *iter = false;
+            iter = iter.parent();
             continue;
         }
         if (value == "null") {
-            node.set(Object::null);
-            node = node.parent();
+            *iter = Object::null_t();
+            iter = iter.parent();
             continue;
         }
         try {
-            std::int64_t result_int = std::strtoll(value.c_str(), nullptr, 10);
-            double result_float = std::strtod(value.c_str(), nullptr);
+            Object::integer_t result_int = std::strtoll(value.c_str(), nullptr, 10);
+            Object::floating_t result_float = std::strtod(value.c_str(), nullptr);
             // Note: If a double/float has an integer value, comparisons are
             // still valid since it is guaranteed to represent the integer
             // exactly
             if (result_int == result_float) {
-                node.set(result_int);
+                *iter = result_int;
             } else {
-                node.set(result_float);
+                *iter = result_float;
             }
-            node = node.parent();
+            iter = iter.parent();
             continue;
         } catch (std::invalid_argument) {
         } catch (std::out_of_range) {}
 
-        throw LoadException("Invalid value '" + std::string(value) + "'");
+        throw JsonLoadError("Invalid value '" + std::string(value) + "'");
     }
 
     return object;
 }
 
-std::string dump_json(ConstObject object) {
+std::string dump_json(const Object::ConstReference& object) {
     std::string json = "";
 
-    std::stack<ConstObject> nodes;
-    nodes.push(object);
+    std::stack<Object::ConstIterator> stack;
+    stack.push(object.iter());
     bool start = true;
     bool end = false;
 
-    while (!nodes.empty()) {
-        auto node = nodes.top();
-        if (!node) {
-            nodes.pop();
+    while (!stack.empty()) {
+        auto iter = stack.top();
+        if (!iter) {
+            stack.pop();
             end = true;
             continue;
         }
@@ -235,25 +235,25 @@ std::string dump_json(ConstObject object) {
             end = false;
             if (!start) {
                 json += "\n";
-                for (int i = 0; i < (nodes.size()-1); i++) {
+                for (int i = 0; i < (stack.size()-1); i++) {
                     json += "    ";
                 }
             }
             start = false;
-            if (node.get_if<Object::map_t>()) {
+            if (iter->is_map()) {
                 json += "}";
-                nodes.pop();
-                nodes.push(node.next());
+                stack.pop();
+                stack.push(iter.next());
                 continue;
             }
-            if (node.get_if<Object::list_t>()) {
+            if (iter->is_list()) {
                 json += "]";
-                nodes.pop();
-                nodes.push(node.next());
+                stack.pop();
+                stack.push(iter.next());
                 continue;
             }
-            nodes.pop();
-            assert(nodes.empty());
+            stack.pop();
+            assert(stack.empty());
             continue;
         }
 
@@ -262,47 +262,47 @@ std::string dump_json(ConstObject object) {
         }
         start = false;
 
-        for (int i = 0; i < (nodes.size()-1); i++) {
+        for (int i = 0; i < (stack.size()-1); i++) {
             json += "    ";
         }
-        if (!node.key().empty()) {
-            json += "\"" + node.key() + "\": ";
+        if (!iter->key().empty()) {
+            json += "\"" + iter->key() + "\": ";
         }
 
-        if (node.get_if<Object::map_t>()) {
+        if (iter->is_map()) {
             json += "{\n";
-            nodes.push(node.child());
+            stack.push(iter.child());
             start = true;
             continue;
         }
-        if (node.get_if<Object::list_t>()) {
+        if (iter->is_list()) {
             json += "[\n";
-            nodes.push(node.child());
+            stack.push(iter.child());
             start = true;
             continue;
         }
 
-        if (auto value = node.get_if<Object::int_t>()) {
+        if (auto value = iter->integer_if()) {
             json += std::to_string(*value);
         }
-        else if (auto value = node.get_if<Object::float_t>()) {
+        else if (auto value = iter->floating_if()) {
             json += float_to_string(*value);
         }
-        else if (auto value = node.get_if<Object::str_t>()) {
+        else if (auto value = iter->string_if()) {
             json += "\"" + *value + "\"";
         }
-        else if (auto value = node.get_if<Object::null_t>()) {
+        else if (iter->is_null()) {
             json += "null";
         }
-        else if (auto value = node.get_if<Object::bool_t>()) {
+        else if (auto value = iter->boolean_if()) {
             json += (*value ? "true" : "false");
         }
-        else if (auto value = node.get_if<Object::binary_t>()) {
+        else if (auto value = iter->binary_if()) {
             json += "\"" + base64_encode(*value) + "\"";
         }
 
-        nodes.pop();
-        nodes.push(node.next());
+        stack.pop();
+        stack.push(iter.next());
     }
 
     return json;

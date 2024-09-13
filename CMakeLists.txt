@@ -27,7 +27,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
 
         src/format/binary_reader.cpp
         src/format/binary_writer.cpp
-        # src/format/json.cpp
+        src/format/json.cpp
 
         src/schema/token.cpp
         src/schema/tokenizer.cpp
@@ -91,7 +91,7 @@ if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_executable(test_format
         test/format/binary.cpp
         # test/format/binary_array.cpp
-        # test/format/json.cpp
+        test/format/json.cpp
     )
     target_link_libraries(test_format datapack datapack_examples GTest::gtest_main)
     gtest_discover_tests(test_format)

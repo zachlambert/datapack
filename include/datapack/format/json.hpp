@@ -11,8 +11,15 @@
 
 namespace datapack {
 
+class JsonLoadError: public std::runtime_error {
+public:
+    JsonLoadError(const std::string& message):
+        std::runtime_error(message)
+    {}
+};
+
 Object load_json(const std::string& json);
-std::string dump_json(ConstObject object);
+std::string dump_json(const Object::ConstReference& object);
 
 template <readable T>
 T read_json(const std::string& json) {

@@ -33,7 +33,7 @@ TEST(Object, Writer) {
         auto sprite_data = sprite["data"];
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
-                auto pixel = sprite_data.append(Object::map_t());
+                auto pixel = *sprite_data.push_back(Object::map_t());
                 pixel["r"] = (i + 0.5) / 2;
                 pixel["g"] = (j + 0.5) / 2;
                 pixel["b"] = 0.0;
@@ -42,7 +42,7 @@ TEST(Object, Writer) {
 
         auto items = expected["items"];
         auto add_item = [&items](int count, const std::string& name) {
-            auto item = items.append(Object::map_t());
+            auto item = *items.push_back(Object::map_t());
             item["count"] = count;
             item["name"] = name;
         };

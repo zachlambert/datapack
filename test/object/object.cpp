@@ -14,8 +14,8 @@ TEST(Object, Edit) {
     object.insert("b", 2.2);
 
     auto c = object.insert("c", Object::list_t());
-    c.append("hello");
-    c.append("world");
+    c.push_back("hello");
+    c.push_back("world");
 
     object.insert("d", true);
     auto e = object.insert("e", Object::map_t());

@@ -37,9 +37,10 @@ public:
     void list_end() override;
 
 private:
+#if 0
     template <typename T>
     bool value_obj_int(T& value) {
-        if (auto x = node->get_int()) {
+        if (auto x = node->integer()) {
             value = *x;
             return true;
         }
@@ -47,12 +48,13 @@ private:
     }
     template <typename T>
     bool value_obj_float(T& value) {
-        if (auto x = node->get_float()) {
+        if (auto x = node->floating()) {
             value = *x;
             return true;
         }
         return false;
     }
+#endif
 
     Object::ConstIterator node;
     std::stack<Object::ConstIterator> nodes;

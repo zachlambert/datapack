@@ -12,7 +12,7 @@ ObjectWriter::ObjectWriter(Object::Reference object):
 
 
 void ObjectWriter::integer(IntType type, const void* value) {
-    std::int64_t integer_value;
+    Object::integer_t integer_value;
     switch(type) {
         case IntType::I32:
             integer_value = *(std::int32_t*)value;
@@ -34,7 +34,7 @@ void ObjectWriter::integer(IntType type, const void* value) {
 }
 
 void ObjectWriter::floating(FloatType type, const void* value) {
-    double floating_value;
+    Object::floating_t floating_value;
     switch(type) {
         case FloatType::F32:
             floating_value = *(float*)value;
@@ -66,7 +66,7 @@ void ObjectWriter::binary(const std::uint8_t* data, std::size_t length, std::siz
 
 void ObjectWriter::optional_begin(bool has_value) {
     if (!has_value) {
-        set_value(std::nullopt);
+        set_value(Object::null_t());
     }
 }
 
@@ -134,9 +134,9 @@ void ObjectWriter::set_value(const Object::value_t& value) {
     } else {
         const auto& node = nodes.top();
         if (node->is_map()) {
-            next = node->insert(next_key, value).iter();
+            next = node->insert(next_key, value);
         } else if (node->is_list()) {
-            next = node->append(value).iter();
+            next = node->push_back(value);
         } else {
             throw std::runtime_error("Shouldn't reach here");
         }

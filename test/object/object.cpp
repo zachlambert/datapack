@@ -5,18 +5,19 @@ TEST(Object, Edit) {
     using namespace datapack;
 
     Object object;
-    object.insert("a", 1.1);
-    object.insert("b", 2.2);
+    object["a"] = 1.1;
+    object["b"] = 2.2;
 
-    auto c = *object.insert("c", Object::list_t());
+    auto c = object["c"];
     c.push_back("hello");
     c.push_back("world");
 
-    object.insert("d", true);
-    auto e = *object.insert("e", Object::map_t());
-    e.insert("foo", "foo");
-    e.insert("bar", "bar");
-    e.insert("and", Object::null_t());
+    object["d"] = true;
+
+    auto e = object["e"];
+    e["foo"] = "foo";
+    e["bar"] = "bar";
+    e["and"] = Object::null_t();
 
     EXPECT_EQ(object["a"].floating(), 1.1);
     EXPECT_EQ(object["b"].floating(), 2.2);

@@ -62,7 +62,7 @@ struct Entity {
     static Entity example();
 };
 
-bool compare(const Entity& a, const Entity& b, double float_threshold = 1e-12);
+bool operator==(const Entity& a, const Entity& b);
 
 namespace datapack {
 

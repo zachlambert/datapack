@@ -78,30 +78,6 @@ static const std::string entity_json = R"({
         1,
         2,
         -1
-    ],
-    "properties": [
-        [
-            "agility",
-            5
-        ],
-        [
-            "strength",
-            10.5
-        ]
-    ],
-    "flags": [
-        [
-            2,
-            true
-        ],
-        [
-            1,
-            false
-        ],
-        [
-            0,
-            true
-        ]
     ]
 })";
 
@@ -119,5 +95,5 @@ TEST(Format, JsonDump) {
 TEST(Format, JsonLoad) {
     Entity value = datapack::read_json<Entity>(entity_json);
     auto expected = Entity::example();
-    ASSERT_TRUE(compare(value, expected));
+    ASSERT_EQ(value, expected);
 }

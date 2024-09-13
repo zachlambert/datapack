@@ -146,6 +146,8 @@ int ObjectReader::variant_begin(const std::span<const char*>& labels) {
     if (auto x = node->string_if()) {
         for (int i = 0; i < labels.size(); i++) {
             if (labels[i] == *x) {
+                std::string value_key = "value_" + std::string(labels[i]);
+                object_next(value_key.c_str());
                 return i;
             }
         }
@@ -159,10 +161,6 @@ void ObjectReader::variant_end() {
 }
 
 void ObjectReader::object_begin(std::size_t size) {
-    if (!node->is_map()) {
-        invalidate();
-        return;
-    }
     nodes.push(node);
     node = node.child();
 }

@@ -9,5 +9,5 @@ TEST(Format, Binary) {
     std::vector<std::uint8_t> data = datapack::write_binary(in);
     Entity out = datapack::read_binary<Entity>(data);
 
-    ASSERT_TRUE(compare(in, out));
+    ASSERT_EQ(in, out);
 }

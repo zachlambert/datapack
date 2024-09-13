@@ -113,7 +113,8 @@ Entity Entity::example() {
     return result;
 }
 
-bool compare(const Entity& a, const Entity& b, double float_threshold) {
+bool operator==(const Entity& a, const Entity& b) {
+    static constexpr double float_threshold = 1e-12;
     if (a.index != b.index) return false;
     if (a.name != b.name) return false;
     if (a.enabled != b.enabled) return false;

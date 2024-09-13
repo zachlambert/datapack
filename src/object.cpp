@@ -254,12 +254,14 @@ int Object::index_list_access(int parent, std::size_t index) const {
     if (!iter->is_list()) {
         throw ValueException("Tried to access value by index on a non-list node");
     }
+    iter = iter.child();
+
     std::size_t i = 0;
     while (iter && i != index) {
         iter = iter.next();
         i++;
     }
-    return iter;
+    return iter.index();
 }
 
 int Object::index_insert(int parent, const std::string& key, const value_t& value) {

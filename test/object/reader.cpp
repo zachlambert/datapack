@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <datapack/util/object_writer.hpp>
 #include <datapack/util/object_reader.hpp>
+#include <datapack/util/debug.hpp>
 #include <datapack/examples/entity.hpp>
 
 TEST(Object, Reader) {
@@ -9,5 +10,5 @@ TEST(Object, Reader) {
     datapack::Object object = datapack::write_object(in);
     Entity out = datapack::read_object<Entity>(object);
 
-    EXPECT_TRUE(compare(in, out));
+    EXPECT_EQ(in, out);
 }

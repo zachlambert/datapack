@@ -32,19 +32,14 @@ struct Point {
         memset(this, 0, sizeof(Point));
     }
 };
-void write(datapack::Writer& writer, const Point& value) {
-    writer.object_begin(sizeof(Point));
-    writer.value("x", value.x);
-    writer.value("y", value.y);
-    writer.value("z", value.z);
-    writer.object_end(sizeof(Point));
+namespace datapack {
+DATAPACK_INLINE(Point, value, packer) {
+    packer.object_begin(sizeof(Point));
+    packer.value("x", value.x);
+    packer.value("y", value.y);
+    packer.value("z", value.z);
+    packer.object_end(sizeof(Point));
 }
-void read(datapack::Reader& reader, Point& value) {
-    reader.object_begin(sizeof(Point));
-    reader.value("x", value.x);
-    reader.value("y", value.y);
-    reader.value("z", value.z);
-    reader.object_end(sizeof(Point));
 }
 
 bool compare(const std::vector<Point>& a, const std::vector<Point>& b) {

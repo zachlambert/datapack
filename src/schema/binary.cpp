@@ -16,7 +16,7 @@ Object binary_to_object(const Schema& schema, const std::vector<std::uint8_t>& b
     return object;
 }
 
-std::vector<std::uint8_t> object_to_binary(const Schema& schema, ConstObject object) {
+std::vector<std::uint8_t> object_to_binary(const Schema& schema, const Object::ConstReference& object) {
     ObjectReader reader(object);
     std::vector<std::uint8_t> bytes;
     BinaryWriter writer(bytes);

@@ -12,7 +12,7 @@ ObjectReader::ObjectReader(Object::ConstReference object):
 
 void ObjectReader::integer(IntType type, void* value) {
     std::int64_t integer_value;
-    if (auto x = node->integer()) {
+    if (auto x = node->integer_if()) {
         integer_value = *x;
     } else {
         invalidate();
@@ -39,9 +39,9 @@ void ObjectReader::integer(IntType type, void* value) {
 
 void ObjectReader::floating(FloatType type, void* value) {
     double floating_value;
-    if (auto x = node->floating()) {
+    if (auto x = node->floating_if()) {
         floating_value = *x;
-    } else if (auto x = node->integer()) {
+    } else if (auto x = node->integer_if()) {
         floating_value = *x;
     } else {
         invalidate();
@@ -58,7 +58,7 @@ void ObjectReader::floating(FloatType type, void* value) {
 }
 
 bool ObjectReader::boolean() {
-    if (auto x = node->boolean()) {
+    if (auto x = node->boolean_if()) {
         return *x;
     }
     invalidate();
@@ -66,7 +66,7 @@ bool ObjectReader::boolean() {
 }
 
 const char* ObjectReader::string() {
-    if (auto x = node->string()) {
+    if (auto x = node->string_if()) {
         return x->c_str();
     }
     invalidate();
@@ -74,7 +74,7 @@ const char* ObjectReader::string() {
 }
 
 int ObjectReader::enumerate(const std::span<const char*>& labels) {
-    auto x = node->string();
+    auto x = node->string_if();
     if (!x) {
         invalidate();
         return 0;
@@ -94,7 +94,7 @@ std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary(
     const std::uint8_t* data = nullptr;
     std::size_t size = 0;
 
-    if (auto x = node->binary()) {
+    if (auto x = node->binary_if()) {
         if (x->size() % stride != 0) {
             invalidate();
             return { nullptr, 0 };
@@ -106,7 +106,7 @@ std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary(
         data = x->data();
         size = x->size();
     }
-    else if (auto x = node->string()) {
+    else if (auto x = node->string_if()) {
         data_temp = base64_decode(*x);
         data = data_temp.data();
         size = data_temp.size();
@@ -143,7 +143,7 @@ void ObjectReader::optional_end() {
 int ObjectReader::variant_begin(const std::span<const char*>& labels) {
     object_begin(0);
     object_next("type");
-    if (auto x = node->string()) {
+    if (auto x = node->string_if()) {
         for (int i = 0; i < labels.size(); i++) {
             if (labels[i] == *x) {
                 return i;

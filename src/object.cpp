@@ -541,22 +541,22 @@ std::ostream& operator<<(std::ostream& os, Object::ConstReference object) {
         else if (node->is_list()) {
             os << "list:";
         }
-        else if (auto value = node->integer()) {
+        else if (auto value = node->integer_if()) {
             os << *value << "";
         }
-        else if (auto value = node->floating()) {
+        else if (auto value = node->floating_if()) {
             os << *value;
         }
-        else if (auto value = node->boolean()) {
+        else if (auto value = node->boolean_if()) {
             os << (*value ? "true" : "false");
         }
-        else if (auto value = node->string()) {
+        else if (auto value = node->string_if()) {
             os << *value;
         }
         else if (node->is_null()) {
             os << "null";
         }
-        else if (auto value = node->binary()) {
+        else if (auto value = node->binary_if()) {
             os << "binary (size=" << value->size() << ")";
         }
 

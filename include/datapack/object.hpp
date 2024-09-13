@@ -93,19 +93,38 @@ private:
         bool is_list() const { return std::get_if<list_t>(&value()); }
         bool is_null() const { return std::get_if<null_t>(&value()); }
 
-        std::conditional_t<IsConst, const integer_t*, integer_t*> integer() const {
+        std::conditional_t<IsConst, const integer_t&, integer_t&> integer() const {
+            return std::get<integer_t>(value());
+        }
+        std::conditional_t<IsConst, const integer_t*, integer_t*> integer_if() const {
             return std::get_if<integer_t>(&value());
         }
-        std::conditional_t<IsConst, const floating_t*, floating_t*> floating() const {
+
+        std::conditional_t<IsConst, const floating_t&, floating_t&> floating() const {
+            return std::get<floating_t>(value());
+        }
+        std::conditional_t<IsConst, const floating_t*, floating_t*> floating_if() const {
             return std::get_if<floating_t>(&value());
         }
-        std::conditional_t<IsConst, const bool*, bool*> boolean() const {
+
+        std::conditional_t<IsConst, const bool&, bool&> boolean() const {
+            return std::get<bool>(value());
+        }
+        std::conditional_t<IsConst, const bool*, bool*> boolean_if() const {
             return std::get_if<bool>(&value());
         }
-        std::conditional_t<IsConst, const std::string*, std::string*> string() const {
+
+        std::conditional_t<IsConst, const std::string&, std::string&> string() const {
+            return std::get<std::string>(value());
+        }
+        std::conditional_t<IsConst, const std::string*, std::string*> string_if() const {
             return std::get_if<std::string>(&value());
         }
-        std::conditional_t<IsConst, const binary_t*, binary_t*> binary() const {
+
+        std::conditional_t<IsConst, const binary_t&, binary_t&> binary() const {
+            return std::get<binary_t>(value());
+        }
+        std::conditional_t<IsConst, const binary_t*, binary_t*> binary_if() const {
             return std::get_if<binary_t>(&value());
         }
 
@@ -218,20 +237,30 @@ public:
     bool is_list() const { return std::get_if<list_t>(&value()); }
     bool is_null() const { return std::get_if<null_t>(&value()); }
 
-    integer_t* integer() { return std::get_if<integer_t>(&value()); }
-    const integer_t* integer() const { return std::get_if<integer_t>(&value()); }
+    integer_t& integer() { return std::get<integer_t>(value()); }
+    const integer_t& integer() const { return std::get<integer_t>(value()); }
+    integer_t* integer_if() { return std::get_if<integer_t>(&value()); }
+    const integer_t* integer_if() const { return std::get_if<integer_t>(&value()); }
 
-    floating_t* floating() { return std::get_if<floating_t>(&value()); }
-    const floating_t* floating() const { return std::get_if<floating_t>(&value()); }
+    floating_t& floating() { return std::get<floating_t>(value()); }
+    const floating_t& floating() const { return std::get<floating_t>(value()); }
+    floating_t* floating_if() { return std::get_if<floating_t>(&value()); }
+    const floating_t* floating_if() const { return std::get_if<floating_t>(&value()); }
 
-    bool* boolean() { return std::get_if<bool>(&value()); }
-    const bool* boolean() const { return std::get_if<bool>(&value()); }
+    bool& boolean() { return std::get<bool>(value()); }
+    const bool& boolean() const { return std::get<bool>(value()); }
+    bool* boolean_if() { return std::get_if<bool>(&value()); }
+    const bool* boolean_if() const { return std::get_if<bool>(&value()); }
 
-    std::string* string() { return std::get_if<std::string>(&value()); }
-    const std::string* string() const { return std::get_if<std::string>(&value()); }
+    std::string& string() { return std::get<std::string>(value()); }
+    const std::string& string() const { return std::get<std::string>(value()); }
+    std::string* string_if() { return std::get_if<std::string>(&value()); }
+    const std::string* string_if() const { return std::get_if<std::string>(&value()); }
 
-    binary_t* binary() { return std::get_if<binary_t>(&value()); }
-    const binary_t* binary() const { return std::get_if<binary_t>(&value()); }
+    binary_t& binary() { return std::get<binary_t>(value()); }
+    const binary_t& binary() const { return std::get<binary_t>(value()); }
+    binary_t* binary_if() { return std::get_if<binary_t>(&value()); }
+    const binary_t* binary_if() const { return std::get_if<binary_t>(&value()); }
 
     const value_t& value() const {
         return nodes[root_index].value;

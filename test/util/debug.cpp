@@ -1,22 +1,22 @@
-#include <gtest/gtest.h>
-#include <datapack/util/debug.hpp>
 #include <datapack/examples/entity.hpp>
+#include <datapack/util/debug.hpp>
+#include <gtest/gtest.h>
 #include <sstream>
 
 static std::vector<std::string> get_lines(const std::string& text) {
-    std::vector<std::string> lines;
-    std::size_t prev = 0;
-    std::size_t pos = std::min(text.find('\n', 0), text.size());
-    while (pos != text.size()) {
-        lines.push_back(text.substr(prev, pos - prev));
-        prev = pos + 1;
-        pos = std::min(text.find('\n', prev), text.size());
-    }
-    return lines;
+  std::vector<std::string> lines;
+  std::size_t prev = 0;
+  std::size_t pos = std::min(text.find('\n', 0), text.size());
+  while (pos != text.size()) {
+    lines.push_back(text.substr(prev, pos - prev));
+    prev = pos + 1;
+    pos = std::min(text.find('\n', prev), text.size());
+  }
+  return lines;
 }
 
 TEST(Util, Debug) {
-    const std::string expected = R"((object) {
+  const std::string expected = R"((object) {
     index: 5,
     name: player,
     enabled: true,
@@ -85,14 +85,14 @@ TEST(Util, Debug) {
 },
 )";
 
-    std::stringstream ss;
-    datapack::DebugWriter(ss).value(Entity::example());
-    const std::string output = ss.str();
+  std::stringstream ss;
+  datapack::DebugWriter(ss).value(Entity::example());
+  const std::string output = ss.str();
 
-    auto expected_lines = get_lines(expected);
-    auto output_lines = get_lines(output);
-    ASSERT_EQ(expected_lines.size(), output_lines.size());
-    for (std::size_t i = 0; i < expected_lines.size(); i++) {
-        EXPECT_EQ(expected_lines[i], output_lines[i]);
-    }
+  auto expected_lines = get_lines(expected);
+  auto output_lines = get_lines(output);
+  ASSERT_EQ(expected_lines.size(), output_lines.size());
+  for (std::size_t i = 0; i < expected_lines.size(); i++) {
+    EXPECT_EQ(expected_lines[i], output_lines[i]);
+  }
 }

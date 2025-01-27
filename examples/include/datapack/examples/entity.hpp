@@ -2,64 +2,60 @@
 
 #include <array>
 #include <optional>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
-#include <datapack/packer.hpp>
 #include <datapack/labelled_enum.hpp>
 #include <datapack/labelled_variant.hpp>
+#include <datapack/packer.hpp>
 
 struct Circle {
-    double radius;
+  double radius;
 };
 
 struct Rect {
-    double width;
-    double height;
+  double width;
+  double height;
 };
 
-enum class Physics {
-    Dynamic,
-    Kinematic,
-    Static
-};
+enum class Physics { Dynamic, Kinematic, Static };
 
 using Shape = std::variant<Circle, Rect>;
 
 struct Pose {
-    double x;
-    double y;
-    double angle;
+  double x;
+  double y;
+  double angle;
 };
 
 struct Item {
-    std::size_t count;
-    std::string name;
+  std::size_t count;
+  std::string name;
 };
 
 struct Sprite {
-    struct Pixel {
-        double r;
-        double g;
-        double b;
-    };
-    std::size_t width;
-    std::size_t height;
-    std::vector<Pixel> data;
+  struct Pixel {
+    double r;
+    double g;
+    double b;
+  };
+  std::size_t width;
+  std::size_t height;
+  std::vector<Pixel> data;
 };
 
 struct Entity {
-    int index;        // Primitives
-    std::string name;
-    bool enabled;
-    Pose pose;        // Object
-    Physics physics;  // Enum
-    std::optional<Shape> hitbox; // Optional + Variant
-    Sprite sprite;               // Binary
-    std::vector<Item> items;     // List
-    std::array<int, 3> assigned_items; // Tuple
+  int index; // Primitives
+  std::string name;
+  bool enabled;
+  Pose pose;                         // Object
+  Physics physics;                   // Enum
+  std::optional<Shape> hitbox;       // Optional + Variant
+  Sprite sprite;                     // Binary
+  std::vector<Item> items;           // List
+  std::array<int, 3> assigned_items; // Tuple
 
-    static Entity example();
+  static Entity example();
 };
 
 bool operator==(const Entity& a, const Entity& b);

@@ -1,17 +1,17 @@
-#include <gtest/gtest.h>
-#include <datapack/format/json.hpp>
 #include <datapack/examples/entity.hpp>
+#include <datapack/format/json.hpp>
+#include <gtest/gtest.h>
 
 static std::vector<std::string> get_lines(const std::string& text) {
-    std::vector<std::string> lines;
-    std::size_t prev = 0;
-    std::size_t pos = std::min(text.find('\n', 0), text.size());
-    while (pos != text.size()) {
-        lines.push_back(text.substr(prev, pos - prev));
-        prev = pos + 1;
-        pos = std::min(text.find('\n', prev), text.size());
-    }
-    return lines;
+  std::vector<std::string> lines;
+  std::size_t prev = 0;
+  std::size_t pos = std::min(text.find('\n', 0), text.size());
+  while (pos != text.size()) {
+    lines.push_back(text.substr(prev, pos - prev));
+    prev = pos + 1;
+    pos = std::min(text.find('\n', prev), text.size());
+  }
+  return lines;
 }
 
 static const std::string entity_json = R"({
@@ -82,18 +82,18 @@ static const std::string entity_json = R"({
 })";
 
 TEST(Format, JsonDump) {
-    const std::string output = datapack::write_json(Entity::example());
+  const std::string output = datapack::write_json(Entity::example());
 
-    auto expected_lines = get_lines(entity_json);
-    auto output_lines = get_lines(output);
-    ASSERT_EQ(expected_lines.size(), output_lines.size());
-    for (std::size_t i = 0; i < expected_lines.size(); i++) {
-        EXPECT_EQ(expected_lines[i], output_lines[i]);
-    }
+  auto expected_lines = get_lines(entity_json);
+  auto output_lines = get_lines(output);
+  ASSERT_EQ(expected_lines.size(), output_lines.size());
+  for (std::size_t i = 0; i < expected_lines.size(); i++) {
+    EXPECT_EQ(expected_lines[i], output_lines[i]);
+  }
 }
 
 TEST(Format, JsonLoad) {
-    Entity value = datapack::read_json<Entity>(entity_json);
-    auto expected = Entity::example();
-    ASSERT_EQ(value, expected);
+  Entity value = datapack::read_json<Entity>(entity_json);
+  auto expected = Entity::example();
+  ASSERT_EQ(value, expected);
 }

@@ -1,6 +1,7 @@
-#include <datapack/util/debug.hpp>
 #include <datapack/examples/entity.hpp>
+#include <datapack/util/debug.hpp>
 
 int main() {
-    std::cout << datapack::debug(Entity::example()) << std::endl;
+  std::cout << datapack::debug(Entity::example()) << std::endl;
+  return 0;
 }

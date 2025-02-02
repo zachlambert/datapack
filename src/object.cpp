@@ -14,6 +14,12 @@ const Object::Reference& Object::Reference::operator=(const value_t& value) cons
 }
 
 template <>
+const Object::Reference& Object::Reference::operator=(const Object::Reference_<true>& value) const {
+  object->index_assign(index, value.iter());
+  return *this;
+}
+
+template <>
 Object::Reference Object::Reference::operator[](const std::string& key) const {
   return Reference_(object, object->index_map_access_or_create(index, key));
 }
@@ -75,7 +81,9 @@ template std::size_t Object::ConstReference::size() const;
 
 template <bool IsConst>
 Object Object::Reference_<IsConst>::clone() const {
-  return object->index_clone(index);
+  Object result;
+  result.index_assign_object(result.root_index, iter());
+  return result;
 }
 template Object Object::Reference::clone() const;
 template Object Object::ConstReference::clone() const;
@@ -92,12 +100,22 @@ template Object::ConstIterator Object::ConstReference::iter() const;
 
 Object::Object() : root_index(0) { nodes.push_back(Node(null_t(), "", -1, -1)); }
 
+Object::Object(ConstReference& value) : root_index(0) {
+  nodes.push_back(Node(null_t(), "", -1, -1));
+  index_assign(root_index, value.iter());
+}
+
 Object::operator Reference() { return Reference(this, root_index); }
 
 Object::operator ConstReference() const { return ConstReference(this, root_index); }
 
 Object::Reference Object::operator=(const value_t& value) {
   index_assign(root_index, value);
+  return Reference(this, root_index);
+}
+
+Object::Reference Object::operator=(const Object::ConstReference& value) {
+  index_assign(root_index, value.iter());
   return Reference(this, root_index);
 }
 
@@ -156,7 +174,11 @@ std::size_t Object::size() const {
   return nodes[root_index].child_count;
 }
 
-Object Object::clone() const { return index_clone(root_index); }
+Object Object::clone() const {
+  Object result;
+  result = iter();
+  return result;
+}
 
 int Object::add_node(const Node& node) {
   if (!free.empty()) {
@@ -299,23 +321,20 @@ void Object::index_clear(int index) {
   }
 }
 
-Object Object::index_clone(int index) const {
-  auto iter = ConstIterator(this, index);
-
-  Object result;
-  result = iter->value();
-
-  if (!iter->is_map() && !iter->is_list()) {
-    return result;
+void Object::index_assign_object(int index, ConstIterator from) {
+  if (!from->is_map() && !from->is_list()) {
+    index_assign(index, from->value());
+    return;
   }
-  if (!iter.child()) {
-    return result;
+  if (!from.child()) {
+    index_assign(index, null_t());
+    return;
   }
 
   std::stack<ConstIterator> from_stack;
-  from_stack.push(iter);
+  from_stack.push(from);
   std::stack<Iterator> to_stack;
-  to_stack.push(result.iter());
+  to_stack.push(Iterator(this, index));
 
   while (!from_stack.empty()) {
     auto from = from_stack.top();
@@ -341,12 +360,15 @@ Object Object::index_clone(int index) const {
       to_stack.push(new_to);
     }
   }
-
-  return result;
 }
 
 Object merge(const Object::ConstReference& base, const Object::ConstReference& diff) {
   Object merged;
+
+  if (base.is_primitive()) {
+    merged = diff;
+    return merged;
+  }
 
   std::stack<Object::ConstIterator> base_nodes;
   std::stack<Object::ConstIterator> diff_nodes;
@@ -355,6 +377,9 @@ Object merge(const Object::ConstReference& base, const Object::ConstReference& d
   diff_nodes.push(diff.iter());
 
   while (!diff_nodes.empty()) {
+    auto diff_iter = diff_nodes.top();
+    auto base_iter = base_nodes.top();
+    diff_iter->is_map();
   }
 
   return merged;

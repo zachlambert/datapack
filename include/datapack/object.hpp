@@ -59,6 +59,7 @@ private:
     Reference_(const Reference_<OtherConst>& other) : object(other.object), index(other.index) {}
 
     const Reference_& operator=(const value_t& value) const;
+    const Reference_& operator=(const Reference_<true>& value) const;
 
     Reference_ operator[](const std::string& key) const;
     Reference_ operator[](std::size_t list_index) const;
@@ -76,6 +77,7 @@ private:
     bool is_map() const { return std::get_if<map_t>(&value()); }
     bool is_list() const { return std::get_if<list_t>(&value()); }
     bool is_null() const { return std::get_if<null_t>(&value()); }
+    bool is_primitive() const { return !is_map() && !is_list(); }
 
     std::conditional_t<IsConst, const integer_t&, integer_t&> integer() const {
       return std::get<integer_t>(value());
@@ -163,6 +165,27 @@ private:
 
     Iterator_() : ref(nullptr, 0) {}
 
+    // The operator= is overloaded for reference to assign the value
+    // Therefore, cannot use the default operator= for iterator, since it will
+    // use the default operator= for ref.
+    // Within Iterator, copy the Reference raw values instead
+    // NOTE: It won't compile otherwise, since it will be looking for the operator=
+    // implemented for Reference_<true> which isn't implemented.
+
+    Iterator_& operator=(const Iterator_& other) {
+      ref.object = other.ref.object;
+      ref.index = other.ref.index;
+      return *this;
+    }
+    template <bool OtherConst>
+    Iterator_& operator=(Iterator_<OtherConst>&& other) {
+      ref.object = other.ref.object;
+      ref.index = other.ref.index;
+      return *this;
+    }
+    template <bool OtherConst, typename = std::enable_if_t<!OtherConst || IsConst>>
+    Iterator_(Iterator_<OtherConst>&& other) : ref(other.ref.object, other.ref.index) {}
+
   private:
     Iterator_(object_t object, int index) : ref(object, index) {}
 
@@ -181,11 +204,13 @@ public:
   using ConstIterator = Iterator_<true>;
 
   Object();
+  Object(ConstReference& value);
 
   operator Reference();
   operator ConstReference() const;
 
   Reference operator=(const value_t& value);
+  Reference operator=(const ConstReference& value);
 
   Reference operator[](const std::string& key);
   ConstReference operator[](std::size_t list_index) const;
@@ -207,6 +232,7 @@ public:
   bool is_map() const { return std::get_if<map_t>(&value()); }
   bool is_list() const { return std::get_if<list_t>(&value()); }
   bool is_null() const { return std::get_if<null_t>(&value()); }
+  bool is_primitive() const { return !is_map() && !is_list(); }
 
   integer_t& integer() { return std::get<integer_t>(value()); }
   const integer_t& integer() const { return std::get<integer_t>(value()); }
@@ -255,7 +281,7 @@ private:
   int index_erase(int index);
   void index_clear(int index);
 
-  Object index_clone(int index) const;
+  void index_assign_object(int index, ConstIterator from);
 
   std::vector<Node> nodes;
   std::stack<int> free;

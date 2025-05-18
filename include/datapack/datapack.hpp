@@ -164,4 +164,15 @@ public:
   virtual void list_end() = 0;
 };
 
+DATAPACK_INLINE(std::int32_t, value, packer) { packer.number(NumberType::I32, &value); }
+DATAPACK_INLINE(std::int64_t, value, packer) { packer.number(NumberType::I64, &value); }
+DATAPACK_INLINE(std::uint32_t, value, packer) { packer.number(NumberType::U32, &value); }
+DATAPACK_INLINE(std::uint64_t, value, packer) { packer.number(NumberType::U64, &value); }
+DATAPACK_INLINE(std::uint8_t, value, packer) { packer.number(NumberType::U8, &value); }
+DATAPACK_INLINE(float, value, packer) { packer.number(NumberType::F32, &value); }
+DATAPACK_INLINE(double, value, packer) { packer.number(NumberType::F64, &value); }
+
+inline void pack(const bool& value, Writer& writer) { writer.boolean(value); }
+inline void pack(bool& value, Reader& reader) { value = reader.boolean(); }
+
 } // namespace datapack

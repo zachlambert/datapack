@@ -1,7 +1,6 @@
 #pragma once
 
 #include <concepts>
-#include <micro_types/variant.hpp>
 #include <span>
 #include <variant>
 
@@ -39,13 +38,6 @@ bool variant_from_label_iter(const char* label, std::size_t index, T& value) {
 template <typename... Args>
 requires labelled_variant<std::variant<Args...>>
 bool variant_from_label(const char* label, std::variant<Args...>& value) {
-  using T = std::variant<Args...>;
-  return variant_from_label_iter<T, Args...>(label, 0, value);
-}
-
-template <typename... Args>
-requires labelled_variant<std::variant<Args...>>
-bool variant_from_label(const char* label, mct::variant<Args...>& value) {
   using T = std::variant<Args...>;
   return variant_from_label_iter<T, Args...>(label, 0, value);
 }

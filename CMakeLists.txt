@@ -43,7 +43,6 @@ else()
     add_library(datapack STATIC
         src/format/binary_reader.cpp
     )
-    target_link_libraries(datapack PUBLIC micro-types)
     target_include_directories(datapack PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>

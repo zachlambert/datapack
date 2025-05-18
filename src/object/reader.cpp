@@ -6,49 +6,37 @@ namespace datapack {
 ObjectReader::ObjectReader(Object::ConstReference object) :
     node(object.iter()), list_start(false), next_variant_label(nullptr) {}
 
-void ObjectReader::integer(IntType type, void* value) {
-  std::int64_t integer_value;
+void ObjectReader::number(NumberType type, void* value_out) {
+  double value;
   if (auto x = node->integer_if()) {
-    integer_value = *x;
+    value = *x;
+  } else if (node->floating_if()) {
+    value = *x;
   } else {
     invalidate();
     return;
   }
   switch (type) {
-  case IntType::I32:
-    *(std::int32_t*)value = integer_value;
+  case NumberType::I32:
+    *(std::int32_t*)value_out = value;
     break;
-  case IntType::I64:
-    *(std::int64_t*)value = integer_value;
+  case NumberType::I64:
+    *(std::int64_t*)value_out = value;
     break;
-  case IntType::U32:
-    *(std::uint32_t*)value = integer_value;
+  case NumberType::U32:
+    *(std::uint32_t*)value_out = value;
     break;
-  case IntType::U64:
-    *(std::uint64_t*)value = integer_value;
+  case NumberType::U64:
+    *(std::uint64_t*)value_out = value;
     break;
-  case IntType::U8:
-    *(std::uint8_t*)value = integer_value;
+  case NumberType::U8:
+    *(std::uint8_t*)value_out = value;
     break;
-  }
-}
-
-void ObjectReader::floating(FloatType type, void* value) {
-  double floating_value;
-  if (auto x = node->floating_if()) {
-    floating_value = *x;
-  } else if (auto x = node->integer_if()) {
-    floating_value = *x;
-  } else {
-    invalidate();
-    return;
-  }
-  switch (type) {
-  case FloatType::F32:
-    *(float*)value = floating_value;
+  case NumberType::F32:
+    *(float*)value_out = value;
     break;
-  case FloatType::F64:
-    *(double*)value = floating_value;
+  case NumberType::F64:
+    *(double*)value_out = value;
     break;
   }
 }
@@ -84,43 +72,19 @@ int ObjectReader::enumerate(const std::span<const char*>& labels) {
   return 0;
 }
 
-std::tuple<const std::uint8_t*, std::size_t> ObjectReader::binary(
-    std::size_t length,
-    std::size_t stride) {
+std::span<const std::uint8_t> ObjectReader::binary() {
   const std::uint8_t* data = nullptr;
   std::size_t size = 0;
 
   if (auto x = node->binary_if()) {
-    if (x->size() % stride != 0) {
-      invalidate();
-      return {nullptr, 0};
-    }
-    if (length != 0 && length * stride != x->size()) {
-      invalidate();
-      return {nullptr, 0};
-    }
-    data = x->data();
-    size = x->size();
+    return *x;
   } else if (auto x = node->string_if()) {
     data_temp = base64_decode(*x);
-    data = data_temp.data();
-    size = data_temp.size();
+    return data_temp;
   } else {
     invalidate();
-    return {nullptr, 0};
+    return std::span<const std::uint8_t>((const std::uint8_t*)nullptr, 0);
   }
-
-  if (size % stride != 0) {
-    invalidate();
-    return {nullptr, 0};
-  } else if (length == 0) {
-    length = size / stride;
-  } else if (length * stride != size) {
-    invalidate();
-    return {nullptr, 0};
-  }
-
-  return std::make_tuple(data, length);
 }
 
 bool ObjectReader::optional_begin() {
@@ -135,7 +99,7 @@ void ObjectReader::optional_end() {
 }
 
 int ObjectReader::variant_begin(const std::span<const char*>& labels) {
-  object_begin(0);
+  object_begin();
   object_next("type");
   if (auto x = node->string_if()) {
     for (int i = 0; i < labels.size(); i++) {
@@ -150,14 +114,14 @@ int ObjectReader::variant_begin(const std::span<const char*>& labels) {
   return 0;
 }
 
-void ObjectReader::variant_end() { object_end(0); }
+void ObjectReader::variant_end() { object_end(); }
 
-void ObjectReader::object_begin(std::size_t size) {
+void ObjectReader::object_begin() {
   nodes.push(node);
   node = node.child();
 }
 
-void ObjectReader::object_end(std::size_t size) {
+void ObjectReader::object_end() {
   node = nodes.top();
   nodes.pop();
 }
@@ -180,7 +144,7 @@ void ObjectReader::object_next(const char* key) {
   node = next;
 }
 
-void ObjectReader::tuple_begin(std::size_t size) {
+void ObjectReader::tuple_begin() {
   if (!node->is_list()) {
     invalidate();
     return;
@@ -201,13 +165,13 @@ void ObjectReader::tuple_next() {
   }
 }
 
-void ObjectReader::tuple_end(std::size_t size) {
+void ObjectReader::tuple_end() {
   list_start = false;
   node = nodes.top();
   nodes.pop();
 }
 
-void ObjectReader::list_begin(bool is_trivial) {
+void ObjectReader::list_begin() {
   if (!node->is_list()) {
     invalidate();
     return;

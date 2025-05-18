@@ -329,41 +329,7 @@ inline bool operator==(const Object& lhs, const Object& rhs) {
 }
 std::ostream& operator<<(std::ostream& os, Object::ConstReference object);
 
-class ObjectReader : public Reader {
-public:
-  ObjectReader(Object::ConstReference object);
-
-  void number(NumberType type, void* value) override;
-  bool boolean() override;
-  const char* string() override;
-  int enumerate(const std::span<const char*>& labels) override;
-  std::span<const std::uint8_t> binary() override;
-
-  bool optional_begin() override;
-  void optional_end() override;
-
-  int variant_begin(const std::span<const char*>& labels) override;
-  void variant_end() override;
-
-  void object_begin() override;
-  void object_end() override;
-  void object_next(const char* key) override;
-
-  void tuple_begin() override;
-  void tuple_end() override;
-  void tuple_next() override;
-
-  void list_begin() override;
-  bool list_next() override;
-  void list_end() override;
-
-private:
-  Object::ConstIterator node;
-  std::stack<Object::ConstIterator> nodes;
-  bool list_start;
-  const char* next_variant_label;
-  std::vector<std::uint8_t> data_temp;
-};
+// Writer and Reader
 
 class ObjectWriter : public Writer {
 public:
@@ -400,6 +366,42 @@ private:
   std::stack<Object::Iterator> nodes;
   std::string next_key;
   std::size_t next_stride;
+};
+
+class ObjectReader : public Reader {
+public:
+  ObjectReader(Object::ConstReference object);
+
+  void number(NumberType type, void* value) override;
+  bool boolean() override;
+  const char* string() override;
+  int enumerate(const std::span<const char*>& labels) override;
+  std::span<const std::uint8_t> binary() override;
+
+  bool optional_begin() override;
+  void optional_end() override;
+
+  int variant_begin(const std::span<const char*>& labels) override;
+  void variant_end() override;
+
+  void object_begin() override;
+  void object_end() override;
+  void object_next(const char* key) override;
+
+  void tuple_begin() override;
+  void tuple_end() override;
+  void tuple_next() override;
+
+  void list_begin() override;
+  bool list_next() override;
+  void list_end() override;
+
+private:
+  Object::ConstIterator node;
+  std::stack<Object::ConstIterator> nodes;
+  bool list_start;
+  const char* next_variant_label;
+  std::vector<std::uint8_t> data_temp;
 };
 
 template <readable T>

@@ -21,8 +21,8 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/encode/floating_string.cpp
         src/object/object.cpp
         # src/object/operations.cpp
-        # src/object/reader.cpp
-        # src/object/writer.cpp
+        src/object/reader.cpp
+        src/object/writer.cpp
         # src/schema/token.cpp
         # src/schema/tokenizer.cpp
         # src/schema/schema.cpp

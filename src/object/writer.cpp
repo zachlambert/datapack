@@ -6,39 +6,32 @@ namespace datapack {
 
 ObjectWriter::ObjectWriter(Object::Reference object) : object(object), next_stride(0) {}
 
-void ObjectWriter::integer(IntType type, const void* value) {
-  Object::integer_t integer_value;
+void ObjectWriter::number(NumberType type, const void* value_in) {
+  Object::floating_t value;
   switch (type) {
-  case IntType::I32:
-    integer_value = *(std::int32_t*)value;
+  case NumberType::I32:
+    value = *(std::int32_t*)value_in;
     break;
-  case IntType::I64:
-    integer_value = *(std::int64_t*)value;
+  case NumberType::I64:
+    value = *(std::int64_t*)value_in;
     break;
-  case IntType::U32:
-    integer_value = *(std::uint32_t*)value;
+  case NumberType::U32:
+    value = *(std::uint32_t*)value_in;
     break;
-  case IntType::U64:
-    integer_value = *(std::uint64_t*)value;
+  case NumberType::U64:
+    value = *(std::uint64_t*)value_in;
     break;
-  case IntType::U8:
-    integer_value = *(std::uint8_t*)value;
+  case NumberType::U8:
+    value = *(std::uint8_t*)value_in;
+    break;
+  case NumberType::F32:
+    value = *(float*)value_in;
+    break;
+  case NumberType::F64:
+    value = *(double*)value_in;
     break;
   }
-  set_value(integer_value);
-}
-
-void ObjectWriter::floating(FloatType type, const void* value) {
-  Object::floating_t floating_value;
-  switch (type) {
-  case FloatType::F32:
-    floating_value = *(float*)value;
-    break;
-  case FloatType::F64:
-    floating_value = *(double*)value;
-    break;
-  }
-  set_value(floating_value);
+  set_value(value);
 }
 
 void ObjectWriter::boolean(bool value) { set_value(value); }
@@ -47,13 +40,9 @@ void ObjectWriter::string(const char* value) { set_value(std::string(value)); }
 
 void ObjectWriter::enumerate(int value, const char* label) { set_value(std::string(label)); }
 
-void ObjectWriter::binary(
-    const std::uint8_t* data,
-    std::size_t length,
-    std::size_t stride,
-    bool fixed_length) {
-  std::vector<std::uint8_t> vec(length * stride);
-  std::memcpy(vec.data(), data, length * stride);
+void ObjectWriter::binary(const std::span<const std::uint8_t>& data) {
+  std::vector<std::uint8_t> vec(data.size());
+  std::memcpy(vec.data(), data.data(), data.size());
   set_value(vec);
 }
 
@@ -68,28 +57,28 @@ void ObjectWriter::optional_end() {
 }
 
 void ObjectWriter::variant_begin(int value, const char* label) {
-  object_begin(0);
+  object_begin();
   object_next("type");
   string(label);
   std::string value_key = "value_" + std::string(label);
   object_next(value_key.c_str());
 }
 
-void ObjectWriter::variant_end() { object_end(0); }
+void ObjectWriter::variant_end() { object_end(); }
 
-void ObjectWriter::object_begin(std::size_t size) { set_value(Object::map_t()); }
+void ObjectWriter::object_begin() { set_value(Object::map_t()); }
 
-void ObjectWriter::object_end(std::size_t size) { nodes.pop(); }
+void ObjectWriter::object_end() { nodes.pop(); }
 
 void ObjectWriter::object_next(const char* key) { next_key = key; }
 
-void ObjectWriter::tuple_begin(std::size_t size) { set_value(Object::list_t()); }
+void ObjectWriter::tuple_begin() { set_value(Object::list_t()); }
 
-void ObjectWriter::tuple_end(std::size_t size) { nodes.pop(); }
+void ObjectWriter::tuple_end() { nodes.pop(); }
 
 void ObjectWriter::tuple_next() { next_key = ""; }
 
-void ObjectWriter::list_begin(bool is_trivial) { set_value(Object::list_t()); }
+void ObjectWriter::list_begin() { set_value(Object::list_t()); }
 
 void ObjectWriter::list_end() { nodes.pop(); }
 

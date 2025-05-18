@@ -1,36 +1,31 @@
-#include "datapack/util/debug.hpp"
+#include "datapack/debug.hpp"
+#include "datapack/encode/base64.hpp"
 
 namespace datapack {
 
 DebugWriter::DebugWriter(std::ostream& os) : os(os), depth(0) {}
 
-void DebugWriter::integer(IntType type, const void* value) {
+void DebugWriter::number(NumberType type, const void* value) {
   switch (type) {
-  case IntType::I32:
+  case NumberType::I32:
     os << *(const std::int32_t*)value;
     break;
-  case IntType::I64:
+  case NumberType::I64:
     os << *(const std::int64_t*)value;
     break;
-  case IntType::U32:
+  case NumberType::U32:
     os << *(const std::uint32_t*)value;
     break;
-  case IntType::U64:
+  case NumberType::U64:
     os << *(const std::uint64_t*)value;
     break;
-  case IntType::U8:
+  case NumberType::U8:
     os << *(const std::uint8_t*)value;
     break;
-  };
-  os << ",\n";
-}
-
-void DebugWriter::floating(FloatType type, const void* value) {
-  switch (type) {
-  case FloatType::F32:
+  case NumberType::F32:
     os << *(const float*)value;
     break;
-  case FloatType::F64:
+  case NumberType::F64:
     os << *(const double*)value;
     break;
   };
@@ -48,16 +43,8 @@ void DebugWriter::enumerate(int value, const char* label) {
   os << "(enum, " << value << " = " << label << "),\n";
 }
 
-void DebugWriter::binary(
-    const std::uint8_t* data,
-    std::size_t length,
-    std::size_t stride,
-    bool fixed_length) {
-  if (fixed_length) {
-    os << "(binary, fixed length = " << length << ", stride = " << stride << "),\n";
-  } else {
-    os << "(binary, variable length = " << length << ", stride = " << stride << "),\n";
-  }
+void DebugWriter::binary(const std::span<const std::uint8_t>& data) {
+  os << "(binary, length = " << data.size() << ", data = '" << base64_encode(data) << "'),\n";
 }
 
 void DebugWriter::optional_begin(bool has_value) {
@@ -88,16 +75,12 @@ void DebugWriter::variant_end() {
   os << "},\n";
 }
 
-void DebugWriter::object_begin(std::size_t size) {
-  if (size == 0) {
-    os << "(object) {\n";
-  } else {
-    os << "(object, trivial size = " << size << ") {\n";
-  }
+void DebugWriter::object_begin() {
+  os << "(object) {\n";
   depth++;
 }
 
-void DebugWriter::object_end(std::size_t size) {
+void DebugWriter::object_end() {
   depth--;
   indent();
   os << "},\n";
@@ -108,16 +91,12 @@ void DebugWriter::object_next(const char* key) {
   os << key << ": ";
 }
 
-void DebugWriter::tuple_begin(std::size_t size) {
-  if (size == 0) {
-    os << "(tuple) {\n";
-  } else {
-    os << "(tuple, trivial size = " << size << ") {\n";
-  }
+void DebugWriter::tuple_begin() {
+  os << "(tuple) {\n";
   depth++;
 }
 
-void DebugWriter::tuple_end(std::size_t size) {
+void DebugWriter::tuple_end() {
   depth--;
   indent();
   os << "},\n";
@@ -125,12 +104,8 @@ void DebugWriter::tuple_end(std::size_t size) {
 
 void DebugWriter::tuple_next() { indent(); }
 
-void DebugWriter::list_begin(bool is_trivial) {
-  if (is_trivial) {
-    os << "(list, trivial) {\n";
-  } else {
-    os << "(list) {\n";
-  }
+void DebugWriter::list_begin() {
+  os << "(list) {\n";
   depth++;
 }
 

@@ -1,6 +1,7 @@
 #include "datapack/object.hpp"
+#include <iostream>
 
-namespace datpack {
+namespace datapack {
 
 Object merge(const Object::ConstReference& base, const Object::ConstReference& diff) {
   Object merged;
@@ -187,4 +188,4 @@ std::ostream& operator<<(std::ostream& os, Object::ConstReference object) {
   return os;
 }
 
-} // namespace datpack
+} // namespace datapack

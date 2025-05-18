@@ -58,7 +58,7 @@ static std::uint8_t reverse_byte(std::uint8_t byte, int bits = 8) {
   return result;
 }
 
-std::string base64_encode(const std::vector<std::uint8_t>& data) {
+std::string base64_encode(const std::span<const std::uint8_t>& data) {
   std::string text;
   std::size_t pos = 0;
   std::size_t i = 0;
@@ -104,7 +104,7 @@ std::vector<std::uint8_t> base64_decode(const std::string& text) {
   return data;
 }
 
-std::size_t base64_encoded_length(const std::vector<std::uint8_t>& data) {
+std::size_t base64_encoded_length(const std::span<const std::uint8_t>& data) {
   std::size_t blocks = data.size() / 3;
   if (data.size() % 3 != 0) {
     blocks += (3 - data.size() % 3);

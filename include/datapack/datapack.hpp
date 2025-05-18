@@ -23,13 +23,22 @@ concept packable = requires(packref<T, Mode> value, Packer<Mode>& packer) {
   { pack(value, packer) };
 };
 
+template <typename T, int Mode>
+concept packable_trivial = requires(packref<T, Mode> value, Packer<Mode>& packer) {
+  { pack_trivial(value, packer) };
+};
+
 using Writer = Packer<MODE_WRITE>;
 template <typename T>
 concept writeable = packable<T, MODE_WRITE>;
+template <typename T>
+concept writeable_trivial = packable_trivial<T, MODE_WRITE>;
 
 using Reader = Packer<MODE_READ>;
 template <typename T>
 concept readable = packable<T, MODE_READ>;
+template <typename T>
+concept readable_trivial = packable_trivial<T, MODE_READ>;
 
 #define DATAPACK(T)                                                                                \
   template <int Mode>                                                                              \
@@ -66,7 +75,18 @@ public:
   template <readable T>
   void value(const char* key, T& value) {
     object_next(key);
-    this->value(value);
+    pack(value, *this);
+  }
+
+  template <readable_trivial T>
+  void value_trivial(T& value) {
+    pack_trivial(value, *this);
+  }
+
+  template <readable_trivial T>
+  void value_trivial(const char* key, T& value) {
+    object_next(key);
+    pack_trivial(value, *this);
   }
 
   // Primitives
@@ -129,7 +149,18 @@ public:
   template <writeable T>
   void value(const char* key, const T& value) {
     object_next(key);
-    this->value(value);
+    pack(value, *this);
+  }
+
+  template <writeable_trivial T>
+  void value_trivial(T& value) {
+    pack_trivial(value, *this);
+  }
+
+  template <writeable_trivial T>
+  void value_trivial(const char* key, T& value) {
+    object_next(key);
+    pack_trivial(value, *this);
   }
 
   // Primitives

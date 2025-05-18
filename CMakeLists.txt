@@ -48,11 +48,11 @@ endif()
 
 # Additional targets
 
-# TEMPORARY
-set(BUILD_ADDITIONAL_TARGETS FALSE)
-
 if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_subdirectory(examples)
+
+    return()
+
     add_subdirectory(demo)
 
     include(FetchContent)

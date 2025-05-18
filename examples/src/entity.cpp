@@ -1,24 +1,27 @@
 #include "datapack/examples/entity.hpp"
 
-#include "datapack/common.hpp"
-#include "datapack/reader.hpp"
-#include "datapack/writer.hpp"
 #include <cmath>
 #include <cstring>
+#include <datapack/std/array.hpp>
+#include <datapack/std/optional.hpp>
+#include <datapack/std/string.hpp>
+#include <datapack/std/unordered_map.hpp>
+#include <datapack/std/variant.hpp>
+#include <datapack/std/vector.hpp>
 
 namespace datapack {
 
 DATAPACK_IMPL(Circle, value, packer) {
-  packer.object_begin(sizeof(Circle));
+  packer.object_begin();
   packer.value("radius", value.radius);
-  packer.object_end(sizeof(Circle));
+  packer.object_end();
 }
 
 DATAPACK_IMPL(Rect, value, packer) {
-  packer.object_begin(sizeof(Rect));
+  packer.object_begin();
   packer.value("width", value.width);
   packer.value("height", value.height);
-  packer.object_end(sizeof(Rect));
+  packer.object_end();
 }
 
 DATAPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
@@ -26,11 +29,11 @@ DATAPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
 DATAPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
 
 DATAPACK_IMPL(Pose, value, packer) {
-  packer.object_begin(sizeof(Pose));
+  packer.object_begin();
   packer.value("x", value.x);
   packer.value("y", value.y);
   packer.value("angle", value.angle);
-  packer.object_end(sizeof(Pose));
+  packer.object_end();
 }
 
 DATAPACK_IMPL(Item, value, packer) {
@@ -44,16 +47,8 @@ DATAPACK_IMPL(Sprite, value, packer) {
   packer.object_begin();
   packer.value("width", value.width);
   packer.value("height", value.height);
-  packer.value("data", value.data);
+  packer.value_trivial("data", value.data);
   packer.object_end();
-}
-
-DATAPACK_IMPL(Sprite::Pixel, value, packer) {
-  packer.object_begin(sizeof(Sprite::Pixel));
-  packer.value("r", value.r);
-  packer.value("g", value.g);
-  packer.value("b", value.b);
-  packer.object_end(sizeof(Sprite::Pixel));
 }
 
 DATAPACK_IMPL(Entity, value, packer) {

@@ -2,6 +2,7 @@
 
 #include "datapack/datapack.hpp"
 #include <assert.h>
+#include <concepts>
 #include <stack>
 #include <stdexcept>
 #include <string>
@@ -11,17 +12,18 @@
 
 namespace datapack {
 
+template <typename T>
+concept integral_not_bool = std::integral<T> && !std::is_same_v<T, bool>;
+
 class Object {
 public:
-  using integer_t = std::int64_t;
-  using floating_t = double;
+  using number_t = double;
   using binary_t = std::vector<std::uint8_t>;
   struct null_t {};
   struct map_t {};
   struct list_t {};
 
-  using value_t =
-      std::variant<integer_t, floating_t, bool, std::string, binary_t, null_t, map_t, list_t>;
+  using value_t = std::variant<number_t, bool, std::string, binary_t, null_t, map_t, list_t>;
 
   class LookupException : public std::runtime_error {
   public:
@@ -71,6 +73,20 @@ private:
     void clear() const;
     std::size_t size() const;
 
+    // Special case for integer types: won't implicitly convert to double
+    template <integral_not_bool T>
+    const Reference_& operator=(T value) const {
+      return ((*this) = double(value));
+    }
+    template <integral_not_bool T>
+    Iterator_<IsConst> insert(const std::string& key, T value) {
+      return insert(key, double(value));
+    }
+    template <integral_not_bool T>
+    Iterator_<IsConst> push_back(const T& value) const {
+      return push_back(double(value));
+    }
+
     Object clone() const;
 
     bool is_map() const { return std::get_if<map_t>(&value()); }
@@ -78,18 +94,11 @@ private:
     bool is_null() const { return std::get_if<null_t>(&value()); }
     bool is_primitive() const { return !is_map() && !is_list(); }
 
-    std::conditional_t<IsConst, const integer_t&, integer_t&> integer() const {
-      return std::get<integer_t>(value());
+    std::conditional_t<IsConst, const number_t&, number_t&> number() const {
+      return std::get<number_t>(value());
     }
-    std::conditional_t<IsConst, const integer_t*, integer_t*> integer_if() const {
-      return std::get_if<integer_t>(&value());
-    }
-
-    std::conditional_t<IsConst, const floating_t&, floating_t&> floating() const {
-      return std::get<floating_t>(value());
-    }
-    std::conditional_t<IsConst, const floating_t*, floating_t*> floating_if() const {
-      return std::get_if<floating_t>(&value());
+    std::conditional_t<IsConst, const number_t*, number_t*> number_if() const {
+      return std::get_if<number_t>(&value());
     }
 
     std::conditional_t<IsConst, const bool&, bool&> boolean() const {
@@ -226,6 +235,20 @@ public:
   void clear();
   std::size_t size() const;
 
+  // Special case: integer types won't implicitly convert to double
+  template <integral_not_bool T>
+  Reference operator=(T value) {
+    return ((*this) = double(value));
+  }
+  template <integral_not_bool T>
+  Iterator insert(const std::string& key, T value) {
+    return insert(key, double(value));
+  }
+  template <integral_not_bool T>
+  Iterator push_back(T value) {
+    return push_back(double(value));
+  }
+
   Object clone() const;
 
   bool is_map() const { return std::get_if<map_t>(&value()); }
@@ -233,15 +256,10 @@ public:
   bool is_null() const { return std::get_if<null_t>(&value()); }
   bool is_primitive() const { return !is_map() && !is_list(); }
 
-  integer_t& integer() { return std::get<integer_t>(value()); }
-  const integer_t& integer() const { return std::get<integer_t>(value()); }
-  integer_t* integer_if() { return std::get_if<integer_t>(&value()); }
-  const integer_t* integer_if() const { return std::get_if<integer_t>(&value()); }
-
-  floating_t& floating() { return std::get<floating_t>(value()); }
-  const floating_t& floating() const { return std::get<floating_t>(value()); }
-  floating_t* floating_if() { return std::get_if<floating_t>(&value()); }
-  const floating_t* floating_if() const { return std::get_if<floating_t>(&value()); }
+  number_t& number() { return std::get<number_t>(value()); }
+  const number_t& number() const { return std::get<number_t>(value()); }
+  number_t* number_if() { return std::get_if<number_t>(&value()); }
+  const number_t* number_if() const { return std::get_if<number_t>(&value()); }
 
   bool& boolean() { return std::get<bool>(value()); }
   const bool& boolean() const { return std::get<bool>(value()); }

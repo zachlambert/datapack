@@ -22,8 +22,8 @@ TEST(Object, Edit) {
   e["bar"] = "bar";
   e["and"] = Object::null_t();
 
-  EXPECT_EQ(object["a"].floating(), 1.1);
-  EXPECT_EQ(object["b"].floating(), 2.2);
+  EXPECT_EQ(object["a"].number(), 1.1);
+  EXPECT_EQ(object["b"].number(), 2.2);
   EXPECT_EQ(object["c"][0].string(), "hello");
   EXPECT_EQ(object["c"][1].string(), "world");
   EXPECT_EQ(object["d"].boolean(), true);
@@ -32,7 +32,7 @@ TEST(Object, Edit) {
   EXPECT_TRUE(object["e"]["and"].is_null());
 
   auto object_a = object["a"];
-  EXPECT_EQ(object_a.floating(), 1.1);
+  EXPECT_EQ(object_a.number(), 1.1);
 
   c[0] = "goodbye";
   EXPECT_EQ(object["c"][0].string(), "goodbye");
@@ -45,7 +45,7 @@ TEST(Object, Edit) {
 
   object["c"] = 3.3;
   object["e"] = false;
-  EXPECT_EQ(object["c"].floating(), 3.3);
+  EXPECT_EQ(object["c"].number(), 3.3);
   EXPECT_EQ(object["e"].boolean(), false);
 }
 
@@ -63,17 +63,14 @@ TEST(Object, Compare) {
   ASSERT_TRUE(a == b);
 }
 
-#if 0
-TEST(Object, ConvertToObjectAndBack) {
+TEST(Object, Reader) {
   Entity in = Entity::example();
 
   datapack::Object object = datapack::write_object(in);
-  std::cerr << object << std::endl;
-  // Entity out = datapack::read_object<Entity>(object);
+  Entity out = datapack::read_object<Entity>(object);
 
-  // EXPECT_EQ(in, out);
+  EXPECT_EQ(in, out);
 }
-#endif
 
 TEST(Object, Writer) {
   using namespace datapack;
@@ -119,12 +116,7 @@ TEST(Object, Writer) {
     return expected;
   }();
 
-  std::cerr << object << std::endl;
-  std::cerr << object.at("index") << std::endl;
-  std::cerr << expected.at("index") << std::endl;
-
   EXPECT_TRUE(object.at("index") == expected.at("index"));
-#if 0
   EXPECT_TRUE(object.at("name") == expected.at("name"));
   EXPECT_TRUE(object.at("enabled") == expected.at("enabled"));
   EXPECT_TRUE(object.at("pose") == expected.at("pose"));
@@ -133,5 +125,4 @@ TEST(Object, Writer) {
   EXPECT_TRUE(object.at("sprite") == expected.at("sprite"));
   EXPECT_TRUE(object.at("items") == expected.at("items"));
   EXPECT_TRUE(object == expected);
-#endif
 }

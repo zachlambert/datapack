@@ -7,10 +7,8 @@ ObjectReader::ObjectReader(Object::ConstReference object) :
     node(object.iter()), list_start(false), next_variant_label(nullptr) {}
 
 void ObjectReader::number(NumberType type, void* value_out) {
-  double value;
-  if (auto x = node->integer_if()) {
-    value = *x;
-  } else if (node->floating_if()) {
+  Object::number_t value;
+  if (auto x = node->number_if()) {
     value = *x;
   } else {
     invalidate();

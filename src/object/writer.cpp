@@ -7,7 +7,7 @@ namespace datapack {
 ObjectWriter::ObjectWriter(Object::Reference object) : object(object), next_stride(0) {}
 
 void ObjectWriter::number(NumberType type, const void* value_in) {
-  Object::floating_t value;
+  Object::number_t value;
   switch (type) {
   case NumberType::I32:
     value = *(std::int32_t*)value_in;

@@ -193,16 +193,8 @@ Object load_json(const std::string& json) {
       continue;
     }
     try {
-      Object::integer_t result_int = std::strtoll(value.c_str(), nullptr, 10);
-      Object::floating_t result_float = std::strtod(value.c_str(), nullptr);
-      // Note: If a double/float has an integer value, comparisons are
-      // still valid since it is guaranteed to represent the integer
-      // exactly
-      if (result_int == result_float) {
-        *iter = result_int;
-      } else {
-        *iter = result_float;
-      }
+      Object::number_t result = std::strtod(value.c_str(), nullptr);
+      *iter = result;
       iter = iter.parent();
       continue;
     } catch (std::invalid_argument) {
@@ -282,9 +274,7 @@ std::string dump_json(const Object::ConstReference& object) {
       continue;
     }
 
-    if (auto value = iter->integer_if()) {
-      json += std::to_string(*value);
-    } else if (auto value = iter->floating_if()) {
+    if (auto value = iter->number_if()) {
       json += floating_to_string(*value);
     } else if (auto value = iter->string_if()) {
       json += "\"" + *value + "\"";

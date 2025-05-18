@@ -87,10 +87,7 @@ bool operator==(const Object::ConstReference& lhs, const Object::ConstReference&
           }
           const auto& rhs_value = *rhs_value_iter;
 
-          if constexpr (std::is_same_v<Object::integer_t, T>) {
-            return (rhs_value == lhs_value);
-          }
-          if constexpr (std::is_same_v<Object::floating_t, T>) {
+          if constexpr (std::is_same_v<Object::number_t, T>) {
             return std::abs(rhs_value - lhs_value) < float_threshold;
           }
           if constexpr (std::is_same_v<bool, T>) {
@@ -162,9 +159,7 @@ std::ostream& operator<<(std::ostream& os, Object::ConstReference object) {
       os << "map:";
     } else if (node->is_list()) {
       os << "list:";
-    } else if (auto value = node->integer_if()) {
-      os << *value << "";
-    } else if (auto value = node->floating_if()) {
+    } else if (auto value = node->number_if()) {
       os << *value;
     } else if (auto value = node->boolean_if()) {
       os << (*value ? "true" : "false");

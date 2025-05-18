@@ -269,7 +269,7 @@ private:
   int add_child(int parent, const std::string& key = "");
   int get_last_child(int node) const;
 
-  void index_assign(int index, const value_t& value);
+  void index_assign_primitive(int index, const value_t& value);
 
   int index_map_access(int parent, const std::string& key) const;
   int index_map_access_or_create(int parent, const std::string& key);

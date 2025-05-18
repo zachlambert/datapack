@@ -9,13 +9,13 @@ namespace datapack {
 
 template <>
 const Object::Reference& Object::Reference::operator=(const value_t& value) const {
-  object->index_assign(index, value);
+  object->index_assign_primitive(index, value);
   return *this;
 }
 
 template <>
 const Object::Reference& Object::Reference::operator=(const Object::Reference_<true>& value) const {
-  object->index_assign(index, value.iter());
+  object->index_assign_object(index, value.iter());
   return *this;
 }
 
@@ -102,7 +102,7 @@ Object::Object() : root_index(0) { nodes.push_back(Node(null_t(), "", -1, -1)); 
 
 Object::Object(ConstReference& value) : root_index(0) {
   nodes.push_back(Node(null_t(), "", -1, -1));
-  index_assign(root_index, value.iter());
+  index_assign_object(root_index, value.iter());
 }
 
 Object::operator Reference() { return Reference(this, root_index); }
@@ -110,12 +110,12 @@ Object::operator Reference() { return Reference(this, root_index); }
 Object::operator ConstReference() const { return ConstReference(this, root_index); }
 
 Object::Reference Object::operator=(const value_t& value) {
-  index_assign(root_index, value);
+  index_assign_primitive(root_index, value);
   return Reference(this, root_index);
 }
 
 Object::Reference Object::operator=(const Object::ConstReference& value) {
-  index_assign(root_index, value.iter());
+  index_assign_object(root_index, value.iter());
   return Reference(this, root_index);
 }
 
@@ -212,7 +212,7 @@ int Object::get_last_child(int node) const {
   return last_child;
 }
 
-void Object::index_assign(int index, const value_t& value) {
+void Object::index_assign_primitive(int index, const value_t& value) {
   index_clear(index);
   nodes[index].value = value;
 }
@@ -322,12 +322,14 @@ void Object::index_clear(int index) {
 }
 
 void Object::index_assign_object(int index, ConstIterator from) {
+  index_clear(index);
+  nodes[index].value = from->value();
+
   if (!from->is_map() && !from->is_list()) {
-    index_assign(index, from->value());
     return;
   }
   if (!from.child()) {
-    index_assign(index, null_t());
+    nodes[index].value = null_t();
     return;
   }
 

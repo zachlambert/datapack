@@ -33,13 +33,13 @@ void BinaryReader::number(NumberType type, void* value) {
 bool BinaryReader::boolean() { return value_bool(); }
 
 const char* BinaryReader::string() {
-  std::size_t max_len = data.size() - pos;
-  std::size_t len = strnlen((char*)&data[pos], max_len);
+  std::size_t max_len = buffer.size() - pos;
+  std::size_t len = strnlen((char*)&buffer[pos], max_len);
   if (len == max_len) {
     invalidate();
     return nullptr;
   }
-  const char* result = (char*)&data[pos];
+  const char* result = (char*)&buffer[pos];
   pos += (len + 1);
   return result;
 }
@@ -59,97 +59,51 @@ int BinaryReader::variant_begin(const std::span<const char*>& labels) {
 }
 
 std::span<const std::uint8_t> BinaryReader::binary() {
-  std::size_t size = length * stride;
-  if (pos + size > data.size()) {
-    invalidate();
-    return {nullptr, 0};
-  }
-
-  const std::uint8_t* output_data = &data[pos];
-  pos += size;
-  return std::make_tuple(output_data, length);
-}
-
-void BinaryReader::object_begin(std::size_t size) {
-  if (size == 0) {
-    return;
-  }
-  if (binary_depth == 0) {
-    binary_start = pos;
-  }
-  pad(size);
-  binary_depth++;
-}
-
-void BinaryReader::object_end(std::size_t size) {
-  if (size == 0) {
-    return;
-  }
-  pad(size);
-  binary_depth--;
-}
-
-void BinaryReader::list_begin(bool is_trivial) {
-  if (binary_depth != 0) {
-    invalidate();
-    return;
-  }
-  if (!is_trivial) {
-    return;
-  }
-  std::uint64_t length = 0;
+  std::uint64_t length;
   value_number(length);
-  trivial_list_remaining = length;
+  auto result = std::span(buffer.data() + pos, length);
+  pos += length;
+  return result;
+}
 
-  binary_depth++;
-  binary_start = pos;
+void BinaryReader::list_begin() {
+  std::uint64_t length;
+  value_number(length);
+  list_remaining.push(length);
 }
 
 bool BinaryReader::list_next() {
-  if (binary_depth > 0) {
-    if (trivial_list_remaining == 0) {
-      return false;
-    }
-    trivial_list_remaining--;
+  assert(!list_remaining.empty());
+  if (list_remaining.top() > 0) {
+    list_remaining.top()--;
     return true;
   }
-  return value_bool();
+  return false;
 }
 
 void BinaryReader::list_end() {
-  if (binary_depth == 0) {
-    return;
-  }
-  binary_depth--;
-  assert(binary_depth == 0);
-}
-
-void BinaryReader::pad(std::size_t size) {
-  if ((pos - binary_start) % size != 0) {
-    pos += (size - (pos - binary_start) % size);
-  }
+  assert(!list_remaining.empty());
+  assert(list_remaining.top() == 0);
+  list_remaining.pop();
 }
 
 template <typename T>
 void BinaryReader::value_number(T& value) {
-  if (binary_depth > 0) {
-    pad(sizeof(T));
-  }
-  if (pos + sizeof(T) > data.size()) {
+  if (pos + sizeof(T) > buffer.size()) {
     invalidate();
     return;
   }
 
-  value = *((T*)&data[pos]);
+  value = *((T*)&buffer[pos]);
   pos += sizeof(T);
 }
 
 bool BinaryReader::value_bool() {
-  if (pos + 1 > data.size()) {
+  if (pos + 1 > buffer.size()) {
     invalidate();
     return false;
   }
-  std::uint8_t value_int = *((bool*)&data[pos]);
+  std::uint8_t value_int = *((bool*)&buffer[pos]);
   if (value_int >= 2) {
     invalidate();
     return false;

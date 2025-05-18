@@ -1,8 +1,6 @@
 #pragma once
 
 #include <assert.h>
-#include <memory>
-#include <optional>
 #include <stack>
 #include <stdexcept>
 #include <string>

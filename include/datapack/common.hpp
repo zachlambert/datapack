@@ -1,3 +1,5 @@
+#pragma once
+
 #include "datapack/common/array.hpp"
 #include "datapack/common/enum.hpp"
 #include "datapack/common/number.hpp"

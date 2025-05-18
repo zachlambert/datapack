@@ -1,6 +1,5 @@
 #pragma once
 
-#include "datapack/constraint.hpp"
 #include "datapack/number.hpp"
 #include "datapack/packer.hpp"
 #include <cstdint>
@@ -9,7 +8,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include <tuple>
 
 namespace datapack {
 
@@ -27,19 +25,6 @@ public:
 
   template <writeable T>
   void value(const char* key, const T& value) {
-    object_next(key);
-    this->value(value);
-  }
-
-  template <writeable T, typename Constraint>
-  void value(const T& value, const Constraint& constraint) {
-    // constraint unused by Writer
-    pack(value, *this);
-  }
-
-  template <writeable T, typename Constraint>
-  void value(const char* key, const T& value, const Constraint& constraint) {
-    // constraint unused by Writer
     object_next(key);
     this->value(value);
   }

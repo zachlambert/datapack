@@ -3,36 +3,35 @@
 namespace datapack {
 
 template <bool Dynamic>
-void BinaryWriter_<Dynamic>::integer(IntType type, const void* value) {
+void BinaryWriter_<Dynamic>::number(NumberType type, const void* value) {
   switch (type) {
-  case IntType::I32:
+  case NumberType::I32:
     value_number(*(std::int32_t*)value);
     break;
-  case IntType::I64:
+  case NumberType::I64:
     value_number(*(std::int64_t*)value);
     break;
-  case IntType::U32:
+  case NumberType::U32:
     value_number(*(std::uint32_t*)value);
     break;
-  case IntType::U64:
+  case NumberType::U64:
     value_number(*(std::uint64_t*)value);
     break;
-  case IntType::U8:
+  case NumberType::U8:
     value_number(*(std::uint8_t*)value);
+    break;
+  case NumberType::F32:
+    value_number(*(float*)value);
+    break;
+  case NumberType::F64:
+    value_number(*(double*)value);
     break;
   }
 }
 
 template <bool Dynamic>
 void BinaryWriter_<Dynamic>::floating(FloatType type, const void* value) {
-  switch (type) {
-  case FloatType::F32:
-    value_number(*(float*)value);
-    break;
-  case FloatType::F64:
-    value_number(*(double*)value);
-    break;
-  }
+  switch (type) {}
 }
 
 template <bool Dynamic>
@@ -66,24 +65,17 @@ void BinaryWriter_<Dynamic>::variant_begin(int value, const char* label) {
 }
 
 template <bool Dynamic>
-void BinaryWriter_<Dynamic>::binary(
-    const std::uint8_t* input_data,
-    std::size_t length,
-    std::size_t stride,
-    bool fixed_length) {
-  std::size_t size = length * stride;
-  if (!fixed_length) {
-    value_number(std::uint64_t(length));
-  }
-  if (!resize(pos + size)) {
+void BinaryWriter_<Dynamic>::binary(const std::span<std::uint8_t>& input_data) {
+  value_number(std::uint64_t(input_data.size()));
+  if (!resize(pos + input_data.size())) {
     return;
   }
-  std::memcpy(&data[pos], input_data, size);
-  pos += size;
+  std::memcpy(&data[pos], input_data.data(), input_data.size());
+  pos += input_data.size();
 }
 
 template <bool Dynamic>
-void BinaryWriter_<Dynamic>::object_begin(std::size_t size) {
+void BinaryWriter_<Dynamic>::object_begin() {
   if (size == 0) {
     return;
   }

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "datapack/datapack.hpp"
 #include "datapack/labelled_variant.hpp"
-#include "datapack/packers.hpp"
 
 namespace datapack {
 

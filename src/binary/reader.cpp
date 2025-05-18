@@ -1,35 +1,30 @@
-#include "datapack/format/binary_reader.hpp"
+#include "datapack/binary.hpp"
 #include <assert.h>
 #include <cstring>
 
 namespace datapack {
 
-void BinaryReader::integer(IntType type, void* value) {
+void BinaryReader::number(NumberType type, void* value) {
   switch (type) {
-  case IntType::I32:
+  case NumberType::I32:
     value_number(*(std::int32_t*)value);
     break;
-  case IntType::I64:
+  case NumberType::I64:
     value_number(*(std::int64_t*)value);
     break;
-  case IntType::U32:
+  case NumberType::U32:
     value_number(*(std::uint32_t*)value);
     break;
-  case IntType::U64:
+  case NumberType::U64:
     value_number(*(std::uint64_t*)value);
     break;
-  case IntType::U8:
+  case NumberType::U8:
     value_number(*(std::uint8_t*)value);
     break;
-  }
-}
-
-void BinaryReader::floating(FloatType type, void* value) {
-  switch (type) {
-  case FloatType::F32:
+  case NumberType::F32:
     value_number(*(float*)value);
     break;
-  case FloatType::F64:
+  case NumberType::F64:
     value_number(*(double*)value);
     break;
   }
@@ -63,12 +58,7 @@ int BinaryReader::variant_begin(const std::span<const char*>& labels) {
   return value;
 }
 
-std::tuple<const std::uint8_t*, std::size_t> BinaryReader::binary(
-    std::size_t length,
-    std::size_t stride) {
-  if (length == 0) {
-    value_number(length);
-  }
+std::span<const std::uint8_t> BinaryReader::binary() {
   std::size_t size = length * stride;
   if (pos + size > data.size()) {
     invalidate();

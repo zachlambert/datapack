@@ -18,18 +18,18 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/binary/reader.cpp
         src/binary/writer.cpp
         src/encode/base64.cpp
-        src/encode/float_string.cpp
+        src/encode/floating_string.cpp
         src/object/object.cpp
-        src/object/operations.cpp
-        src/object/reader.cpp
-        src/object/writer.cpp
-        src/schema/token.cpp
-        src/schema/tokenizer.cpp
-        src/schema/schema.cpp
-        src/schema/binary.cpp
-        src/debug.cpp
-        src/json.cpp
-        src/random.cpp
+        # src/object/operations.cpp
+        # src/object/reader.cpp
+        # src/object/writer.cpp
+        # src/schema/token.cpp
+        # src/schema/tokenizer.cpp
+        # src/schema/schema.cpp
+        # src/schema/binary.cpp
+        # src/debug.cpp
+        # src/json.cpp
+        # src/random.cpp
     )
     target_include_directories(datapack PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -48,6 +48,9 @@ else()
 endif()
 
 # Additional targets
+
+# TEMPORARY
+set(BUILD_ADDITIONAL_TARGETS FALSE)
 
 if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_subdirectory(examples)

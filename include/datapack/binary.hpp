@@ -39,7 +39,6 @@ public:
   void list_end() override;
 
 private:
-  void pad(std::size_t size);
   template <typename T>
   void value_number(T& value);
   bool value_bool();

@@ -138,7 +138,7 @@ public:
   virtual void boolean(bool value) = 0;
   virtual void string(const char* string) = 0;
   virtual void enumerate(int value, const char* label) = 0;
-  virtual void binary(const std::span<const std::uint8_t>& span);
+  virtual void binary(const std::span<const std::uint8_t>& data);
 
   // Single-element containers
 

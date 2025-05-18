@@ -1,6 +1,5 @@
 #pragma once
 
-#include "datapack/datapack.hpp"
 #include <concepts>
 #include <span>
 
@@ -36,16 +35,6 @@ bool enum_from_label(const char* label, T& value) {
 template <labelled_enum T>
 const char* enum_to_label(const T& value) {
   return enum_labels<T>[(int)value];
-}
-
-template <labelled_enum T>
-void pack(const T& value, Writer& writer) {
-  writer.enumerate((int)value, enum_labels<T>[(int)value]);
-}
-
-template <labelled_enum T>
-void pack(T& value, Reader& reader) {
-  value = (T)reader.enumerate(enum_labels<T>);
 }
 
 } // namespace datapack

@@ -1,5 +1,5 @@
-#include "datapack/util/object_writer.hpp"
 #include "datapack/encode/base64.hpp"
+#include "datapack/object.hpp"
 #include <cstring>
 
 namespace datapack {

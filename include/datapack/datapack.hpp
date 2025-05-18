@@ -1,5 +1,6 @@
 #pragma once
 
+#include "datapack/labelled_enum.hpp"
 #include <concepts>
 #include <cstdint>
 #include <span>
@@ -174,5 +175,15 @@ DATAPACK_INLINE(double, value, packer) { packer.number(NumberType::F64, &value);
 
 inline void pack(const bool& value, Writer& writer) { writer.boolean(value); }
 inline void pack(bool& value, Reader& reader) { value = reader.boolean(); }
+
+template <labelled_enum T>
+void pack(const T& value, Writer& writer) {
+  writer.enumerate((int)value, enum_labels<T>[(int)value]);
+}
+
+template <labelled_enum T>
+void pack(T& value, Reader& reader) {
+  value = (T)reader.enumerate(enum_labels<T>);
+}
 
 } // namespace datapack

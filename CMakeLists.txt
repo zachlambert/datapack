@@ -15,24 +15,21 @@ endif()
 
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_library(datapack SHARED
-        src/util/debug.cpp
-        src/util/random.cpp
-
+        src/binary/reader.cpp
+        src/binary/writer.cpp
         src/encode/base64.cpp
         src/encode/float_string.cpp
-
-        src/object.cpp
-        src/util/object_writer.cpp
-        src/util/object_reader.cpp
-
-        src/format/binary_reader.cpp
-        src/format/binary_writer.cpp
-        src/format/json.cpp
-
+        src/object/object.cpp
+        src/object/operations.cpp
+        src/object/reader.cpp
+        src/object/writer.cpp
         src/schema/token.cpp
         src/schema/tokenizer.cpp
         src/schema/schema.cpp
         src/schema/binary.cpp
+        src/debug.cpp
+        src/json.cpp
+        src/random.cpp
     )
     target_include_directories(datapack PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
@@ -41,7 +38,8 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
 
 else()
     add_library(datapack STATIC
-        src/format/binary_reader.cpp
+        src/binary/reader.cpp
+        src/binary/writer.cpp
     )
     target_include_directories(datapack PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

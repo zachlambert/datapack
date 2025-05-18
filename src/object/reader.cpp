@@ -1,5 +1,5 @@
-#include "datapack/util/object_reader.hpp"
 #include "datapack/encode/base64.hpp"
+#include "datapack/object.hpp"
 
 namespace datapack {
 

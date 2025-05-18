@@ -1,8 +1,22 @@
-#include <datapack/common.hpp>
+#include <datapack/debug.hpp>
 #include <datapack/examples/entity.hpp>
-#include <datapack/schema/tokenizer.hpp>
-#include <datapack/util/debug.hpp>
+#include <datapack/random.hpp>
+#include <datapack/schema/schema.hpp>
+#include <datapack/std/string.hpp>
+#include <datapack/std/variant.hpp>
+#include <datapack/std/vector.hpp>
 #include <gtest/gtest.h>
+
+TEST(Schema, SchemaUsage) {
+  datapack::Schema schema = datapack::create_schema<Entity>();
+
+  std::stringstream ss;
+  datapack::RandomReader reader;
+  datapack::DebugWriter writer(ss);
+
+  datapack::use_schema(schema, reader, writer);
+  // No expect/assert, juts check it doesn't crash
+}
 
 TEST(Schema, Tokenizer) {
   using namespace datapack;
@@ -16,72 +30,64 @@ TEST(Schema, Tokenizer) {
   std::vector<Token> expected = {
       token::ObjectBegin(),
       token::ObjectNext("index"),
-      IntType::I32,
+      NumberType::I32,
       token::ObjectNext("name"),
       std::string(),
       token::ObjectNext("enabled"),
       bool(),
       token::ObjectNext("pose"),
-      token::ObjectBegin(sizeof(Pose)),
+      token::ObjectBegin(),
       token::ObjectNext("x"),
-      FloatType::F64,
+      NumberType::F64,
       token::ObjectNext("y"),
-      FloatType::F64,
+      NumberType::F64,
       token::ObjectNext("angle"),
-      FloatType::F64,
-      token::ObjectEnd(sizeof(Pose)),
+      NumberType::F64,
+      token::ObjectEnd(),
       token::ObjectNext("physics"),
-      token::Enumerate(std::vector<std::string>{"dynamic", "kinematic", "static"}),
+      token::Enumerate({"dynamic", "kinematic", "static"}),
       token::ObjectNext("hitbox"),
       token::Optional(),
-      token::VariantBegin(std::vector<std::string>{"circle", "rect"}),
+      token::VariantBegin({"circle", "rect"}),
       token::VariantNext(0),
-      token::ObjectBegin(sizeof(Circle)),
+      token::ObjectBegin(),
       token::ObjectNext("radius"),
-      FloatType::F64,
-      token::ObjectEnd(sizeof(Circle)),
+      NumberType::F64,
+      token::ObjectEnd(),
       token::VariantNext(1),
-      token::ObjectBegin(sizeof(Rect)),
+      token::ObjectBegin(),
       token::ObjectNext("width"),
-      FloatType::F64,
+      NumberType::F64,
       token::ObjectNext("height"),
-      FloatType::F64,
-      token::ObjectEnd(sizeof(Rect)),
+      NumberType::F64,
+      token::ObjectEnd(),
       token::VariantEnd(),
       token::ObjectNext("sprite"),
       token::ObjectBegin(),
       token::ObjectNext("width"),
-      IntType::U64,
+      NumberType::U64,
       token::ObjectNext("height"),
-      IntType::U64,
+      NumberType::U64,
       token::ObjectNext("data"),
-      token::List(true),
-      token::ObjectBegin(sizeof(Sprite::Pixel)),
-      token::ObjectNext("r"),
-      FloatType::F64,
-      token::ObjectNext("g"),
-      FloatType::F64,
-      token::ObjectNext("b"),
-      FloatType::F64,
-      token::ObjectEnd(sizeof(Sprite::Pixel)),
+      token::Binary(),
       token::ObjectEnd(),
       token::ObjectNext("items"),
       token::List(),
       token::ObjectBegin(),
       token::ObjectNext("count"),
-      IntType::U64,
+      NumberType::U64,
       token::ObjectNext("name"),
       std::string(),
       token::ObjectEnd(),
       token::ObjectNext("assigned_items"),
-      token::TupleBegin(sizeof(Entity::assigned_items)),
+      token::TupleBegin(),
       token::TupleNext(),
-      IntType::I32,
+      NumberType::I32,
       token::TupleNext(),
-      IntType::I32,
+      NumberType::I32,
       token::TupleNext(),
-      IntType::I32,
-      token::TupleEnd(sizeof(Entity::assigned_items)),
+      NumberType::I32,
+      token::TupleEnd(),
       token::ObjectEnd()};
 
   ASSERT_EQ(tokens.size(), expected.size());

@@ -1,5 +1,5 @@
 #include <datapack/examples/entity.hpp>
-#include <datapack/format/json.hpp>
+#include <datapack/json.hpp>
 #include <gtest/gtest.h>
 
 static std::vector<std::string> get_lines(const std::string& text) {

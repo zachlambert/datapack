@@ -51,56 +51,7 @@ endif()
 if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_subdirectory(examples)
     add_subdirectory(demo)
-
-    return()
-
-    include(FetchContent)
-
-    FetchContent_Declare(googletest URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip)
-    include(GoogleTest)
-    set(INSTALL_GTEST OFF)
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-
-    enable_testing()
-
-    add_executable(test_util
-        test/util/debug.cpp
-        test/util/random.cpp
-    )
-    target_link_libraries(test_util datapack datapack_examples GTest::gtest_main)
-    gtest_discover_tests(test_util)
-
-    add_executable(test_encode
-        test/encode/base64.cpp
-        test/encode/float_string.cpp
-    )
-    target_link_libraries(test_encode datapack GTest::gtest_main)
-    gtest_discover_tests(test_encode)
-
-    add_executable(test_object
-        test/object/object.cpp
-        test/object/writer.cpp
-        test/object/reader.cpp
-    )
-    target_link_libraries(test_object datapack datapack_examples GTest::gtest_main)
-    gtest_discover_tests(test_object)
-
-    add_executable(test_format
-        test/format/binary.cpp
-        test/format/binary_array.cpp
-        test/format/json.cpp
-    )
-    target_link_libraries(test_format datapack datapack_examples GTest::gtest_main)
-    gtest_discover_tests(test_format)
-
-    add_executable(test_schema
-        test/schema/tokenizer.cpp
-        test/schema/schema.cpp
-        test/schema/binary.cpp
-    )
-    target_link_libraries(test_schema datapack datapack_examples GTest::gtest_main)
-    gtest_discover_tests(test_schema)
+    add_subdirectory(test)
 endif()
 
 

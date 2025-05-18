@@ -1,5 +1,8 @@
 #include "datapack/debug.hpp"
+
+#ifdef PRINT_BINARY
 #include "datapack/encode/base64.hpp"
+#endif
 
 namespace datapack {
 
@@ -44,7 +47,11 @@ void DebugWriter::enumerate(int value, const char* label) {
 }
 
 void DebugWriter::binary(const std::span<const std::uint8_t>& data) {
+#ifdef PRINT_BINARY
   os << "(binary, length = " << data.size() << ", data = '" << base64_encode(data) << "'),\n";
+#else
+  os << "(binary, length = " << data.size() << "),\n";
+#endif
 }
 
 void DebugWriter::optional_begin(bool has_value) {

@@ -1,5 +1,5 @@
+#include <datapack/debug.hpp>
 #include <datapack/examples/entity.hpp>
-#include <datapack/util/debug.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -15,12 +15,12 @@ static std::vector<std::string> get_lines(const std::string& text) {
   return lines;
 }
 
-TEST(Util, Debug) {
+TEST(Debug, ProducesCorrectOutput) {
   const std::string expected = R"((object) {
     index: 5,
     name: player,
     enabled: true,
-    pose: (object, trivial size = 24) {
+    pose: (object) {
         x: 1,
         y: 2,
         angle: 3,
@@ -28,7 +28,7 @@ TEST(Util, Debug) {
     physics: (enum, 1 = kinematic),
     hitbox: (optional, has_value) {
         (variant, 0 = circle) {
-            (object, trivial size = 8) {
+            (object) {
                 radius: 1,
             },
         },
@@ -36,28 +36,7 @@ TEST(Util, Debug) {
     sprite: (object) {
         width: 2,
         height: 2,
-        data: (list, trivial) {
-            (object, trivial size = 24) {
-                r: 0.25,
-                g: 0.25,
-                b: 0,
-            },
-            (object, trivial size = 24) {
-                r: 0.25,
-                g: 0.75,
-                b: 0,
-            },
-            (object, trivial size = 24) {
-                r: 0.75,
-                g: 0.25,
-                b: 0,
-            },
-            (object, trivial size = 24) {
-                r: 0.75,
-                g: 0.75,
-                b: 0,
-            },
-        },
+        data: (binary, length = 96),
     },
     items: (list) {
         (object) {
@@ -77,7 +56,7 @@ TEST(Util, Debug) {
             name: gold,
         },
     },
-    assigned_items: (tuple, trivial size = 12) {
+    assigned_items: (tuple) {
         1,
         2,
         -1,

@@ -1,6 +1,5 @@
+#include <datapack/binary.hpp>
 #include <datapack/examples/entity.hpp>
-#include <datapack/format/binary_reader.hpp>
-#include <datapack/format/binary_writer.hpp>
 #include <gtest/gtest.h>
 
 TEST(Format, Binary) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "datapack/datapack.hpp"
 #include <assert.h>
 #include <stack>
 #include <stdexcept>
@@ -327,5 +328,92 @@ inline bool operator==(const Object& lhs, const Object& rhs) {
   return Object::ConstReference(lhs) == Object::ConstReference(rhs);
 }
 std::ostream& operator<<(std::ostream& os, Object::ConstReference object);
+
+class ObjectReader : public Reader {
+public:
+  ObjectReader(Object::ConstReference object);
+
+  void number(NumberType type, void* value) override;
+  bool boolean() override;
+  const char* string() override;
+  int enumerate(const std::span<const char*>& labels) override;
+  std::span<const std::uint8_t> binary() override;
+
+  bool optional_begin() override;
+  void optional_end() override;
+
+  int variant_begin(const std::span<const char*>& labels) override;
+  void variant_end() override;
+
+  void object_begin() override;
+  void object_end() override;
+  void object_next(const char* key) override;
+
+  void tuple_begin() override;
+  void tuple_end() override;
+  void tuple_next() override;
+
+  void list_begin() override;
+  bool list_next() override;
+  void list_end() override;
+
+private:
+  Object::ConstIterator node;
+  std::stack<Object::ConstIterator> nodes;
+  bool list_start;
+  const char* next_variant_label;
+  std::vector<std::uint8_t> data_temp;
+};
+
+class ObjectWriter : public Writer {
+public:
+  ObjectWriter(Object::Reference object);
+
+  void number(NumberType type, const void* value) override;
+  void boolean(bool value) override;
+  void string(const char* value) override;
+  void enumerate(int value, const char* label) override;
+  void binary(const std::span<std::uint8_t>& data) override;
+
+  void optional_begin(bool has_value) override;
+  void optional_end() override;
+
+  void variant_begin(int value, const char* label) override;
+  void variant_end() override;
+
+  void object_begin() override;
+  void object_next(const char* key) override;
+  void object_end() override;
+
+  void tuple_begin() override;
+  void tuple_next() override;
+  void tuple_end() override;
+
+  void list_begin() override;
+  void list_next() override;
+  void list_end() override;
+
+private:
+  void set_value(const Object::value_t& value);
+
+  Object::Reference object;
+  std::stack<Object::Iterator> nodes;
+  std::string next_key;
+  std::size_t next_stride;
+};
+
+template <readable T>
+T read_object(Object::ConstReference object) {
+  T result;
+  ObjectReader(object).value(result);
+  return result;
+}
+
+template <writeable T>
+Object write_object(const T& value) {
+  Object object;
+  ObjectWriter(object).value(value);
+  return object;
+}
 
 } // namespace datapack

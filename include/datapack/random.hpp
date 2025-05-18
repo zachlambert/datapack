@@ -1,11 +1,11 @@
 #pragma once
 
-#include <datapack/reader.hpp>
-#include <tuple>
+#include "datapack/datapack.hpp"
+#include <cstdint>
 #include <stack>
 #include <string>
+#include <tuple>
 #include <vector>
-#include <cstdint>
 
 namespace datapack {
 
@@ -13,13 +13,11 @@ class RandomReader : public Reader {
 public:
   RandomReader();
 
-  void integer(IntType type, void* value) override;
-  void floating(FloatType type, void* value) override;
+  void number(NumberType type, void* value) override;
   bool boolean() override;
   const char* string() override;
   int enumerate(const std::span<const char*>& labels) override;
-  std::tuple<const std::uint8_t*, std::size_t> binary(std::size_t length, std::size_t stride)
-      override;
+  std::span<const std::uint8_t> binary() override;
 
   bool optional_begin() override;
   void optional_end() override {}
@@ -27,15 +25,15 @@ public:
   int variant_begin(const std::span<const char*>& labels) override;
   void variant_end() override {}
 
-  void object_begin(std::size_t) override {}
-  void object_end(std::size_t) override {}
+  void object_begin() override {}
+  void object_end() override {}
   void object_next(const char* key) override {}
 
-  void tuple_begin(std::size_t trivial_size = 0) override {}
-  void tuple_end(std::size_t trivial_size = 0) override {}
+  void tuple_begin() override {}
+  void tuple_end() override {}
   void tuple_next() override {}
 
-  void list_begin(bool is_trivial = false) override;
+  void list_begin() override;
   bool list_next() override;
   void list_end() override;
 

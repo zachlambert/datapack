@@ -72,11 +72,13 @@ void BinaryWriter::list_end() {
 // method occurs in the same source file
 template <typename T>
 void BinaryWriter::value_number(T value) {
+  buffer.resize(pos + sizeof(T));
   *((T*)&buffer[pos]) = value;
   pos += sizeof(T);
 }
 
 void BinaryWriter::value_bool(bool value) {
+  buffer.resize(pos + 1);
   buffer[pos] = (value ? 0x01 : 0x00);
   pos++;
 }

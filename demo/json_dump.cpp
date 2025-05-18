@@ -1,6 +1,6 @@
+#include <datapack/debug.hpp>
 #include <datapack/examples/entity.hpp>
-#include <datapack/format/json.hpp>
-#include <datapack/util/debug.hpp>
+#include <datapack/json.hpp>
 #include <iostream>
 
 int main() {

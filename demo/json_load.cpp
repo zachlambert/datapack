@@ -1,4 +1,4 @@
-#include <datapack/format/json.hpp>
+#include <datapack/json.hpp>
 #include <iostream>
 
 int main() {

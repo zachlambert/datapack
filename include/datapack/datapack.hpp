@@ -61,6 +61,69 @@ concept readable_trivial = packable_trivial<T, MODE_READ>;
     packer.object_end();                                                                           \
   }
 
+// Writer
+template <>
+class Packer<MODE_WRITE> {
+public:
+  Packer() {}
+
+  // Write values
+
+  template <writeable T>
+  void value(const T& value) {
+    pack(value, *this);
+  }
+
+  template <writeable T>
+  void value(const char* key, const T& value) {
+    object_next(key);
+    pack(value, *this);
+  }
+
+  template <writeable_trivial T>
+  void value_trivial(T& value) {
+    pack_trivial(value, *this);
+  }
+
+  template <writeable_trivial T>
+  void value_trivial(const char* key, T& value) {
+    object_next(key);
+    pack_trivial(value, *this);
+  }
+
+  // Primitives
+
+  virtual void number(NumberType type, const void* value) = 0;
+  virtual void boolean(bool value) = 0;
+  virtual void string(const char* string) = 0;
+  virtual void enumerate(int value, const char* label) = 0;
+  virtual void binary(const std::span<const std::uint8_t>& data) = 0;
+
+  // Single-element containers
+
+  virtual void optional_begin(bool has_value) = 0;
+  virtual void optional_end() = 0;
+
+  virtual void variant_begin(int value, const char* label) = 0;
+  virtual void variant_end() = 0;
+
+  // Fixed-size containers
+
+  virtual void object_begin() = 0;
+  virtual void object_next(const char* key) = 0;
+  virtual void object_end() = 0;
+
+  virtual void tuple_begin() = 0;
+  virtual void tuple_next() = 0;
+  virtual void tuple_end() = 0;
+
+  // Variable-size containers
+
+  virtual void list_begin() = 0;
+  virtual void list_next() = 0;
+  virtual void list_end() = 0;
+};
+
 // Reader
 template <>
 class Packer<MODE_READ> {
@@ -131,69 +194,6 @@ public:
 private:
   bool valid_;
   const bool is_tokenizer_;
-};
-
-// Writer
-template <>
-class Packer<MODE_WRITE> {
-public:
-  Packer() {}
-
-  // Write values
-
-  template <writeable T>
-  void value(const T& value) {
-    pack(value, *this);
-  }
-
-  template <writeable T>
-  void value(const char* key, const T& value) {
-    object_next(key);
-    pack(value, *this);
-  }
-
-  template <writeable_trivial T>
-  void value_trivial(T& value) {
-    pack_trivial(value, *this);
-  }
-
-  template <writeable_trivial T>
-  void value_trivial(const char* key, T& value) {
-    object_next(key);
-    pack_trivial(value, *this);
-  }
-
-  // Primitives
-
-  virtual void number(NumberType type, const void* value) = 0;
-  virtual void boolean(bool value) = 0;
-  virtual void string(const char* string) = 0;
-  virtual void enumerate(int value, const char* label) = 0;
-  virtual void binary(const std::span<const std::uint8_t>& data);
-
-  // Single-element containers
-
-  virtual void optional_begin(bool has_value) = 0;
-  virtual void optional_end() = 0;
-
-  virtual void variant_begin(int value, const char* label) = 0;
-  virtual void variant_end() = 0;
-
-  // Fixed-size containers
-
-  virtual void object_begin() = 0;
-  virtual void object_next(const char* key) = 0;
-  virtual void object_end() = 0;
-
-  virtual void tuple_begin() = 0;
-  virtual void tuple_next() = 0;
-  virtual void tuple_end() = 0;
-
-  // Variable-size containers
-
-  virtual void list_begin() = 0;
-  virtual void list_next() = 0;
-  virtual void list_end() = 0;
 };
 
 DATAPACK_INLINE(std::int32_t, value, packer) { packer.number(NumberType::I32, &value); }

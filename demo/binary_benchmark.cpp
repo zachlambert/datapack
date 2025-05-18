@@ -1,11 +1,10 @@
 #include <assert.h>
 #include <chrono>
 #include <cstring>
-#include <datapack/common/vector.hpp>
+#include <datapack/binary.hpp>
 #include <datapack/examples/entity.hpp>
-#include <datapack/format/binary_reader.hpp>
-#include <datapack/format/binary_writer.hpp>
-#include <datapack/util/random.hpp>
+#include <datapack/random.hpp>
+#include <datapack/std/vector.hpp>
 #include <functional>
 #include <iostream>
 
@@ -16,9 +15,9 @@ void measure(
     const std::function<Clock::duration()>& func) {
   // A few dummy invocations at the start to avoid one-off initial costs
 #if 0
-    for (std::size_t i = 0; i < 5; i++) {
-        func();
-    }
+  for (std::size_t i = 0; i < 5; i++) {
+    func();
+  }
 #endif
 
   Clock::duration::rep nanos = 0;
@@ -232,13 +231,11 @@ int main() {
   for (std::size_t n = 0; n < 20; n++) {
     input.push_back(datapack::random<Entity>());
   }
-#if 1
   for (auto& entity : input) {
-    entity.sprite.width = 2;
-    entity.sprite.height = 2;
-    entity.sprite.data.resize(4);
+    entity.sprite.width = 20;
+    entity.sprite.height = 20;
+    entity.sprite.data.resize(20 * 20);
   }
-#endif
   std::size_t reserve_size = datapack::write_binary(input).size() * 2;
   std::size_t sprite_size = input[0].sprite.data.size();
 
@@ -249,65 +246,42 @@ int main() {
     for (auto& entity : output) {
       entity.sprite.data.reserve(sprite_size);
     }
-    measure("binary write without binary arrays", N, [&]() {
-      datapack::BinaryWriter writer(data, false);
-      auto before = Clock::now();
-      writer.value(input);
-      auto after = Clock::now();
-      return after - before;
-    });
-    measure("binary read without binary arrays", N, [&]() {
-      datapack::BinaryReader reader(data, false);
-      auto before = Clock::now();
-      reader.value(output);
-      auto after = Clock::now();
-      return after - before;
-    });
-  }
-
-  {
-    std::vector<std::uint8_t> data;
-    data.reserve(reserve_size);
-    std::vector<Entity> output(input.size());
-    for (auto& entity : output) {
-      entity.sprite.data.reserve(sprite_size);
-    }
-    measure("binary write with binary arrays", N, [&]() {
-      datapack::BinaryWriter writer(data, true);
-      auto before = Clock::now();
-      // printf("Input size: %zu\n", input.size());
-      writer.value(input);
-      auto after = Clock::now();
-      return after - before;
-    });
-    measure("binary read with binary arrays", N, [&]() {
-      datapack::BinaryReader reader(data, true);
-      auto before = Clock::now();
-      reader.value(output);
-      // printf("Output size: %zu\n", output.size());
-      auto after = Clock::now();
-      return after - before;
-    });
-  }
-
-  {
-    std::vector<std::uint8_t> data;
-    data.reserve(reserve_size);
-    std::vector<Entity> output(input.size());
-    for (auto& entity : output) {
-      entity.sprite.data.reserve(sprite_size);
-    }
-    measure("binary direct write", N, [&]() {
+    measure("binary write direct", N, [&]() {
       auto before = Clock::now();
       write_direct(input, data);
       // printf("Input size: %zu\n", input.size());
       auto after = Clock::now();
       return after - before;
     });
-    measure("binary direct read", N, [&]() {
+    measure("binary read direct", N, [&]() {
       auto before = Clock::now();
       read_direct(output, data);
       // printf("Output size: %zu\n", input.size());
+      auto after = Clock::now();
+      return after - before;
+    });
+  }
+
+  {
+    std::vector<std::uint8_t> data;
+    data.reserve(reserve_size);
+    std::vector<Entity> output(input.size());
+    for (auto& entity : output) {
+      entity.sprite.data.reserve(sprite_size);
+    }
+    measure("binary write with datapack", N, [&]() {
+      datapack::BinaryWriter writer(data);
+      auto before = Clock::now();
+      // printf("Input size: %zu\n", input.size());
+      writer.value(input);
+      auto after = Clock::now();
+      return after - before;
+    });
+    measure("binary read with datapack", N, [&]() {
+      datapack::BinaryReader reader(data);
+      auto before = Clock::now();
+      reader.value(output);
+      // printf("Output size: %zu\n", output.size());
       auto after = Clock::now();
       return after - before;
     });

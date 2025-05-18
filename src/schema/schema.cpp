@@ -1,5 +1,7 @@
 #include "datapack/schema/schema.hpp"
-#include "datapack/common.hpp"
+#include "datapack/std/string.hpp"
+#include "datapack/std/variant.hpp"
+#include "datapack/std/vector.hpp"
 #include <stdexcept>
 
 #include <stack>
@@ -139,16 +141,16 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
     const auto& token = schema.tokens[token_pos];
     token_pos++;
 
-    if (auto value = std::get_if<token::ObjectBegin>(&token)) {
+    if (std::get_if<token::ObjectBegin>(&token)) {
       states.push(State(StateType::None, 0, 0, 0));
-      reader.object_begin(value->size);
-      writer.object_begin(value->size);
+      reader.object_begin();
+      writer.object_begin();
       continue;
     }
-    if (auto value = std::get_if<token::ObjectEnd>(&token)) {
+    if (std::get_if<token::ObjectEnd>(&token)) {
       states.pop();
-      reader.object_end(value->size);
-      writer.object_end(value->size);
+      reader.object_end();
+      writer.object_end();
       continue;
     }
     if (auto value = std::get_if<token::ObjectNext>(&token)) {
@@ -157,16 +159,16 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
       continue;
     }
 
-    if (auto value = std::get_if<token::TupleBegin>(&token)) {
+    if (std::get_if<token::TupleBegin>(&token)) {
       states.push(State(StateType::None, 0, 0, 0));
-      reader.tuple_begin(value->size);
-      writer.tuple_begin(value->size);
+      reader.tuple_begin();
+      writer.tuple_begin();
       continue;
     }
-    if (auto value = std::get_if<token::TupleEnd>(&token)) {
+    if (std::get_if<token::TupleEnd>(&token)) {
       states.pop();
-      reader.tuple_end(value->size);
-      writer.tuple_end(value->size);
+      reader.tuple_end();
+      writer.tuple_end();
       continue;
     }
     if (std::get_if<token::TupleNext>(&token)) {
@@ -175,9 +177,9 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
       continue;
     }
 
-    if (auto value = std::get_if<token::List>(&token)) {
-      reader.list_begin(value->is_trivial);
-      writer.list_begin(value->is_trivial);
+    if (std::get_if<token::List>(&token)) {
+      reader.list_begin();
+      writer.list_begin();
 
       states.push(State(StateType::List, token_pos, get_tokens_end(schema.tokens, token_pos), 0));
       continue;
@@ -227,14 +229,10 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
       continue;
     }
 
-    if (auto x = std::get_if<IntType>(&token)) {
-      std::uint64_t dummy; // Fits all integer types
-      reader.integer(*x, &dummy);
-      writer.integer(*x, &dummy);
-    } else if (auto x = std::get_if<FloatType>(&token)) {
-      std::uint64_t dummy; // Fits all floating types
-      reader.floating(*x, &dummy);
-      writer.floating(*x, &dummy);
+    if (auto x = std::get_if<NumberType>(&token)) {
+      std::uint8_t dummy_buffer[8]; // Large enough for all number types
+      reader.number(*x, dummy_buffer);
+      writer.number(*x, dummy_buffer);
     } else if (std::get_if<bool>(&token)) {
       writer.boolean(reader.boolean());
     } else if (std::get_if<std::string>(&token)) {
@@ -249,8 +247,8 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
       int enum_value = reader.enumerate(labels_cstr);
       writer.enumerate(enum_value, labels_cstr[enum_value]);
     } else if (auto value = std::get_if<token::Binary>(&token)) {
-      auto [data, length] = reader.binary(value->length, value->stride);
-      writer.binary(data, length, value->stride, value->length != 0);
+      auto data = reader.binary();
+      writer.binary(data);
     } else {
       throw std::runtime_error("Shouldn't be here");
     }

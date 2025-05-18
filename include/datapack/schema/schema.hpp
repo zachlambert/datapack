@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datapack/packer.hpp"
+#include "datapack/datapack.hpp"
 #include "datapack/schema/token.hpp"
 #include "datapack/schema/tokenizer.hpp"
 
@@ -10,20 +10,21 @@ struct Schema {
   std::vector<Token> tokens;
 };
 
-template <readable T> Schema create_schema() {
+template <readable T>
+Schema create_schema() {
   T dummy;
   Schema schema;
   Tokenizer(schema.tokens).value(dummy);
   return schema;
 }
 
-void use_schema(const Schema &schema, Reader &reader, Writer &writer);
-inline void use_schema(const Schema &schema, Reader &&reader, Writer &&writer) {
+void use_schema(const Schema& schema, Reader& reader, Writer& writer);
+inline void use_schema(const Schema& schema, Reader&& reader, Writer&& writer) {
   use_schema(schema, reader, writer);
 }
 
 DATAPACK(Schema);
 
-bool operator==(const Schema &lhs, const Schema &rhs);
+bool operator==(const Schema& lhs, const Schema& rhs);
 
 } // namespace datapack

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "datapack/datapack.hpp"
+#include <string>
 
 namespace datapack {
 

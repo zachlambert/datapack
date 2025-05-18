@@ -3,13 +3,11 @@
 namespace datapack {
 
 Tokenizer::Tokenizer(std::vector<Token>& tokens) :
-    Reader(false, true, false), tokens(tokens), first_element(false) {
+    Reader(true), tokens(tokens), first_element(false) {
   tokens.clear();
 }
 
-void Tokenizer::integer(IntType type, void* value) { tokens.push_back(type); }
-
-void Tokenizer::floating(FloatType type, void* value) { tokens.push_back(type); }
+void Tokenizer::number(NumberType type, void* value) { tokens.push_back(type); }
 
 bool Tokenizer::boolean() {
   tokens.push_back(bool());
@@ -26,11 +24,9 @@ int Tokenizer::enumerate(const std::span<const char*>& labels) {
   return 0;
 }
 
-std::tuple<const std::uint8_t*, std::size_t> Tokenizer::binary(
-    std::size_t length,
-    std::size_t stride) {
-  tokens.push_back(token::Binary(length, stride));
-  return {nullptr, 0};
+std::span<const std::uint8_t> Tokenizer::binary() {
+  tokens.push_back(token::Binary());
+  return std::span<const std::uint8_t>((const std::uint8_t*)nullptr, 0);
 }
 
 bool Tokenizer::optional_begin() {
@@ -51,20 +47,20 @@ void Tokenizer::variant_tokenize(int index) { tokens.push_back(token::VariantNex
 
 void Tokenizer::variant_end() { tokens.push_back(token::VariantEnd()); }
 
-void Tokenizer::object_begin(std::size_t size) { tokens.push_back(token::ObjectBegin(size)); }
+void Tokenizer::object_begin() { tokens.push_back(token::ObjectBegin()); }
 
 void Tokenizer::object_next(const char* key) { tokens.push_back(token::ObjectNext(key)); }
 
-void Tokenizer::object_end(std::size_t size) { tokens.push_back(token::ObjectEnd(size)); }
+void Tokenizer::object_end() { tokens.push_back(token::ObjectEnd()); }
 
-void Tokenizer::tuple_begin(std::size_t size) { tokens.push_back(token::TupleBegin(size)); }
+void Tokenizer::tuple_begin() { tokens.push_back(token::TupleBegin()); }
 
 void Tokenizer::tuple_next() { tokens.push_back(token::TupleNext()); }
 
-void Tokenizer::tuple_end(std::size_t size) { tokens.push_back(token::TupleEnd(size)); }
+void Tokenizer::tuple_end() { tokens.push_back(token::TupleEnd()); }
 
-void Tokenizer::list_begin(bool is_trivial) {
-  tokens.push_back(token::List(is_trivial));
+void Tokenizer::list_begin() {
+  tokens.push_back(token::List());
   first_element = true;
 }
 

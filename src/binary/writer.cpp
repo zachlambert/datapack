@@ -39,11 +39,15 @@ void BinaryWriter::string(const char* value) {
   pos += size;
 }
 
-void BinaryWriter::enumerate(int value, const char* label) { value_number(value); }
+void BinaryWriter::enumerate(int value, const std::span<const char*>& labels) {
+  value_number(value);
+}
 
 void BinaryWriter::optional_begin(bool has_value) { value_bool(has_value); }
 
-void BinaryWriter::variant_begin(int value, const char* label) { value_number(value); }
+void BinaryWriter::variant_begin(int value, const std::span<const char*>& labels) {
+  value_number(value);
+}
 
 void BinaryWriter::binary(const std::span<const std::uint8_t>& data) {
   value_number(std::uint64_t(data.size()));

@@ -96,7 +96,7 @@ public:
   virtual void number(NumberType type, const void* value) = 0;
   virtual void boolean(bool value) = 0;
   virtual void string(const char* string) = 0;
-  virtual void enumerate(int value, const char* label) = 0;
+  virtual void enumerate(int value, const std::span<const char*>& labels) = 0;
   virtual void binary(const std::span<const std::uint8_t>& data) = 0;
 
   // Single-element containers
@@ -104,7 +104,7 @@ public:
   virtual void optional_begin(bool has_value) = 0;
   virtual void optional_end() = 0;
 
-  virtual void variant_begin(int value, const char* label) = 0;
+  virtual void variant_begin(int value, const std::span<const char*>& labels) = 0;
   virtual void variant_end() = 0;
 
   // Fixed-size containers
@@ -209,7 +209,7 @@ inline void pack(bool& value, Reader& reader) { value = reader.boolean(); }
 
 template <labelled_enum T>
 void pack(const T& value, Writer& writer) {
-  writer.enumerate((int)value, enum_labels<T>[(int)value]);
+  writer.enumerate((int)value, enum_labels<T>);
 }
 
 template <labelled_enum T>

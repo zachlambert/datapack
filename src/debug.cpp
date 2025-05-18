@@ -42,8 +42,8 @@ void DebugWriter::boolean(bool value) {
 
 void DebugWriter::string(const char* value) { os << value << ",\n"; }
 
-void DebugWriter::enumerate(int value, const char* label) {
-  os << "(enum, " << value << " = " << label << "),\n";
+void DebugWriter::enumerate(int value, const std::span<const char*>& labels) {
+  os << "(enum, " << value << " = " << labels[value] << "),\n";
 }
 
 void DebugWriter::binary(const std::span<const std::uint8_t>& data) {
@@ -70,8 +70,8 @@ void DebugWriter::optional_end() {
   os << "},\n";
 }
 
-void DebugWriter::variant_begin(int value, const char* label) {
-  os << "(variant, " << value << " = " << label << ") {\n";
+void DebugWriter::variant_begin(int value, const std::span<const char*>& labels) {
+  os << "(variant, " << value << " = " << labels[value] << ") {\n";
   depth++;
   indent();
 }

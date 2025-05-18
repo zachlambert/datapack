@@ -7,7 +7,7 @@ namespace datapack {
 
 template <labelled_variant T>
 void pack(const T& value, Writer& writer) {
-  writer.variant_begin(value.index(), variant_labels<T>[value.index()]);
+  writer.variant_begin(value.index(), variant_labels<T>);
   std::visit([&](const auto& value) { writer.value(value); }, value);
   writer.variant_end();
 }

@@ -38,7 +38,9 @@ void ObjectWriter::boolean(bool value) { set_value(value); }
 
 void ObjectWriter::string(const char* value) { set_value(std::string(value)); }
 
-void ObjectWriter::enumerate(int value, const char* label) { set_value(std::string(label)); }
+void ObjectWriter::enumerate(int value, const std::span<const char*>& labels) {
+  set_value(std::string(labels[value]));
+}
 
 void ObjectWriter::binary(const std::span<const std::uint8_t>& data) {
   std::vector<std::uint8_t> vec(data.size());
@@ -56,11 +58,11 @@ void ObjectWriter::optional_end() {
   // Do nothing
 }
 
-void ObjectWriter::variant_begin(int value, const char* label) {
+void ObjectWriter::variant_begin(int value, const std::span<const char*>& labels) {
   object_begin();
   object_next("type");
-  string(label);
-  std::string value_key = "value_" + std::string(label);
+  string(labels[value]);
+  std::string value_key = "value_" + std::string(labels[value]);
   object_next(value_key.c_str());
 }
 

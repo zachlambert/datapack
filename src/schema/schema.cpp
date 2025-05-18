@@ -212,7 +212,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             }
             found_match = true;
             variant_start = token_pos;
-            writer.variant_begin(variant_index, labels_cstr[variant_index]);
+            writer.variant_begin(variant_index, labels_cstr);
           }
           token_pos = get_tokens_end(schema.tokens, token_pos);
           continue;
@@ -245,7 +245,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
         labels_cstr.push_back(label.c_str());
       }
       int enum_value = reader.enumerate(labels_cstr);
-      writer.enumerate(enum_value, labels_cstr[enum_value]);
+      writer.enumerate(enum_value, labels_cstr);
     } else if (auto value = std::get_if<token::Binary>(&token)) {
       auto data = reader.binary();
       writer.binary(data);

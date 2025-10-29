@@ -132,108 +132,6 @@ public:
     return *this;
   }
 
-  bool valid() const { return node_list && index >= 0; }
-
-  void node_clear(int index) {
-    if (index == -1) {
-      return;
-    }
-    if ((*node_list)[index].child == -1) {
-      return;
-    }
-
-    int child = (*node_list)[index].child;
-    (*node_list)[index].child = -1;
-
-    std::stack<int> to_remove;
-    to_remove.push(child);
-    while (!to_remove.empty()) {
-      int node = to_remove.top();
-      to_remove.pop();
-      if ((*node_list)[child].next != -1) {
-        to_remove.push((*node_list)[child].next);
-      }
-      if ((*node_list)[child].child != -1) {
-        to_remove.push((*node_list)[child].child);
-      }
-      node_list->pop(node);
-    }
-  }
-
-  void node_erase(int index) {
-    if (index == -1) {
-      return;
-    }
-    node_clear(index);
-
-    int parent = (*node_list)[index].parent;
-    if (parent == -1) {
-      assert(index == 0);
-      node_list.reset();
-      index = -1;
-      return;
-    }
-
-    int prev = (*node_list)[index].prev;
-    int next = (*node_list)[index].next;
-
-    if (prev != -1) {
-      (*node_list)[prev].next = next;
-    } else {
-      (*node_list)[parent].child = next;
-    }
-    if (next != -1) {
-      (*node_list)[next].prev = prev;
-    }
-  }
-
-  int node_insert(const value_t& value, const std::string& key, int parent, int prev) {
-    int node = node_list->emplace(value, key, parent, prev);
-
-    if (prev != -1) {
-      (*node_list)[node].next = (*node_list)[prev].next;
-      (*node_list)[prev].next = node;
-    } else {
-      (*node_list)[node].next = (*node_list)[parent].child;
-      (*node_list)[parent].child = node;
-    }
-
-    int next = (*node_list)[node].next;
-    if (next != -1) {
-      (*node_list)[next].prev = node;
-    }
-
-    return node;
-  }
-
-  void node_copy(int to, std::shared_ptr<const NodeList> node_list_from, int from) {
-    std::stack<std::pair<int, int>> stack;
-    stack.emplace(to, from);
-    bool at_root = true;
-
-    while (!stack.empty()) {
-      auto [to, from] = stack.top();
-      stack.pop();
-
-      (*node_list)[to].value = (*node_list_from)[from].value;
-      (*node_list)[to].key = (*node_list_from)[from].key;
-
-      int from_next = (*node_list_from)[from].child;
-      if (!at_root && from_next != -1) {
-        int to_next = node_insert(null_t(), "", (*node_list)[to].parent, to);
-        stack.emplace(to_next, from_next);
-      }
-
-      int from_child = (*node_list_from)[from].child;
-      if (from_child != -1) {
-        int to_child = node_insert(null_t(), "", to, -1);
-        stack.emplace(to_child, from_child);
-      }
-
-      at_root = false;
-    }
-  }
-
   Object operator[](const std::string& key) {
     if (!valid()) {
       throw KeyError("Empty object");
@@ -339,18 +237,113 @@ public:
   const binary_t* binary_if() const { return std::get_if<binary_t>(&value()); }
 
 private:
+  bool valid() const { return node_list && index >= 0; }
+
+  void node_clear(int index) {
+    if (index == -1) {
+      return;
+    }
+    if ((*node_list)[index].child == -1) {
+      return;
+    }
+
+    int child = (*node_list)[index].child;
+    (*node_list)[index].child = -1;
+
+    std::stack<int> to_remove;
+    to_remove.push(child);
+    while (!to_remove.empty()) {
+      int node = to_remove.top();
+      to_remove.pop();
+      if ((*node_list)[child].next != -1) {
+        to_remove.push((*node_list)[child].next);
+      }
+      if ((*node_list)[child].child != -1) {
+        to_remove.push((*node_list)[child].child);
+      }
+      node_list->pop(node);
+    }
+  }
+
+  void node_erase(int index) {
+    if (index == -1) {
+      return;
+    }
+    node_clear(index);
+
+    int parent = (*node_list)[index].parent;
+    if (parent == -1) {
+      assert(index == 0);
+      node_list.reset();
+      index = -1;
+      return;
+    }
+
+    int prev = (*node_list)[index].prev;
+    int next = (*node_list)[index].next;
+
+    if (prev != -1) {
+      (*node_list)[prev].next = next;
+    } else {
+      (*node_list)[parent].child = next;
+    }
+    if (next != -1) {
+      (*node_list)[next].prev = prev;
+    }
+  }
+
+  int node_insert(const value_t& value, const std::string& key, int parent, int prev) {
+    int node = node_list->emplace(value, key, parent, prev);
+
+    if (prev != -1) {
+      (*node_list)[node].next = (*node_list)[prev].next;
+      (*node_list)[prev].next = node;
+    } else {
+      (*node_list)[node].next = (*node_list)[parent].child;
+      (*node_list)[parent].child = node;
+    }
+
+    int next = (*node_list)[node].next;
+    if (next != -1) {
+      (*node_list)[next].prev = node;
+    }
+
+    return node;
+  }
+
+  void node_copy(int to, std::shared_ptr<const NodeList> node_list_from, int from) {
+    std::stack<std::pair<int, int>> stack;
+    stack.emplace(to, from);
+    bool at_root = true;
+
+    while (!stack.empty()) {
+      auto [to, from] = stack.top();
+      stack.pop();
+
+      (*node_list)[to].value = (*node_list_from)[from].value;
+      (*node_list)[to].key = (*node_list_from)[from].key;
+
+      int from_next = (*node_list_from)[from].child;
+      if (!at_root && from_next != -1) {
+        int to_next = node_insert(null_t(), "", (*node_list)[to].parent, to);
+        stack.emplace(to_next, from_next);
+      }
+
+      int from_child = (*node_list_from)[from].child;
+      if (from_child != -1) {
+        int to_child = node_insert(null_t(), "", to, -1);
+        stack.emplace(to_child, from_child);
+      }
+
+      at_root = false;
+    }
+  }
+
   Object(const std::shared_ptr<NodeList>& node_list, int index) :
       node_list(node_list), index(index) {}
 
   value_t& value() { return (*node_list)[index].value; }
   const value_t& value() const { return (*node_list)[index].value; }
-
-  bool iter_equal(const Object& other) const {
-    if (index == -1 && other.index == -1) {
-      return true;
-    }
-    return (index == other.index) && (node_list.get() == other.node_list.get());
-  }
 
   std::shared_ptr<NodeList> node_list;
   int index;
@@ -368,40 +361,43 @@ private:
 
 class Pair {
 public:
-  const std::string& key() const { return (*object.node_list)[object.index].key; }
-  std::string& key() { return (*object.node_list)[object.index].key; }
+  const std::string& key() const { return (*node_list)[index].key; }
+  std::string& key() { return (*node_list)[index].key; }
 
-  Object& value() { return object; }
-  const Object& value() const { return object; }
+  Object value() { return Object(node_list, index); }
+  const Object value() const { return Object(node_list, index); }
 
   template <std::size_t Index>
   auto get() {
     static_assert(Index < 2);
-    if constexpr (Index == 0)
+    if constexpr (Index == 0) {
       return key();
-    if constexpr (Index == 1)
+    }
+    if constexpr (Index == 1) {
       return value();
+    }
   }
 
   template <std::size_t Index>
   auto get() const {
     static_assert(Index < 2);
-    if constexpr (Index == 0)
+    if constexpr (Index == 0) {
       return key();
-    if constexpr (Index == 1)
+    }
+    if constexpr (Index == 1) {
       return value();
+    }
   }
 
-  Pair(const Pair& other) : object(other.object.node_list, other.object.index) {}
-
 private:
-  Pair(std::shared_ptr<NodeList> node_list, int index) : object(node_list, index) {}
-  Object object;
+  Pair(std::shared_ptr<NodeList> node_list, int index) : node_list(node_list), index(index) {}
+  std::shared_ptr<NodeList> node_list;
+  int index;
+
+  friend class Object;
 
   template <bool IsConst>
   friend class Iterator_;
-
-  friend class Object;
 
   template <bool IsConst_>
   friend bool operator==(const Iterator_<IsConst_>& lhs, const Iterator_<IsConst_>& rhs);
@@ -417,7 +413,7 @@ public:
   std::conditional_t<IsConst, const Pair*, Pair*> operator->() const { return &pair; }
 
   Iterator_& operator++() {
-    pair.object.index = (*pair.object.node_list)[pair.object.index].next;
+    pair.index = (*pair.node_list)[pair.index].next;
     return *this;
   }
   Iterator_ operator++(int) {
@@ -446,7 +442,16 @@ private:
 
 template <bool IsConst>
 inline bool operator==(const Iterator_<IsConst>& lhs, const Iterator_<IsConst>& rhs) {
-  return lhs.pair.object.iter_equal(rhs.pair.object);
+  if (lhs.pair.index == -1) {
+    return rhs.pair.index == -1;
+  }
+  if (rhs.pair.index == -1) {
+    return false;
+  }
+  if (lhs.pair.node_list.get() != rhs.pair.node_list.get()) {
+    throw std::runtime_error("Cannot compare iterators from different objects");
+  }
+  return lhs.pair.index == rhs.pair.index;
 }
 template <bool IsConst>
 inline bool operator!=(const Iterator_<IsConst>& lhs, const Iterator_<IsConst>& rhs) {
@@ -530,10 +535,10 @@ inline Iterator Object::push_back(const Object& value) {
 }
 
 inline void Object::erase(const ConstIterator& iterator) {
-  if (iterator.pair.object.node_list.get() != node_list.get()) {
+  if (iterator.pair.node_list.get() != node_list.get()) {
     throw KeyError("Tried to erase with an iterator for a different object");
   }
-  node_erase(iterator.pair.object.index);
+  node_erase(iterator.pair.index);
 }
 
 inline Iterator Object::begin() { return Iterator(node_list, (*node_list)[index].child); }

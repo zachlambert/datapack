@@ -8,9 +8,8 @@ int main() {
   foo["a"] = 1.0;
   foo["b"] = "hello";
 
-  for (auto iter = foo.begin(); iter != foo.end(); iter++) {
-    const auto& pair = *iter;
-    std::cout << pair.key() << ": " << pair.value() << std::endl;
+  for (auto [key, value] : foo) {
+    std::cout << key << ": " << value << std::endl;
   }
 
   Object bar;
@@ -18,7 +17,6 @@ int main() {
   bar.push_back(1.0);
   std::cout << bar << std::endl;
 
-#if 0
   Object object;
   object["a"] = 1.0;
   object["a"] = 2.0;
@@ -28,5 +26,4 @@ int main() {
   object["d"].push_back(100);
 
   std::cout << object << std::endl;
-#endif
 }

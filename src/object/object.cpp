@@ -24,9 +24,9 @@ std::ostream& operator<<(std::ostream& os, const Object& object) {
     stack.pop();
     const Node& node_d = (*object.node_list)[node];
 
-    apply_indent(depth);
     if (depth != 0) {
       os << "\n";
+      apply_indent(depth);
       if (node_d.key.empty()) {
         os << "- ";
       } else {

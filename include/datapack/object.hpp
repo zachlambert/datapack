@@ -10,6 +10,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -21,11 +22,21 @@ struct null_t {};
 struct map_t {};
 struct list_t {};
 
-using primitive_t = std::variant<number_t, bool, std::string, binary_t>;
+using primitive_t = std::variant<int, double, bool, std::string, binary_t>;
 using value_t = std::variant<number_t, bool, std::string, binary_t, null_t, map_t, list_t>;
 
 inline value_t primitive_to_value(const primitive_t& value) {
-  return std::visit([](const auto& value) { return value_t(value); }, value);
+  return std::visit(
+      [](const auto& value) {
+        using T = std::decay_t<decltype(value)>;
+        if constexpr (std::is_same_v<T, int>) {
+          return value_t(double(value));
+        }
+        if constexpr (!std::is_same_v<T, int>) {
+          return value_t(value);
+        }
+      },
+      value);
 }
 
 struct Node {
@@ -365,6 +376,24 @@ public:
   Object& value() { return object; }
   const Object& value() const { return object; }
 
+  template <std::size_t Index>
+  auto get() {
+    static_assert(Index < 2);
+    if constexpr (Index == 0)
+      return key();
+    if constexpr (Index == 1)
+      return value();
+  }
+
+  template <std::size_t Index>
+  auto get() const {
+    static_assert(Index < 2);
+    if constexpr (Index == 0)
+      return key();
+    if constexpr (Index == 1)
+      return value();
+  }
+
 private:
   Pair(std::shared_ptr<NodeList> node_list, int index) : object(node_list, index) {}
   Object object;
@@ -523,3 +552,22 @@ inline ConstIterator Object::cbegin() {
 inline ConstIterator Object::cend() { return ConstIterator(); }
 
 } // namespace datapack
+
+namespace std {
+
+template <>
+struct tuple_size<::datapack::Pair> {
+  static constexpr size_t value = 2;
+};
+
+template <>
+struct tuple_element<0, ::datapack::Pair> {
+  using type = std::string;
+};
+
+template <>
+struct tuple_element<1, ::datapack::Pair> {
+  using type = ::datapack::Object;
+};
+
+} // namespace std

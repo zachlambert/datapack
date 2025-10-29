@@ -4,69 +4,79 @@
 
 namespace datapack {
 
+static void indent(std::ostream& os, std::size_t depth) {
+  for (std::size_t i = 0; i < depth; i++) {
+    os << "  ";
+  }
+}
+
+static std::ostream& print_value(std::ostream& os, const Object& object, std::size_t depth) {
+  if (auto x = object.number_if()) {
+    os << *x;
+  } else if (auto x = object.boolean_if()) {
+    os << (*x ? "true" : "false");
+  } else if (auto x = object.string_if()) {
+    os << *x;
+  } else if (auto x = object.binary_if()) {
+    os << "[\n";
+    indent(os, depth + 1);
+    os << std::hex;
+    for (std::size_t i = 0; i < x->size(); i++) {
+      os << std::setfill('0') << std::setw(2) << (*x)[i] << " ";
+      if ((i + 1) % 8 == 0) {
+        os << "\n";
+        indent(os, depth + 1);
+      }
+    }
+    if (x->size() % 8 != 0) {
+      os << "\n";
+    }
+    indent(os, depth);
+    os << "]";
+  } else if (object.is_map()) {
+    os << "[map]";
+  } else if (object.is_list()) {
+    os << "[list]";
+  }
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const Object& object) {
+  print_value(os, object, 0);
+  if (object.is_primitive()) {
+    return os;
+  }
+
   struct State {
-    int node;
+    ConstIterator iter;
     std::size_t depth;
-    State(int node, std::size_t depth) : node(node), depth(depth) {}
+    State(ConstIterator iter, std::size_t depth) : iter(iter), depth(depth) {}
   };
   std::stack<State> stack;
-  stack.emplace(object.index, 0);
-
-  auto apply_indent = [&os](std::size_t depth) {
-    for (std::size_t i = 0; i < depth; i++) {
-      os << "  ";
-    }
-  };
+  stack.emplace(object.begin(), 0);
 
   while (!stack.empty()) {
-    auto [node, depth] = stack.top();
+    auto [iter, depth] = stack.top();
     stack.pop();
-    const Node& node_d = (*object.node_list)[node];
 
-    if (depth != 0) {
-      os << "\n";
-      apply_indent(depth);
-      if (node_d.key.empty()) {
-        os << "- ";
-      } else {
-        os << node_d.key << ": ";
-      }
-      if (node_d.next != -1) {
-        stack.emplace(node_d.next, depth);
-      }
+    os << "\n";
+    indent(os, depth);
+    if (iter->key().empty()) {
+      os << "- ";
+    } else {
+      os << iter->key() << ": ";
+    }
+    auto next = iter;
+    next++;
+    if (next != object.end()) {
+      stack.emplace(next, depth);
     }
 
-    if (auto value = std::get_if<double>(&node_d.value)) {
-      os << *value;
-    } else if (auto value = std::get_if<bool>(&node_d.value)) {
-      os << (*value ? "true" : "false");
-    } else if (auto value = std::get_if<std::string>(&node_d.value)) {
-      os << *value;
-    } else if (auto value = std::get_if<binary_t>(&node_d.value)) {
-      os << "[\n";
-      apply_indent(depth + 1);
-      os << std::hex;
-      for (std::size_t i = 0; i < value->size(); i++) {
-        os << std::setfill('0') << std::setw(2) << (*value)[i] << " ";
-        if ((i + 1) % 8 == 0) {
-          os << "\n";
-          apply_indent(depth + 1);
-        }
-      }
-      if (value->size() % 8 != 0) {
-        os << "\n";
-      }
-      apply_indent(depth);
-      os << "]";
-    } else if (std::get_if<map_t>(&node_d.value)) {
-      os << "[map]";
-    } else if (std::get_if<list_t>(&node_d.value)) {
-      os << "[list]";
-    }
+    print_value(os, iter->value(), depth);
 
-    if (node_d.child != -1) {
-      stack.emplace(node_d.child, depth + 1);
+    auto child = iter->value().begin();
+    if (child != object.end()) {
+      stack.emplace(child, depth + 1);
     }
   }
 

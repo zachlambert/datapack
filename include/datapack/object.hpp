@@ -338,8 +338,6 @@ public:
   binary_t* binary_if() { return std::get_if<binary_t>(&value()); }
   const binary_t* binary_if() const { return std::get_if<binary_t>(&value()); }
 
-  friend std::ostream& operator<<(std::ostream& os, const Object& object);
-
 private:
   Object(const std::shared_ptr<NodeList>& node_list, int index) :
       node_list(node_list), index(index) {}
@@ -393,6 +391,8 @@ public:
     if constexpr (Index == 1)
       return value();
   }
+
+  Pair(const Pair& other) : object(other.object.node_list, other.object.index) {}
 
 private:
   Pair(std::shared_ptr<NodeList> node_list, int index) : object(node_list, index) {}
@@ -550,6 +550,8 @@ inline ConstIterator Object::cbegin() {
   return ConstIterator(node_list, (*node_list)[index].child);
 }
 inline ConstIterator Object::cend() { return ConstIterator(); }
+
+std::ostream& operator<<(std::ostream& os, const Object& object);
 
 } // namespace datapack
 

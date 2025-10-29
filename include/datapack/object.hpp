@@ -4,12 +4,12 @@
 #include <assert.h>
 #include <concepts>
 #include <memory>
+#include <ostream>
 #include <stack>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <type_traits>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -95,11 +95,12 @@ using Iterator = Iterator_<false>;
 
 class Object {
 public:
-  Object() : node_list(), index(-1) {}
+  Object() : node_list(std::make_shared<NodeList>()), index(0) {
+    node_list->emplace(null_t(), "", -1, -1);
+  }
 
-  Object(const Object& other) {
-    node_list = std::make_shared<NodeList>();
-    index = 0;
+  Object(const Object& other) : node_list(std::make_shared<NodeList>()), index(0) {
+    node_list->emplace(null_t(), "", -1, -1);
     node_copy(0, other.node_list, other.index);
   }
 
@@ -186,7 +187,10 @@ public:
       (*node_list)[parent].child = node;
     }
 
-    (*node_list)[(*node_list)[node].next].prev = node;
+    int next = (*node_list)[node].next;
+    if (next != -1) {
+      (*node_list)[next].prev = node;
+    }
 
     return node;
   }
@@ -223,12 +227,12 @@ public:
     if (!valid()) {
       throw KeyError("Empty object");
     }
-    if (!is_map()) {
-      if (!is_null()) {
-        throw KeyError("Not a map or null");
-      }
+    if (is_null()) {
       (*node_list)[index].value = map_t();
+    } else if (!is_map()) {
+      throw KeyError("Not a map or null");
     }
+
     int prev = -1;
     int node = (*node_list)[index].child;
     while (node != -1) {
@@ -322,6 +326,8 @@ public:
   const binary_t& binary() const { return std::get<binary_t>(value()); }
   binary_t* binary_if() { return std::get_if<binary_t>(&value()); }
   const binary_t* binary_if() const { return std::get_if<binary_t>(&value()); }
+
+  friend std::ostream& operator<<(std::ostream& os, const Object& object);
 
 private:
   Object(const std::shared_ptr<NodeList>& node_list, int index) :
@@ -446,6 +452,12 @@ inline ConstIterator Object::find(const std::string& key) const {
 }
 
 inline Iterator Object::insert(const std::string& key, const primitive_t& value) {
+  if (is_null()) {
+    (*node_list)[index].value = map_t();
+  } else if (!is_map()) {
+    throw KeyError("Not a map or null");
+  }
+
   int node = (*node_list)[index].child;
   int prev = -1;
   while (node != -1) {
@@ -460,6 +472,12 @@ inline Iterator Object::insert(const std::string& key, const primitive_t& value)
 }
 
 inline Iterator Object::push_back(const primitive_t& value) {
+  if (is_null()) {
+    (*node_list)[index].value = list_t();
+  } else if (!is_list()) {
+    throw KeyError("Not a list or null");
+  }
+
   int node = (*node_list)[index].child;
   int prev = -1;
   while (node != -1) {
@@ -489,48 +507,19 @@ inline void Object::erase(const ConstIterator& iterator) {
   node_erase(iterator.pair.object.index);
 }
 
-inline Iterator Object::begin() { return Iterator(node_list, index); }
+inline Iterator Object::begin() { return Iterator(node_list, (*node_list)[index].child); }
 
 inline Iterator Object::end() { return Iterator(); }
 
-inline ConstIterator Object::begin() const { return ConstIterator(node_list, index); }
+inline ConstIterator Object::begin() const {
+  return ConstIterator(node_list, (*node_list)[index].child);
+}
 
 inline ConstIterator Object::end() const { return ConstIterator(); };
 
-inline ConstIterator Object::cbegin() { return ConstIterator(node_list, index); }
+inline ConstIterator Object::cbegin() {
+  return ConstIterator(node_list, (*node_list)[index].child);
+}
 inline ConstIterator Object::cend() { return ConstIterator(); }
 
 } // namespace datapack
-
-namespace std {
-
-template <>
-struct tuple_size<::datapack::Pair> : integral_constant<size_t, 2> {};
-
-template <size_t Index>
-struct tuple_element<Index, ::datapack::Pair>
-    : tuple_element<Index, tuple<std::string, ::datapack::Object>> {};
-
-} // namespace std
-
-template <std::size_t Index>
-std::tuple_element_t<Index, datapack::Pair>& get(datapack::Pair& pair) {
-  if constexpr (Index == 0) {
-    return pair.key();
-  }
-  if constexpr (Index == 1) {
-    return pair.value();
-  }
-}
-
-#if 0
-template <std::size_t Index>
-const std::tuple_element_t<Index, datapack::Pair>& get(const datapack::Pair& pair) {
-  if constexpr (Index == 0) {
-    return pair.key();
-  }
-  if constexpr (Index == 1) {
-    return pair.value();
-  }
-}
-#endif

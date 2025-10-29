@@ -4,13 +4,19 @@
 int main() {
   using namespace datapack;
 
-  Object object;
-  object["a"] = 1.0;
+  Object foo;
+  foo["a"] = 1.0;
+  foo["b"] = "hello";
 
-  for (auto iter = object.begin(); iter != object.end(); iter++) {
+  for (auto iter = foo.begin(); iter != foo.end(); iter++) {
     const auto& pair = *iter;
-    // auto [key, value] = pair;
+    std::cout << pair.key() << ": " << pair.value() << std::endl;
   }
+
+  Object bar;
+  bar.push_back(0.0);
+  bar.push_back(1.0);
+  std::cout << bar << std::endl;
 
 #if 0
   Object object;

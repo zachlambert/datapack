@@ -591,23 +591,12 @@ public:
       items_(std::const_pointer_cast<Tree>(tree), node),
       values_(std::const_pointer_cast<Tree>(tree), node) {}
 
-  Object_ clone() const {
-    Object_ result;
-    result = (*this);
-    return result;
-  }
-
-  Object_& operator=(const Object_& other) {
-    static_assert(!Const);
-    tree->copy_node(node, *other.tree, other.node);
-    return *this;
-  }
-
-  Object_& operator=(const primitive_t& value) {
-    static_assert(!Const);
-    tree->clear_node(node);
-    (*tree)[node].value = primitive_to_value(value);
-    return *this;
+  Object_(const primitive_t& value) :
+      tree(std::make_shared<Tree>()),
+      node(0),
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {
+    tree->insert_node(primitive_to_value(value), "", -1, -1);
   }
 
   Object_(std::initializer_list<primitive_t> list) :
@@ -632,6 +621,45 @@ public:
     }
   }
 
+  static Object as_list(std::initializer_list<Object> list) {
+    Object result;
+    for (const auto& value : list) {
+      result.push_back(value);
+    }
+    return result;
+  }
+
+  Object_(std::initializer_list<std::pair<std::string, Object>> list) :
+      tree(std::make_shared<Tree>()),
+      node(0),
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {
+    tree->insert_node(null_t(), "", -1, -1);
+    for (const auto& [key, value] : list) {
+      (*this)[key] = value;
+    }
+  }
+
+  Object_ clone() const {
+    Object_ result;
+    result = (*this);
+    return result;
+  }
+
+  Object_& operator=(const Object_& other) {
+    static_assert(!Const);
+    tree->copy_node(node, *other.tree, other.node);
+    return *this;
+  }
+
+  Object_& operator=(primitive_t value) {
+    static_assert(!Const);
+    tree->clear_node(node);
+    (*tree)[node].value = primitive_to_value(value);
+    return *this;
+  }
+
+#if 0
   Object_& operator=(std::initializer_list<Object> list) {
     for (const auto& value : list) {
       push_back(value);
@@ -645,6 +673,7 @@ public:
     }
     return *this;
   }
+#endif
 
   Object_ operator[](const std::string& key) {
     if constexpr (!Const) {

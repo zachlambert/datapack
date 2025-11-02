@@ -81,15 +81,17 @@ void demo_iterators() {
 }
 
 void demo_initializer_list() {
-  datapack::Object a;
-  a = {1, 2, 3};
+  using namespace datapack;
+  Object a = {1, 2, 3};
   std::cout << "a: " << a << std::endl;
 
-  datapack::Object b;
-  b = {{"a", 1}, {"b", 2}, {"c", 3}};
+  Object b = {{"a", 1}, {"b", 2}, {"c", 3}};
   std::cout << "b: " << b << std::endl;
 
-  datapack::Object c;
+  Object b2 = Object::as_list({{"a", 1}, {"b", 2}, {"c", 3}});
+  std::cout << "b2: " << b2 << std::endl;
+
+  Object c;
   c = {{"foo", {1, 2, 3}}, {"bar", {{"alpha", true}, {"beta", false}}}};
   std::cout << "c: " << c << std::endl;
 }

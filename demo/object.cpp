@@ -1,48 +1,88 @@
 #include <datapack/object.hpp>
 #include <iostream>
 
-void demo_mutation() {
+void demo_build_primitive() {
   datapack::Object a;
   a = 1.0;
   std::cout << "a: " << a << std::endl;
 
-  datapack::ConstObject b;
-  // b = "Hello";
-  // std::cout << "b: " << b << std::endl;
+  datapack::Object b;
+  b = "Hello";
+  std::cout << "b: " << b << std::endl;
 
   datapack::Object c;
-  c.push_back(1);
-  c.push_back(2.0);
+  c = 12;
+  std::cout << "c: " << c << std::endl;
+
+  datapack::Object d;
+  d = true;
+  std::cout << "d: " << d << std::endl;
+
+  datapack::Object e;
+  e = std::vector<uint8_t>{0xAA, 0xBB, 0xCC, 0xDD};
+  std::cout << "e: " << e << std::endl;
 }
 
-int main() {
-  using namespace datapack;
+datapack::Object demo_build_map() {
+  datapack::Object object;
 
-  Object foo;
-  foo["a"] = 1.0;
-  foo["b"] = "hello";
+  object["a"] = "hello";
+  object["b"] = 100;
+  object["c"] = false;
 
-  for (auto [key, value] : foo.items()) {
+  object["list"].push_back(0);
+  object["list"].push_back(1);
+  object["list"].push_back(2);
+
+  object["map"]["foo"] = true;
+  object["map"]["bar"] = false;
+
+  std::cout << object << std::endl;
+  return object;
+}
+
+void demo_clone_copy() {
+  datapack::Object a;
+  a["foo"] = "foo";
+  a["bar"] = "bar";
+
+  auto b = a.clone();
+  auto c = a; // Copy
+
+  a["bar"] = "BAR";
+
+  std::cout << "a: " << a << std::endl;
+  std::cout << "b: " << b << std::endl;
+  std::cout << "c: " << c << std::endl;
+}
+
+void demo_iterators() {
+  datapack::ConstObject object = demo_build_map();
+
+  std::cout << "Iterate object.items()" << std::endl;
+  for (auto [key, value] : object.items()) {
     std::cout << key << ": " << value << std::endl;
   }
 
-  Object bar;
-  bar.push_back(0.0);
-  bar.push_back(1.0);
-  std::cout << bar << std::endl;
+  std::cout << "Iterate object.values()" << std::endl;
+  for (auto value : object.values()) {
+    std::cout << "- " << value << std::endl;
+  }
 
-  Object object;
-  object["a"] = 1.0;
-  object["a"] = 2.0;
-  object["b"] = "hello";
-  object["c"]["first"] = "first";
-  object["c"]["second"] = "second";
-  object["d"].push_back(100);
+  std::cout << "Iterate object.[\"list\"].values()" << std::endl;
+  for (auto value : object["list"].values()) {
+    std::cout << "- " << value << std::endl;
+  }
 
-  std::cout << object << std::endl;
+  std::cout << "Iterate object.[\"map\"].items()" << std::endl;
+  for (auto [key, value] : object["map"].items()) {
+    std::cout << key << ": " << value << std::endl;
+  }
+}
 
-  Object object_b = object["b"];
-  object_b = 3.12;
-
-  std::cout << object << std::endl;
+int main() {
+  demo_build_primitive();
+  demo_build_map();
+  demo_clone_copy();
+  demo_iterators();
 }

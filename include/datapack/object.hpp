@@ -204,7 +204,7 @@ public:
       nodes[to].value = nodes_from[from].value;
       nodes[to].key = nodes_from[from].key;
 
-      int from_next = nodes_from[from].child;
+      int from_next = nodes_from[from].next;
       if (!at_root && from_next != -1) {
         int to_next = insert_node(null_t(), "", nodes[to].parent, to);
         stack.emplace(to_next, from_next);
@@ -587,9 +587,15 @@ public:
       items_(std::const_pointer_cast<Tree>(tree), node),
       values_(std::const_pointer_cast<Tree>(tree), node) {}
 
+  Object_ clone() const {
+    Object_ result;
+    result = (*this);
+    return result;
+  }
+
   Object_& operator=(const Object_& other) {
     static_assert(!Const);
-    tree->copy_node(node, other.tree, other.node);
+    tree->copy_node(node, *other.tree, other.node);
     return *this;
   }
 
@@ -687,6 +693,9 @@ private:
 
   template <bool Const_>
   friend class ContainerItems::PairRef;
+
+  template <bool Const_>
+  friend class ContainerValues::Iterator_;
 };
 
 template <bool Const>
@@ -754,6 +763,16 @@ NodeHandle_<Const> Object_<Const>::handle() const {
   return NodeHandle_<Const>(tree, node);
 }
 
+template <bool Const>
+Object_<Const> ContainerValues::Iterator_<Const>::operator*() const {
+  return Object_<Const>(tree, node);
+}
+
+template <bool Const>
+NodeHandle_<Const> ContainerValues::Iterator_<Const>::operator->() const {
+  return NodeHandle_<Const>(tree, node);
+}
+
 std::ostream& operator<<(std::ostream& os, ConstObject ref);
 
 } // namespace datapack
@@ -767,7 +786,7 @@ struct tuple_size<::datapack::ContainerItems::PairRef<Const>> {
 
 template <bool Const>
 struct tuple_element<0, ::datapack::ContainerItems::PairRef<Const>> {
-  using type = std::string;
+  using type = datapack::const_ref_t<Const, std::string>;
 };
 
 template <bool Const>

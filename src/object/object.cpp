@@ -40,9 +40,9 @@ static void print_value(std::ostream& os, ConstRef value, std::size_t depth) {
   }
 }
 
-static void print_ptr(std::ostream& os, ConstPtr ptr) {
-  print_value(os, *ptr, 0);
-  if (ptr->is_primitive()) {
+static void print_ptr(std::ostream& os, ConstPtr root) {
+  print_value(os, *root, 0);
+  if (root->is_primitive()) {
     return;
   }
 
@@ -52,10 +52,10 @@ static void print_ptr(std::ostream& os, ConstPtr ptr) {
     State(ConstPtr ptr, std::size_t depth) : ptr(ptr), depth(depth) {}
   };
   std::stack<State> stack;
-  stack.emplace(ptr.child(), 0);
+  stack.emplace(root.child(), 1);
 
   while (!stack.empty()) {
-    auto [iter, depth] = stack.top();
+    auto [ptr, depth] = stack.top();
     stack.pop();
 
     os << "\n";

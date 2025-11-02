@@ -159,7 +159,7 @@ public:
     if (prev != -1) {
       nodes[node].next = nodes[prev].next;
       nodes[prev].next = node;
-    } else {
+    } else if (parent != -1) {
       nodes[node].next = nodes[parent].child;
       nodes[parent].child = node;
     }
@@ -216,7 +216,7 @@ public:
     }
   }
 
-  int find_map_node(int root, const std::string& key) const {
+  int find_map_node(int root, const std::string& key, bool required = true) const {
     assert(root != -1);
     if (!std::get_if<map_t>(&nodes[root].value)) {
       throw TypeError("Expected map node");
@@ -229,7 +229,28 @@ public:
       }
       node = nodes[node].next;
     }
+    if (required) {
+      throw KeyError("Key '" + key + "' does not exist");
+    }
     return -1;
+  }
+
+  int find_or_create_map_node(int root, const std::string& key) {
+    assert(root != -1);
+    if (!std::get_if<map_t>(&nodes[root].value)) {
+      throw TypeError("Expected map node");
+    }
+
+    int node = nodes[root].child;
+    int prev = -1;
+    while (node != -1) {
+      if (nodes[node].key == key) {
+        return node;
+      }
+      prev = node;
+      node = nodes[node].next;
+    }
+    return insert_node(null_t(), key, root, prev);
   }
 
   int insert_map_node(int root, const std::string& key, const value_t& value) {
@@ -574,16 +595,15 @@ public:
       if (is_null()) {
         tree->set_node(node, map_t());
       }
+      return Ref_(tree, tree->find_or_create_map_node(node, key));
     }
-    return Ref_(tree, tree->find_map_node(node, key));
+    if constexpr (Const) {
+      return Ref_(tree, tree->find_map_node(node, key));
+    }
   }
 
-  Ref_ operator[](std::size_t index) const {
-    return Ref_(tree, tree->find_list_node(node, index));
-  }
-
-  Ref_ at(const std::string& key) const {
-    return Ref_(tree, tree->find_map_node(node, key));
+  Ref_ at(const std::string& key) {
+    return Ref_(tree, tree->find_map_node(node, key, true));
   }
 
   Ptr_<Const> find(const std::string& key);
@@ -772,7 +792,7 @@ public:
     if (is_null()) {
       tree.set_node(root, map_t());
     }
-    return Ref(&tree, tree.find_map_node(root, key));
+    return Ref(&tree, tree.find_or_create_map_node(root, key));
   }
 
   ConstRef operator[](std::size_t index) const {
@@ -784,10 +804,10 @@ public:
   }
 
   Ptr find(const std::string& key) {
-    return Ptr(&tree, tree.find_map_node(root, key));
+    return Ptr(&tree, tree.find_map_node(root, key, false));
   }
   ConstPtr find(const std::string& key) const {
-    return ConstPtr(&tree, tree.find_map_node(root, key));
+    return ConstPtr(&tree, tree.find_map_node(root, key, false));
   }
 
   void insert(const std::string& key, const primitive_t& value) {

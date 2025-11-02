@@ -1,6 +1,22 @@
 #include <datapack/object.hpp>
 #include <iostream>
 
+#if 0
+void demo_mutation() {
+  datapack::Ref a;
+  a = 1.0;
+  std::cout << "a: " << a << std::endl;
+
+  datapack::Ref b;
+  b = "Hello";
+  std::cout << "b: " << b << std::endl;
+
+  datapack::Ref c;
+  c.push_back(1);
+  c.push_back(2.0);
+}
+#endif
+
 int main() {
   using namespace datapack;
 
@@ -24,6 +40,11 @@ int main() {
   object["c"]["first"] = "first";
   object["c"]["second"] = "second";
   object["d"].push_back(100);
+
+  std::cout << object << std::endl;
+
+  Object object_b = object["b"];
+  object_b = 3.12;
 
   std::cout << object << std::endl;
 }

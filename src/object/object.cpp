@@ -10,7 +10,7 @@ static void indent(std::ostream& os, std::size_t depth) {
   }
 }
 
-static void print_value(std::ostream& os, ConstRef value, std::size_t depth) {
+static void print_value(std::ostream& os, ConstObject value, std::size_t depth) {
   if (auto x = value.number_if()) {
     os << *x;
   } else if (auto x = value.boolean_if()) {
@@ -40,10 +40,10 @@ static void print_value(std::ostream& os, ConstRef value, std::size_t depth) {
   }
 }
 
-static void print_ptr(std::ostream& os, ConstPtr root) {
-  print_value(os, *root, 0);
-  if (root->is_primitive()) {
-    return;
+std::ostream& operator<<(std::ostream& os, ConstObject object) {
+  print_value(os, object, 0);
+  if (object.is_primitive()) {
+    return os;
   }
 
   struct State {
@@ -52,7 +52,7 @@ static void print_ptr(std::ostream& os, ConstPtr root) {
     State(ConstPtr ptr, std::size_t depth) : ptr(ptr), depth(depth) {}
   };
   std::stack<State> stack;
-  stack.emplace(root.child(), 1);
+  stack.emplace(object.ptr().child(), 1);
 
   while (!stack.empty()) {
     auto [ptr, depth] = stack.top();
@@ -77,15 +77,6 @@ static void print_ptr(std::ostream& os, ConstPtr root) {
       stack.emplace(child, depth + 1);
     }
   }
-}
-
-std::ostream& operator<<(std::ostream& os, const Object& object) {
-  print_ptr(os, object.ptr());
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const ConstRef& ref) {
-  print_ptr(os, ref.ptr());
   return os;
 }
 

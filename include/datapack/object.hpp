@@ -2,6 +2,7 @@
 
 #include "datapack/datapack.hpp"
 #include <assert.h>
+#include <memory>
 #include <ostream>
 #include <stack>
 #include <stdexcept>
@@ -44,6 +45,9 @@ using const_ref_t = std::conditional_t<Const, const T&, T&>;
 
 template <bool Const, typename T>
 using const_ptr_t = std::conditional_t<Const, const T*, T*>;
+
+template <bool Const, typename T>
+using shared_ptr_t = std::conditional_t<Const, std::shared_ptr<const T>, std::shared_ptr<T>>;
 
 // ===================================
 // Exceptions
@@ -328,22 +332,10 @@ private:
 // Forward declare iterators
 
 template <bool Const>
-class MapIterator_;
+class Object_;
 
-using ConstMapIterator = MapIterator_<true>;
-using MapIterator = MapIterator_<false>;
-
-template <bool Const>
-class ListIterator_;
-
-using ListIterator = ListIterator_<false>;
-using ConstListIterator = ListIterator_<true>;
-
-template <bool Const>
-class Ref_;
-
-using Ref = Ref_<false>;
-using ConstRef = Ref_<true>;
+using Object = Object_<false>;
+using ConstObject = Object_<true>;
 
 template <bool Const>
 class Ptr_;
@@ -366,15 +358,15 @@ public:
       return (*tree)[node].key;
     }
 
-    Ref_<Const> value();
+    Object_<Const> value();
 
     template <std::size_t Index>
     requires(Index <= 2)
-    std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Ref_<Const>> get();
+    std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Object_<Const>> get();
 
   private:
-    PairRef(const_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
-    const_ptr_t<Const, Tree> tree;
+    PairRef(shared_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
+    shared_ptr_t<Const, Tree> tree;
     int node;
 
     template <bool Const_>
@@ -409,10 +401,10 @@ public:
     }
 
     template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
-    Iterator_(const MapIterator_<OtherConst>& other) : parent(other.parent), pair(other.pair) {}
+    Iterator_(const Iterator_<OtherConst>& other) : parent(other.parent), pair(other.pair) {}
 
   private:
-    Iterator_(const_ptr_t<Const, Tree> tree, int parent, int node) :
+    Iterator_(shared_ptr_t<Const, Tree> tree, int parent, int node) :
         parent(parent), pair(tree, node) {}
 
     bool equal_to(const Iterator_& other) const {
@@ -432,44 +424,43 @@ public:
 
   Iterator begin() {
     assert_map();
-    return Iterator(tree, *node, (*tree)[*node].child);
+    return Iterator(tree, node, (*tree)[node].child);
   };
   Iterator end() {
     assert_map();
-    return Iterator(tree, *node, -1);
+    return Iterator(tree, node, -1);
   };
   ConstIterator begin() const {
     assert_map();
-    return ConstIterator(tree, *node, (*tree)[*node].child);
+    return ConstIterator(tree, node, (*tree)[node].child);
   };
   ConstIterator end() const {
     assert_map();
-    return ConstIterator(tree, *node, -1);
+    return ConstIterator(tree, node, -1);
   };
   ConstIterator cbegin() {
     assert_map();
-    return ConstIterator(tree, *node, (*tree)[*node].child);
+    return ConstIterator(tree, node, (*tree)[node].child);
   };
   ConstIterator cend() {
     assert_map();
-    return ConstIterator(tree, *node, -1);
+    return ConstIterator(tree, node, -1);
   };
 
 private:
-  ContainerItems(Tree* tree, const int* node) : tree(tree), node(node) {}
+  ContainerItems(std::shared_ptr<Tree> tree, const int node) : tree(tree), node(node) {}
 
   void assert_map() const {
-    if (!std::get_if<map_t>(&(*tree)[*node].value)) {
+    if (!std::get_if<map_t>(&(*tree)[node].value)) {
       throw TypeError("Cannot create an item iterator on a non-map node");
     }
   }
 
-  Tree* tree;
-  const int* node;
+  std::shared_ptr<Tree> tree;
+  const int node;
 
-  friend class Object;
   template <bool Const_>
-  friend class Ref_;
+  friend class Object_;
 };
 
 // ===================================
@@ -480,7 +471,7 @@ public:
   template <bool Const>
   class Iterator_ {
   public:
-    Ref_<Const> operator*() const;
+    Object_<Const> operator*() const;
     Ptr_<Const> operator->() const;
 
     Iterator_& operator++() {
@@ -501,14 +492,14 @@ public:
     }
 
     template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
-    Iterator_(const MapIterator_<OtherConst>& other) :
+    Iterator_(const Iterator_<OtherConst>& other) :
         tree(other.tree), parent(other.parent), node(other.node) {}
 
   private:
-    Iterator_(const_ptr_t<Const, Tree> tree, int parent, int node) :
+    Iterator_(shared_ptr_t<Const, Tree> tree, int parent, int node) :
         tree(tree), parent(parent), node(node) {}
 
-    const_ptr_t<Const, Tree> tree;
+    shared_ptr_t<Const, Tree> tree;
     int parent;
     int node;
 
@@ -519,47 +510,49 @@ public:
 
   Iterator begin() {
     assert_container();
-    return Iterator(tree, *node, (*tree)[*node].child);
+    return Iterator(tree, node, (*tree)[node].child);
   };
   Iterator end() {
     assert_container();
-    return Iterator(tree, *node, -1);
+    return Iterator(tree, node, -1);
   };
   ConstIterator begin() const {
     assert_container();
-    return ConstIterator(tree, *node, (*tree)[*node].child);
+    return ConstIterator(tree, node, (*tree)[node].child);
   };
   ConstIterator end() const {
     assert_container();
-    return ConstIterator(tree, *node, -1);
+    return ConstIterator(tree, node, -1);
   };
   ConstIterator cbegin() {
     assert_container();
-    return ConstIterator(tree, *node, (*tree)[*node].child);
+    return ConstIterator(tree, node, (*tree)[node].child);
   };
   ConstIterator cend() {
     assert_container();
-    return ConstIterator(tree, *node, -1);
+    return ConstIterator(tree, node, -1);
   };
 
 private:
-  ContainerValues(Tree* tree, const int* node) : tree(tree), node(node) {}
+  ContainerValues(std::shared_ptr<Tree> tree, int node) : tree(tree), node(node) {}
 
   void assert_container() const {
-    if (!std::get_if<map_t>(&(*tree)[*node].value) && !std::get_if<list_t>(&(*tree)[*node].value)) {
+    if (!std::get_if<map_t>(&(*tree)[node].value) && !std::get_if<list_t>(&(*tree)[node].value)) {
       throw TypeError("Cannot create an item iterator on a non-container node");
     }
   }
 
-  Tree* tree;
-  const int* node;
+  std::shared_ptr<Tree> tree;
+  const int node;
 
-  friend class Object;
   template <bool Const_>
-  friend class Ref_;
+  friend class Object_;
 };
 
-#define REF_PRIMITIVE_METHODS(Type, name)                                                          \
+// ===================================
+// Object_
+
+#define OBJECT_PRIMITIVE_METHODS(Type, name)                                                       \
   const_ref_t<Const, Type> name() {                                                                \
     return std::get<Type>((*tree)[node].value);                                                    \
   }                                                                                                \
@@ -568,42 +561,56 @@ private:
   }
 
 template <bool Const>
-class Ref_ {
+class Object_ {
+  Object_(shared_ptr_t<Const, Tree> tree, int node) :
+      tree(tree),
+      node(node),
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {}
+
 public:
+  Object_() :
+      tree(std::make_shared<Tree>()),
+      node(0),
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {
+    tree->insert_node(null_t(), "", -1, -1);
+  }
+
   template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
-  Ref_(const Ref_<OtherConst>& other) :
+  Object_(const Object_<OtherConst>& other) :
       tree(other.tree),
       node(other.node),
-      values_(const_cast<Tree*>(tree), &node),
-      items_(const_cast<Tree*>(tree), &node) {}
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {}
 
-  Ref_& operator=(const Ref_& other) {
+  Object_& operator=(const Object_& other) {
     static_assert(!Const);
     tree->copy_node(node, other.tree, other.node);
     return *this;
   }
 
-  Ref_& operator=(const primitive_t& value) {
+  Object_& operator=(const primitive_t& value) {
     static_assert(!Const);
     tree->clear_node(node);
     (*tree)[node].value = primitive_to_value(value);
     return *this;
   }
 
-  Ref_ operator[](const std::string& key) {
+  Object_ operator[](const std::string& key) {
     if constexpr (!Const) {
       if (is_null()) {
         tree->set_node(node, map_t());
       }
-      return Ref_(tree, tree->find_or_create_map_node(node, key));
+      return Object_(tree, tree->find_or_create_map_node(node, key));
     }
     if constexpr (Const) {
-      return Ref_(tree, tree->find_map_node(node, key));
+      return Object_(tree, tree->find_map_node(node, key));
     }
   }
 
-  Ref_ at(const std::string& key) {
-    return Ref_(tree, tree->find_map_node(node, key, true));
+  Object_ at(const std::string& key) {
+    return Object_(tree, tree->find_map_node(node, key, true));
   }
 
   Ptr_<Const> find(const std::string& key);
@@ -618,11 +625,11 @@ public:
     tree->insert_list_node(node, primitive_to_value(value));
   }
 
-  void insert(const std::string& key, const ConstRef& value) {
+  void insert(const std::string& key, const ConstObject& value) {
     int new_node = tree->insert_map_node(node, key, null_t());
     tree->copy_node(new_node, *value.tree, value.node);
   }
-  void push_back(const ConstRef& value) {
+  void push_back(const ConstObject& value) {
     if (is_null()) {
       tree->set_node(node, list_t());
     }
@@ -647,29 +654,23 @@ public:
     return !is_map() && !is_list() && !is_null();
   }
 
-  REF_PRIMITIVE_METHODS(number_t, number)
-  REF_PRIMITIVE_METHODS(bool, boolean)
-  REF_PRIMITIVE_METHODS(std::string, string)
-  REF_PRIMITIVE_METHODS(binary_t, binary)
+  OBJECT_PRIMITIVE_METHODS(number_t, number)
+  OBJECT_PRIMITIVE_METHODS(bool, boolean)
+  OBJECT_PRIMITIVE_METHODS(std::string, string)
+  OBJECT_PRIMITIVE_METHODS(binary_t, binary)
 
-  const_ref_t<Const, ContainerItems> items() const {
+  const_ref_t<Const, ContainerItems> items() {
     return items_;
   }
-  const_ref_t<Const, ContainerValues> values() const {
+  const_ref_t<Const, ContainerValues> values() {
     return values_;
   }
 
   Ptr_<Const> ptr() const;
 
 private:
-  Ref_(const_ptr_t<Const, Tree> tree, int node) :
-      tree(tree),
-      node(node),
-      items_(const_cast<Tree*>(tree), &node),
-      values_(const_cast<Tree*>(tree), &node) {}
-
-  const_ptr_t<Const, Tree> tree;
-  int node;
+  shared_ptr_t<Const, Tree> tree;
+  const int node;
   ContainerItems items_;
   ContainerValues values_;
 
@@ -678,31 +679,29 @@ private:
   template <bool Const_>
   friend class Ptr_;
 
-  friend class Object;
-
   template <bool Const_>
-  friend class Ref_;
+  friend class Object_;
 
   template <bool Const_>
   friend class ContainerItems::PairRef;
 };
 
 template <bool Const>
-Ref_<Const> ContainerItems::PairRef<Const>::value() {
-  return Ref_<Const>(tree, node);
+Object_<Const> ContainerItems::PairRef<Const>::value() {
+  return Object_<Const>(tree, node);
 }
 
 template <bool Const>
 template <std::size_t Index>
 requires(Index <= 2)
-std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Ref_<Const>> ContainerItems::
+std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Object_<Const>> ContainerItems::
     PairRef<Const>::get() {
   static_assert(Index <= 2);
   if constexpr (Index == 0) {
     return (*tree)[node].key;
   }
   if constexpr (Index == 1) {
-    return Ref_<Const>(tree, node);
+    return Object_<Const>(tree, node);
   }
 }
 
@@ -712,10 +711,10 @@ std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Ref_<Const>> Con
 template <bool Const>
 class Ptr_ {
 public:
-  Ref_<Const>& operator*() const {
+  Object_<Const>& operator*() const {
     return ref;
   }
-  Ref_<Const>* operator->() const {
+  Object_<Const>* operator->() const {
     return &ref;
   }
 
@@ -739,146 +738,20 @@ public:
   Ptr_(const Ptr_<OtherConst>& other) : ref(other.ref) {}
 
 private:
-  Ptr_(const_ptr_t<Const, Tree> tree, int node) : ref(tree, node) {}
+  Ptr_(shared_ptr_t<Const, Tree> tree, int node) : ref(tree, node) {}
 
-  mutable Ref_<Const> ref;
+  mutable Object_<Const> ref;
 
-  friend class Object;
   template <bool Const_>
-  friend class Ref_;
+  friend class Object_;
 };
 
 template <bool Const>
-Ptr_<Const> Ref_<Const>::ptr() const {
+Ptr_<Const> Object_<Const>::ptr() const {
   return Ptr_<Const>(tree, node);
 }
 
-// ===================================
-// Object
-
-#define OBJECT_PRIMITIVE_METHODS(Type, name)                                                       \
-  Type& name() {                                                                                   \
-    return std::get<Type>(tree[root].value);                                                       \
-  }                                                                                                \
-  const Type& name() const {                                                                       \
-    return std::get<Type>(tree[root].value);                                                       \
-  }                                                                                                \
-  Type* name##_if() {                                                                              \
-    return std::get_if<Type>(&tree[root].value);                                                   \
-  }                                                                                                \
-  const Type* name##_if() const {                                                                  \
-    return std::get_if<Type>(&tree[root].value);                                                   \
-  }
-
-class Object {
-
-public:
-  Object() : items_(&tree, &root), values_(&tree, &root) {
-    tree.insert_node(null_t(), "", -1, -1);
-  }
-
-  Object& operator=(const Object& other) {
-    tree.copy_node(root, other.tree, other.root);
-    return *this;
-  }
-
-  Object& operator=(const primitive_t& value) {
-    tree.clear_node(root);
-    tree[root].value = primitive_to_value(value);
-    return *this;
-  }
-
-  Ref operator[](const std::string& key) {
-    if (is_null()) {
-      tree.set_node(root, map_t());
-    }
-    return Ref(&tree, tree.find_or_create_map_node(root, key));
-  }
-
-  ConstRef operator[](std::size_t index) const {
-    return ConstRef(&tree, tree.find_list_node(root, index));
-  }
-
-  ConstRef at(const std::string& key) const {
-    return ConstRef(&tree, tree.find_map_node(root, key));
-  }
-
-  Ptr find(const std::string& key) {
-    return Ptr(&tree, tree.find_map_node(root, key, false));
-  }
-  ConstPtr find(const std::string& key) const {
-    return ConstPtr(&tree, tree.find_map_node(root, key, false));
-  }
-
-  void insert(const std::string& key, const primitive_t& value) {
-    tree.insert_map_node(root, key, primitive_to_value(value));
-  }
-  void push_back(const primitive_t& value) {
-    if (is_null()) {
-      tree.set_node(root, list_t());
-    }
-    tree.insert_list_node(root, primitive_to_value(value));
-  }
-
-  void insert(const std::string& key, const ConstRef& value) {
-    int new_node = tree.insert_map_node(root, key, null_t());
-    tree.copy_node(new_node, *value.tree, value.node);
-  }
-  void push_back(const ConstRef& value) {
-    if (is_null()) {
-      tree.set_node(root, list_t());
-    }
-    int new_node = tree.insert_list_node(root, null_t());
-    tree.copy_node(new_node, *value.tree, value.node);
-  }
-
-  bool is_map() const {
-    return std::get_if<map_t>(&tree[root].value);
-  }
-  bool is_list() const {
-    return std::get_if<list_t>(&tree[root].value);
-  }
-  bool is_null() const {
-    return std::get_if<null_t>(&tree[root].value);
-  }
-  bool is_primitive() const {
-    return !is_map() && !is_list() && !is_null();
-  }
-
-  OBJECT_PRIMITIVE_METHODS(number_t, number)
-  OBJECT_PRIMITIVE_METHODS(bool, boolean)
-  OBJECT_PRIMITIVE_METHODS(std::string, string)
-  OBJECT_PRIMITIVE_METHODS(binary_t, binary)
-
-  ContainerItems& items() {
-    return items_;
-  }
-  const ContainerItems& items() const {
-    return items_;
-  }
-  ContainerValues& values() {
-    return values_;
-  }
-  const ContainerValues& values() const {
-    return values_;
-  }
-
-  Ptr ptr() {
-    return Ptr(&tree, root);
-  }
-  ConstPtr ptr() const {
-    return ConstPtr(&tree, root);
-  }
-
-private:
-  Tree tree;
-  const int root = 0;
-  ContainerItems items_;
-  ContainerValues values_;
-};
-
-std::ostream& operator<<(std::ostream& os, const Object& object);
-std::ostream& operator<<(std::ostream& os, const ConstRef& ref);
+std::ostream& operator<<(std::ostream& os, ConstObject ref);
 
 } // namespace datapack
 
@@ -896,7 +769,7 @@ struct tuple_element<0, ::datapack::ContainerItems::PairRef<Const>> {
 
 template <bool Const>
 struct tuple_element<1, ::datapack::ContainerItems::PairRef<Const>> {
-  using type = ::datapack::Ref_<Const>;
+  using type = ::datapack::Object_<Const>;
 };
 
 } // namespace std

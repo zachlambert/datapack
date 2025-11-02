@@ -8,7 +8,7 @@ int main() {
   foo["a"] = 1.0;
   foo["b"] = "hello";
 
-  for (auto [key, value] : foo) {
+  for (auto [key, value] : foo.items()) {
     std::cout << key << ": " << value << std::endl;
   }
 

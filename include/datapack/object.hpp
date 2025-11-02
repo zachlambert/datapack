@@ -2,13 +2,10 @@
 
 #include "datapack/datapack.hpp"
 #include <assert.h>
-#include <concepts>
-#include <memory>
 #include <ostream>
 #include <stack>
 #include <stdexcept>
 #include <string>
-#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -39,6 +36,46 @@ inline value_t primitive_to_value(const primitive_t& value) {
       value);
 }
 
+template <bool Const, typename T>
+using const_value_t = std::conditional_t<Const, const T, T>;
+
+template <bool Const, typename T>
+using const_ref_t = std::conditional_t<Const, const T&, T&>;
+
+template <bool Const, typename T>
+using const_ptr_t = std::conditional_t<Const, const T*, T*>;
+
+// ===================================
+// Exceptions
+
+class KeyError : std::runtime_error {
+public:
+  KeyError(const std::string& message) : std::runtime_error(message) {}
+};
+
+class OutOfRangeError : std::runtime_error {
+public:
+  OutOfRangeError(const std::string& message) : std::runtime_error(message) {}
+};
+
+class TypeError : std::runtime_error {
+public:
+  TypeError(const std::string& message) : std::runtime_error(message) {}
+};
+
+class IteratorError : std::runtime_error {
+public:
+  IteratorError(const std::string& message) : std::runtime_error(message) {}
+};
+
+class UsageError : std::runtime_error {
+public:
+  UsageError(const std::string& message) : std::runtime_error(message) {}
+};
+
+// ===================================
+// Node and Tree
+
 struct Node {
   value_t value;
   std::string key;
@@ -50,268 +87,108 @@ struct Node {
       value(value), key(key), parent(parent), child(-1), prev(prev), next(-1) {}
 };
 
-class NodeList {
+class Tree {
 public:
-  const Node& operator[](std::size_t i) const { return data[i]; }
-  Node& operator[](std::size_t i) { return data[i]; }
-
-  template <typename... Args>
-  int emplace(Args&&... args) {
-    int index = 0;
-    if (free.empty()) {
-      index = data.size();
-      data.emplace_back(std::forward<Args>(args)...);
-    } else {
-      index = free.back();
-      free.pop_back();
-      data[index] = Node(std::forward<Args>(args)...);
-    }
-    return index;
+  const Node& operator[](std::size_t i) const {
+    return nodes[i];
+  }
+  Node& operator[](std::size_t i) {
+    return nodes[i];
   }
 
-  void pop(int index) { free.push_back(index); }
-
-  std::size_t size() const { return data.size() - free.size(); }
-
-private:
-  std::vector<Node> data;
-  std::vector<int> free;
-};
-
-template <bool IsConst, typename T>
-using const_value_t = std::conditional_t<IsConst, const T, T>;
-
-template <bool IsConst, typename T>
-using const_ref_t = std::conditional_t<IsConst, const T&, T&>;
-
-template <bool IsConst, typename T>
-using const_ptr_t = std::conditional_t<IsConst, const T*, T*>;
-
-class KeyError : std::runtime_error {
-public:
-  KeyError(const std::string& message) : std::runtime_error(message) {}
-};
-
-// ===================================
-// Forward declarations
-
-template <bool IsConst>
-class Iterator_;
-
-using ConstIterator = Iterator_<true>;
-using Iterator = Iterator_<false>;
-
-// ===================================
-// Object_
-
-class Object {
-public:
-  Object() : node_list(std::make_shared<NodeList>()), index(0) {
-    node_list->emplace(null_t(), "", -1, -1);
+  std::size_t size() const {
+    return nodes.size() - free.size();
   }
 
-  Object(const Object& other) : node_list(std::make_shared<NodeList>()), index(0) {
-    node_list->emplace(null_t(), "", -1, -1);
-    node_copy(0, other.node_list, other.index);
+  void set_node(int index, const value_t& value) {
+    clear_node(index);
+    nodes[index].value = value;
   }
 
-  Object(const primitive_t& value) {
-    node_list = std::make_shared<NodeList>();
-    index = 0;
-    node_list->emplace(primitive_to_value(value), "", -1, -1);
-  }
-
-  Object& operator=(const Object& other) {
-    node_copy(index, other.node_list, other.index);
-    return *this;
-  }
-
-  Object& operator=(const primitive_t& value) {
-    node_clear(index);
-    (*node_list)[index].value = primitive_to_value(value);
-    return *this;
-  }
-
-  Object operator[](const std::string& key) {
-    if (!valid()) {
-      throw KeyError("Empty object");
-    }
-    if (is_null()) {
-      (*node_list)[index].value = map_t();
-    } else if (!is_map()) {
-      throw KeyError("Not a map or null");
-    }
-
-    int prev = -1;
-    int node = (*node_list)[index].child;
-    while (node != -1) {
-      if ((*node_list)[node].key == key) {
-        return Object(node_list, node);
-      }
-      prev = node;
-      node = (*node_list)[node].next;
-    }
-    int new_node = node_insert(null_t(), key, index, prev);
-    return Object(node_list, new_node);
-  }
-
-  Object operator[](std::size_t list_index) const {
-    if (!valid()) {
-      throw KeyError("Empty object");
-    }
-    if (!is_list()) {
-      throw KeyError("Not a list");
-    }
-    int node = (*node_list)[index].child;
-    std::size_t index = 0;
-    while (node != -1) {
-      if (index == list_index) {
-        return Object(node_list, node);
-      }
-      node = (*node_list)[node].next;
-      index++;
-    }
-    throw KeyError(
-        "Requested index " + std::to_string(list_index) + " from list of length " +
-        std::to_string(index) + "");
-  }
-
-  Object at(const std::string& key) const {
-    if (!valid()) {
-      throw KeyError("Empty object");
-    }
-    if (!is_map()) {
-      throw KeyError("Not a map");
-    }
-    int node = (*node_list)[index].child;
-    while (node != -1) {
-      if ((*node_list)[node].key == key) {
-        return Object(node_list, node);
-      }
-      node = (*node_list)[node].next;
-    }
-    throw KeyError("Could not find key '" + key + "'");
-  }
-
-  Iterator find(const std::string& key);
-  ConstIterator find(const std::string& key) const;
-
-  Iterator insert(const std::string& key, const primitive_t& value);
-  Iterator push_back(const primitive_t& value);
-
-  Iterator insert(const std::string& key, const Object& value);
-  Iterator push_back(const Object& value);
-
-  void erase(const ConstIterator& iterator);
-
-  Iterator begin();
-  Iterator end();
-  ConstIterator begin() const;
-  ConstIterator end() const;
-  ConstIterator cbegin();
-  ConstIterator cend();
-
-  bool is_map() const { return std::get_if<map_t>(&value()); }
-  bool is_list() const { return std::get_if<list_t>(&value()); }
-  bool is_null() const { return std::get_if<null_t>(&value()); }
-  bool is_primitive() const { return !is_map() && !is_list() && !is_null(); }
-
-  number_t& number() { return std::get<number_t>(value()); }
-  const number_t& number() const { return std::get<number_t>(value()); }
-  number_t* number_if() { return std::get_if<number_t>(&value()); }
-  const number_t* number_if() const { return std::get_if<number_t>(&value()); }
-
-  bool& boolean() { return std::get<bool>(value()); }
-  const bool& boolean() const { return std::get<bool>(value()); }
-  bool* boolean_if() { return std::get_if<bool>(&value()); }
-  const bool* boolean_if() const { return std::get_if<bool>(&value()); }
-
-  std::string& string() { return std::get<std::string>(value()); }
-  const std::string& string() const { return std::get<std::string>(value()); }
-  std::string* string_if() { return std::get_if<std::string>(&value()); }
-  const std::string* string_if() const { return std::get_if<std::string>(&value()); }
-
-  binary_t& binary() { return std::get<binary_t>(value()); }
-  const binary_t& binary() const { return std::get<binary_t>(value()); }
-  binary_t* binary_if() { return std::get_if<binary_t>(&value()); }
-  const binary_t* binary_if() const { return std::get_if<binary_t>(&value()); }
-
-private:
-  bool valid() const { return node_list && index >= 0; }
-
-  void node_clear(int index) {
+  void clear_node(int index) {
     if (index == -1) {
       return;
     }
-    if ((*node_list)[index].child == -1) {
+    if (nodes[index].child == -1) {
       return;
     }
 
-    int child = (*node_list)[index].child;
-    (*node_list)[index].child = -1;
+    int child = nodes[index].child;
+    nodes[index].child = -1;
 
     std::stack<int> to_remove;
     to_remove.push(child);
     while (!to_remove.empty()) {
       int node = to_remove.top();
       to_remove.pop();
-      if ((*node_list)[child].next != -1) {
-        to_remove.push((*node_list)[child].next);
+      if (nodes[child].next != -1) {
+        to_remove.push(nodes[child].next);
       }
-      if ((*node_list)[child].child != -1) {
-        to_remove.push((*node_list)[child].child);
+      if (nodes[child].child != -1) {
+        to_remove.push(nodes[child].child);
       }
-      node_list->pop(node);
+      pop_node(node);
     }
   }
 
-  void node_erase(int index) {
+  void erase_node(int index) {
     if (index == -1) {
       return;
     }
-    node_clear(index);
+    clear_node(index);
 
-    int parent = (*node_list)[index].parent;
-    if (parent == -1) {
-      assert(index == 0);
-      node_list.reset();
-      index = -1;
-      return;
-    }
-
-    int prev = (*node_list)[index].prev;
-    int next = (*node_list)[index].next;
+    int parent = nodes[index].parent;
+    int prev = nodes[index].prev;
+    int next = nodes[index].next;
 
     if (prev != -1) {
-      (*node_list)[prev].next = next;
-    } else {
-      (*node_list)[parent].child = next;
+      nodes[prev].next = next;
+    } else if (parent != -1) {
+      nodes[parent].child = next;
     }
     if (next != -1) {
-      (*node_list)[next].prev = prev;
+      nodes[next].prev = prev;
     }
+
+    pop_node(index);
   }
 
-  int node_insert(const value_t& value, const std::string& key, int parent, int prev) {
-    int node = node_list->emplace(value, key, parent, prev);
+  int insert_node(const value_t& value, const std::string& key, int parent, int prev) {
+    int node = emplace_node(value, key, parent, prev);
 
     if (prev != -1) {
-      (*node_list)[node].next = (*node_list)[prev].next;
-      (*node_list)[prev].next = node;
+      nodes[node].next = nodes[prev].next;
+      nodes[prev].next = node;
     } else {
-      (*node_list)[node].next = (*node_list)[parent].child;
-      (*node_list)[parent].child = node;
+      nodes[node].next = nodes[parent].child;
+      nodes[parent].child = node;
     }
 
-    int next = (*node_list)[node].next;
+    int next = nodes[node].next;
     if (next != -1) {
-      (*node_list)[next].prev = node;
+      nodes[next].prev = node;
     }
 
     return node;
   }
 
-  void node_copy(int to, std::shared_ptr<const NodeList> node_list_from, int from) {
+  void copy_node(int to, const Tree& nodes_from, int from) {
+    if (&nodes_from == this) {
+      if (to == from) {
+        throw UsageError("Cannot copy to the same node");
+      }
+      for (int node = nodes[to].parent; node != -1; node = nodes[node].parent) {
+        if (node == from) {
+          throw UsageError("Cannot copy from a node to its descendent");
+        }
+      }
+      for (int node = nodes[from].parent; node != -1; node = nodes_from[node].parent) {
+        if (node == to) {
+          throw UsageError("Cannot copy from a node to its ancestor");
+        }
+      }
+    }
+
     std::stack<std::pair<int, int>> stack;
     stack.emplace(to, from);
     bool at_root = true;
@@ -320,18 +197,18 @@ private:
       auto [to, from] = stack.top();
       stack.pop();
 
-      (*node_list)[to].value = (*node_list_from)[from].value;
-      (*node_list)[to].key = (*node_list_from)[from].key;
+      nodes[to].value = nodes_from[from].value;
+      nodes[to].key = nodes_from[from].key;
 
-      int from_next = (*node_list_from)[from].child;
+      int from_next = nodes_from[from].child;
       if (!at_root && from_next != -1) {
-        int to_next = node_insert(null_t(), "", (*node_list)[to].parent, to);
+        int to_next = insert_node(null_t(), "", nodes[to].parent, to);
         stack.emplace(to_next, from_next);
       }
 
-      int from_child = (*node_list_from)[from].child;
+      int from_child = nodes_from[from].child;
       if (from_child != -1) {
-        int to_child = node_insert(null_t(), "", to, -1);
+        int to_child = insert_node(null_t(), "", to, -1);
         stack.emplace(to_child, from_child);
       }
 
@@ -339,242 +216,667 @@ private:
     }
   }
 
-  Object(const std::shared_ptr<NodeList>& node_list, int index) :
-      node_list(node_list), index(index) {}
-
-  value_t& value() { return (*node_list)[index].value; }
-  const value_t& value() const { return (*node_list)[index].value; }
-
-  std::shared_ptr<NodeList> node_list;
-  int index;
-
-  friend class Pair;
-  template <bool IsConst>
-  friend class Iterator_;
-
-  template <bool IsConst_>
-  friend bool operator==(const Iterator_<IsConst_>& lhs, const Iterator_<IsConst_>& rhs);
-};
-
-// ===================================
-// Pair
-
-class Pair {
-public:
-  const std::string& key() const { return (*node_list)[index].key; }
-  std::string& key() { return (*node_list)[index].key; }
-
-  Object value() { return Object(node_list, index); }
-  const Object value() const { return Object(node_list, index); }
-
-  template <std::size_t Index>
-  auto get() {
-    static_assert(Index < 2);
-    if constexpr (Index == 0) {
-      return key();
+  int find_map_node(int root, const std::string& key) const {
+    assert(root != -1);
+    if (!std::get_if<map_t>(&nodes[root].value)) {
+      throw TypeError("Expected map node");
     }
-    if constexpr (Index == 1) {
-      return value();
+
+    int node = nodes[root].child;
+    while (node != -1) {
+      if (nodes[node].key == key) {
+        return node;
+      }
+      node = nodes[node].next;
     }
+    return -1;
   }
 
-  template <std::size_t Index>
-  auto get() const {
-    static_assert(Index < 2);
-    if constexpr (Index == 0) {
-      return key();
+  int insert_map_node(int root, const std::string& key, const value_t& value) {
+    assert(root != -1);
+    if (!std::get_if<map_t>(&nodes[root].value)) {
+      throw TypeError("Expected map node");
     }
-    if constexpr (Index == 1) {
-      return value();
+
+    int node = nodes[root].child;
+    int prev = -1;
+    while (node != -1) {
+      if (nodes[node].key == key) {
+        throw TypeError("Element with key '" + key + "' already exists");
+      }
+      prev = node;
+      node = nodes[node].next;
     }
+    return insert_node(value, key, root, prev);
+  }
+
+  int find_list_node(int root, std::size_t index) const {
+    assert(root != -1);
+    if (!std::get_if<list_t>(&nodes[root].value)) {
+      throw TypeError("Expected list node");
+    }
+
+    int node = nodes[root].child;
+    std::size_t i = 0;
+    while (node != -1 && i < index) {
+      node = nodes[node].next;
+      i++;
+    }
+    return node;
+  }
+
+  int insert_list_node(int root, const value_t& value) {
+    assert(root != -1);
+    if (!std::get_if<list_t>(&nodes[root].value)) {
+      throw TypeError("Expected list node");
+    }
+
+    int node = nodes[root].child;
+    int prev = -1;
+    while (node != -1) {
+      prev = node;
+      node = nodes[node].next;
+    }
+    return insert_node(value, "", root, prev);
   }
 
 private:
-  Pair(std::shared_ptr<NodeList> node_list, int index) : node_list(node_list), index(index) {}
-  std::shared_ptr<NodeList> node_list;
-  int index;
+  template <typename... Args>
+  int emplace_node(Args&&... args) {
+    int index = 0;
+    if (free.empty()) {
+      index = nodes.size();
+      nodes.emplace_back(std::forward<Args>(args)...);
+    } else {
+      index = free.back();
+      free.pop_back();
+      nodes[index] = Node(std::forward<Args>(args)...);
+    }
+    return index;
+  }
 
-  friend class Object;
+  void pop_node(int index) {
+    free.push_back(index);
+  }
 
-  template <bool IsConst>
-  friend class Iterator_;
-
-  template <bool IsConst_>
-  friend bool operator==(const Iterator_<IsConst_>& lhs, const Iterator_<IsConst_>& rhs);
+  std::vector<Node> nodes;
+  std::vector<int> free;
 };
 
 // ===================================
-// Iterator_
+// Forward declare iterators
 
-template <bool IsConst>
-class Iterator_ {
+template <bool Const>
+class MapIterator_;
+
+using ConstMapIterator = MapIterator_<true>;
+using MapIterator = MapIterator_<false>;
+
+template <bool Const>
+class ListIterator_;
+
+using ListIterator = ListIterator_<false>;
+using ConstListIterator = ListIterator_<true>;
+
+template <bool Const>
+class Ref_;
+
+using Ref = Ref_<false>;
+using ConstRef = Ref_<true>;
+
+template <bool Const>
+class Ptr_;
+
+using Ptr = Ptr_<false>;
+using ConstPtr = Ptr_<true>;
+
+// ===================================
+// ContainerItems
+
+class ContainerItems {
 public:
-  std::conditional_t<IsConst, const Pair&, Pair&> operator*() const { return pair; }
-  std::conditional_t<IsConst, const Pair*, Pair*> operator->() const { return &pair; }
+  template <bool Const>
+  class Iterator_;
 
-  Iterator_& operator++() {
-    pair.index = (*pair.node_list)[pair.index].next;
+  template <bool Const>
+  class PairRef {
+  public:
+    const_ref_t<Const, std::string> key() {
+      return (*tree)[node].key;
+    }
+
+    Ref_<Const> value();
+
+    template <std::size_t Index>
+    requires(Index <= 2)
+    std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Ref_<Const>> get();
+
+  private:
+    PairRef(const_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
+    const_ptr_t<Const, Tree> tree;
+    int node;
+
+    template <bool Const_>
+    friend class ::datapack::ContainerItems::Iterator_;
+  };
+
+  template <bool Const>
+  class Iterator_ {
+  public:
+    PairRef<Const>& operator*() const {
+      return pair;
+    }
+    PairRef<Const>* operator->() const {
+      return &pair;
+    }
+
+    Iterator_& operator++() {
+      pair.node = (*pair.tree)[pair.node].next;
+      return *this;
+    }
+    Iterator_ operator++(int) {
+      Iterator_ temp = (*this);
+      ++(*this);
+      return temp;
+    }
+
+    friend bool operator==(const Iterator_& lhs, const Iterator_& rhs) {
+      return lhs.equal_to(rhs);
+    }
+    friend bool operator!=(const Iterator_& lhs, const Iterator_& rhs) {
+      return !lhs.equal_to(rhs);
+    }
+
+    template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
+    Iterator_(const MapIterator_<OtherConst>& other) : parent(other.parent), pair(other.pair) {}
+
+  private:
+    Iterator_(const_ptr_t<Const, Tree> tree, int parent, int node) :
+        parent(parent), pair(tree, node) {}
+
+    bool equal_to(const Iterator_& other) const {
+      if (pair.tree != other.pair.tree || parent != other.parent) {
+        throw IteratorError("Cannot compare iterators from different containers");
+      }
+      return (pair.node == other.pair.node);
+    }
+
+    int parent;
+    mutable PairRef<Const> pair;
+
+    friend class ContainerItems;
+  };
+  using Iterator = Iterator_<false>;
+  using ConstIterator = Iterator_<true>;
+
+  Iterator begin() {
+    assert_map();
+    return Iterator(tree, *node, (*tree)[*node].child);
+  };
+  Iterator end() {
+    assert_map();
+    return Iterator(tree, *node, -1);
+  };
+  ConstIterator begin() const {
+    assert_map();
+    return ConstIterator(tree, *node, (*tree)[*node].child);
+  };
+  ConstIterator end() const {
+    assert_map();
+    return ConstIterator(tree, *node, -1);
+  };
+  ConstIterator cbegin() {
+    assert_map();
+    return ConstIterator(tree, *node, (*tree)[*node].child);
+  };
+  ConstIterator cend() {
+    assert_map();
+    return ConstIterator(tree, *node, -1);
+  };
+
+private:
+  ContainerItems(Tree* tree, const int* node) : tree(tree), node(node) {}
+
+  void assert_map() const {
+    if (!std::get_if<map_t>(&(*tree)[*node].value)) {
+      throw TypeError("Cannot create an item iterator on a non-map node");
+    }
+  }
+
+  Tree* tree;
+  const int* node;
+
+  friend class Object;
+  template <bool Const_>
+  friend class Ref_;
+};
+
+// ===================================
+// ContainerValues
+
+class ContainerValues {
+public:
+  template <bool Const>
+  class Iterator_ {
+  public:
+    Ref_<Const> operator*() const;
+    Ptr_<Const> operator->() const;
+
+    Iterator_& operator++() {
+      node = (*tree)[node].next;
+      return *this;
+    }
+    Iterator_ operator++(int) {
+      Iterator_ temp = (*this);
+      ++(*this);
+      return temp;
+    }
+
+    friend bool operator==(const Iterator_& lhs, const Iterator_& rhs) {
+      if (lhs.tree != rhs.tree || lhs.parent != rhs.parent) {
+        throw IteratorError("Cannot compare iterators from different containers");
+      }
+      return (lhs.node == rhs.node);
+    }
+
+    template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
+    Iterator_(const MapIterator_<OtherConst>& other) :
+        tree(other.tree), parent(other.parent), node(other.node) {}
+
+  private:
+    Iterator_(const_ptr_t<Const, Tree> tree, int parent, int node) :
+        tree(tree), parent(parent), node(node) {}
+
+    const_ptr_t<Const, Tree> tree;
+    int parent;
+    int node;
+
+    friend class ContainerValues;
+  };
+  using Iterator = Iterator_<false>;
+  using ConstIterator = Iterator_<true>;
+
+  Iterator begin() {
+    assert_container();
+    return Iterator(tree, *node, (*tree)[*node].child);
+  };
+  Iterator end() {
+    assert_container();
+    return Iterator(tree, *node, -1);
+  };
+  ConstIterator begin() const {
+    assert_container();
+    return ConstIterator(tree, *node, (*tree)[*node].child);
+  };
+  ConstIterator end() const {
+    assert_container();
+    return ConstIterator(tree, *node, -1);
+  };
+  ConstIterator cbegin() {
+    assert_container();
+    return ConstIterator(tree, *node, (*tree)[*node].child);
+  };
+  ConstIterator cend() {
+    assert_container();
+    return ConstIterator(tree, *node, -1);
+  };
+
+private:
+  ContainerValues(Tree* tree, const int* node) : tree(tree), node(node) {}
+
+  void assert_container() const {
+    if (!std::get_if<map_t>(&(*tree)[*node].value) && !std::get_if<list_t>(&(*tree)[*node].value)) {
+      throw TypeError("Cannot create an item iterator on a non-container node");
+    }
+  }
+
+  Tree* tree;
+  const int* node;
+
+  friend class Object;
+  template <bool Const_>
+  friend class Ref_;
+};
+
+#define REF_PRIMITIVE_METHODS(Type, name)                                                          \
+  const_ref_t<Const, Type> name() {                                                                \
+    return std::get<Type>((*tree)[node].value);                                                    \
+  }                                                                                                \
+  const_ptr_t<Const, Type> name##_if() {                                                           \
+    return std::get_if<Type>(&(*tree)[node].value);                                                \
+  }
+
+template <bool Const>
+class Ref_ {
+public:
+  template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
+  Ref_(const Ref_<OtherConst>& other) :
+      tree(other.tree),
+      node(other.node),
+      values_(const_cast<Tree*>(tree), &node),
+      items_(const_cast<Tree*>(tree), &node) {}
+
+  Ref_& operator=(const Ref_& other) {
+    static_assert(!Const);
+    tree->copy_node(node, other.tree, other.node);
     return *this;
   }
-  Iterator_ operator++(int) {
-    Iterator_ temp = *this;
-    ++(*this);
-    return temp;
+
+  Ref_& operator=(const primitive_t& value) {
+    static_assert(!Const);
+    tree->clear_node(node);
+    (*tree)[node].value = primitive_to_value(value);
+    return *this;
   }
 
-  template <bool OtherConst, typename = std::enable_if_t<!(!IsConst && OtherConst)>>
-  Iterator_(const Iterator_<OtherConst>& other) : pair(other.pair) {}
+  Ref_ operator[](const std::string& key) {
+    if constexpr (!Const) {
+      if (is_null()) {
+        tree->set_node(node, map_t());
+      }
+    }
+    return Ref_(tree, tree->find_map_node(node, key));
+  }
 
-  Iterator_() : pair(nullptr, -1) {}
+  Ref_ operator[](std::size_t index) const {
+    return Ref_(tree, tree->find_list_node(node, index));
+  }
+
+  Ref_ at(const std::string& key) const {
+    return Ref_(tree, tree->find_map_node(node, key));
+  }
+
+  Ptr_<Const> find(const std::string& key);
+
+  void insert(const std::string& key, const primitive_t& value) {
+    tree->insert_map_node(node, key, value);
+  }
+  void push_back(const primitive_t& value) {
+    if (is_null()) {
+      tree->set_node(node, list_t());
+    }
+    tree->insert_list_node(node, primitive_to_value(value));
+  }
+
+  void insert(const std::string& key, const ConstRef& value) {
+    int new_node = tree->insert_map_node(node, key, null_t());
+    tree->copy_node(new_node, *value.tree, value.node);
+  }
+  void push_back(const ConstRef& value) {
+    if (is_null()) {
+      tree->set_node(node, list_t());
+    }
+    int new_node = tree->insert_list_node(node, null_t());
+    tree->copy_node(new_node, *value.tree, value.node);
+  }
+
+  void erase() {
+    tree->erase_node(node);
+  }
+
+  bool is_map() const {
+    return std::get_if<map_t>(&(*tree)[node].value);
+  }
+  bool is_list() const {
+    return std::get_if<list_t>(&(*tree)[node].value);
+  }
+  bool is_null() const {
+    return std::get_if<null_t>(&(*tree)[node].value);
+  }
+  bool is_primitive() const {
+    return !is_map() && !is_list() && !is_null();
+  }
+
+  REF_PRIMITIVE_METHODS(number_t, number)
+  REF_PRIMITIVE_METHODS(bool, boolean)
+  REF_PRIMITIVE_METHODS(std::string, string)
+  REF_PRIMITIVE_METHODS(binary_t, binary)
+
+  const_ref_t<Const, ContainerItems> items() const {
+    return items_;
+  }
+  const_ref_t<Const, ContainerValues> values() const {
+    return values_;
+  }
+
+  Ptr_<Const> ptr() const;
 
 private:
-  Iterator_(const std::shared_ptr<NodeList>& node_list, int index) : pair(node_list, index) {}
-  mutable Pair pair;
+  Ref_(const_ptr_t<Const, Tree> tree, int node) :
+      tree(tree),
+      node(node),
+      items_(const_cast<Tree*>(tree), &node),
+      values_(const_cast<Tree*>(tree), &node) {}
 
-  template <bool OtherConst>
-  friend class Iterator_;
+  const_ptr_t<Const, Tree> tree;
+  int node;
+  ContainerItems items_;
+  ContainerValues values_;
+
+  template <bool Const_>
+  friend class PairRef;
+  template <bool Const_>
+  friend class Ptr_;
 
   friend class Object;
 
-  template <bool IsConst_>
-  friend bool operator==(const Iterator_<IsConst_>& lhs, const Iterator_<IsConst_>& rhs);
+  template <bool Const_>
+  friend class Ref_;
+
+  template <bool Const_>
+  friend class ContainerItems::PairRef;
 };
 
-template <bool IsConst>
-inline bool operator==(const Iterator_<IsConst>& lhs, const Iterator_<IsConst>& rhs) {
-  if (lhs.pair.index == -1) {
-    return rhs.pair.index == -1;
-  }
-  if (rhs.pair.index == -1) {
-    return false;
-  }
-  if (lhs.pair.node_list.get() != rhs.pair.node_list.get()) {
-    throw std::runtime_error("Cannot compare iterators from different objects");
-  }
-  return lhs.pair.index == rhs.pair.index;
+template <bool Const>
+Ref_<Const> ContainerItems::PairRef<Const>::value() {
+  return Ref_<Const>(tree, node);
 }
-template <bool IsConst>
-inline bool operator!=(const Iterator_<IsConst>& lhs, const Iterator_<IsConst>& rhs) {
-  return !(lhs == rhs);
+
+template <bool Const>
+template <std::size_t Index>
+requires(Index <= 2)
+std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Ref_<Const>> ContainerItems::
+    PairRef<Const>::get() {
+  static_assert(Index <= 2);
+  if constexpr (Index == 0) {
+    return (*tree)[node].key;
+  }
+  if constexpr (Index == 1) {
+    return Ref_<Const>(tree, node);
+  }
 }
 
 // ===================================
-// Object methods that use Iterator
+// Ptr_
 
-inline Iterator Object::find(const std::string& key) {
-  if (!valid()) {
-    throw KeyError("Empty object");
+template <bool Const>
+class Ptr_ {
+public:
+  Ref_<Const>& operator*() const {
+    return ref;
   }
-  if (!is_map()) {
-    throw KeyError("Not a map");
+  Ref_<Const>* operator->() const {
+    return &ref;
   }
-  int prev = -1;
-  int node = (*node_list)[index].child;
-  while (node != -1) {
-    if ((*node_list)[node].key == key) {
-      return Iterator(node_list, node);
+
+  operator bool() const {
+    return ref.node != -1;
+  }
+
+  Ptr_ child() const {
+    return Ptr_(ref.tree, (*ref.tree)[ref.node].child);
+  }
+  Ptr_ next() const {
+    return Ptr_(ref.tree, (*ref.tree)[ref.node].next);
+  }
+  const_ref_t<Const, std::string> key() const {
+    return (*ref.tree)[ref.node].key;
+  }
+
+  Ptr_() : ref(nullptr, -1) {}
+
+  template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
+  Ptr_(const Ptr_<OtherConst>& other) : ref(other.ref) {}
+
+private:
+  Ptr_(const_ptr_t<Const, Tree> tree, int node) : ref(tree, node) {}
+
+  mutable Ref_<Const> ref;
+
+  friend class Object;
+  template <bool Const_>
+  friend class Ref_;
+};
+
+template <bool Const>
+Ptr_<Const> Ref_<Const>::ptr() const {
+  return Ptr_<Const>(tree, node);
+}
+
+// ===================================
+// Object
+
+#define OBJECT_PRIMITIVE_METHODS(Type, name)                                                       \
+  Type& name() {                                                                                   \
+    return std::get<Type>(tree[root].value);                                                       \
+  }                                                                                                \
+  const Type& name() const {                                                                       \
+    return std::get<Type>(tree[root].value);                                                       \
+  }                                                                                                \
+  Type* name##_if() {                                                                              \
+    return std::get_if<Type>(&tree[root].value);                                                   \
+  }                                                                                                \
+  const Type* name##_if() const {                                                                  \
+    return std::get_if<Type>(&tree[root].value);                                                   \
+  }
+
+class Object {
+
+public:
+  Object() : items_(&tree, &root), values_(&tree, &root) {
+    tree.insert_node(null_t(), "", -1, -1);
+  }
+
+  Object& operator=(const Object& other) {
+    tree.copy_node(root, other.tree, other.root);
+    return *this;
+  }
+
+  Object& operator=(const primitive_t& value) {
+    tree.clear_node(root);
+    tree[root].value = primitive_to_value(value);
+    return *this;
+  }
+
+  Ref operator[](const std::string& key) {
+    if (is_null()) {
+      tree.set_node(root, map_t());
     }
-    prev = node;
-    node = (*node_list)[node].next;
-  }
-  int new_node = node_insert(null_t(), key, index, prev);
-  return Iterator(node_list, new_node);
-}
-
-inline ConstIterator Object::find(const std::string& key) const {
-  return ConstIterator(const_cast<Object&>(*this).find(key));
-}
-
-inline Iterator Object::insert(const std::string& key, const primitive_t& value) {
-  if (is_null()) {
-    (*node_list)[index].value = map_t();
-  } else if (!is_map()) {
-    throw KeyError("Not a map or null");
+    return Ref(&tree, tree.find_map_node(root, key));
   }
 
-  int node = (*node_list)[index].child;
-  int prev = -1;
-  while (node != -1) {
-    if ((*node_list)[node].key == key) {
-      throw KeyError("Key '" + key + "' already exists");
+  ConstRef operator[](std::size_t index) const {
+    return ConstRef(&tree, tree.find_list_node(root, index));
+  }
+
+  ConstRef at(const std::string& key) const {
+    return ConstRef(&tree, tree.find_map_node(root, key));
+  }
+
+  Ptr find(const std::string& key) {
+    return Ptr(&tree, tree.find_map_node(root, key));
+  }
+  ConstPtr find(const std::string& key) const {
+    return ConstPtr(&tree, tree.find_map_node(root, key));
+  }
+
+  void insert(const std::string& key, const primitive_t& value) {
+    tree.insert_map_node(root, key, primitive_to_value(value));
+  }
+  void push_back(const primitive_t& value) {
+    if (is_null()) {
+      tree.set_node(root, list_t());
     }
-    prev = node;
-    node = (*node_list)[node].next;
-  }
-  int new_node = node_insert(primitive_to_value(value), key, index, prev);
-  return Iterator(node_list, new_node);
-}
-
-inline Iterator Object::push_back(const primitive_t& value) {
-  if (is_null()) {
-    (*node_list)[index].value = list_t();
-  } else if (!is_list()) {
-    throw KeyError("Not a list or null");
+    tree.insert_list_node(root, primitive_to_value(value));
   }
 
-  int node = (*node_list)[index].child;
-  int prev = -1;
-  while (node != -1) {
-    prev = node;
-    node = (*node_list)[node].next;
+  void insert(const std::string& key, const ConstRef& value) {
+    int new_node = tree.insert_map_node(root, key, null_t());
+    tree.copy_node(new_node, *value.tree, value.node);
   }
-  int new_node = node_insert(primitive_to_value(value), "", index, prev);
-  return Iterator(node_list, new_node);
-}
-
-inline Iterator Object::insert(const std::string& key, const Object& value) {
-  auto iter = insert(key, 0.0);
-  iter->value() = value;
-  return iter;
-}
-
-inline Iterator Object::push_back(const Object& value) {
-  auto iter = push_back(0.0);
-  iter->value() = value;
-  return iter;
-}
-
-inline void Object::erase(const ConstIterator& iterator) {
-  if (iterator.pair.node_list.get() != node_list.get()) {
-    throw KeyError("Tried to erase with an iterator for a different object");
+  void push_back(const ConstRef& value) {
+    if (is_null()) {
+      tree.set_node(root, list_t());
+    }
+    int new_node = tree.insert_list_node(root, null_t());
+    tree.copy_node(new_node, *value.tree, value.node);
   }
-  node_erase(iterator.pair.index);
-}
 
-inline Iterator Object::begin() { return Iterator(node_list, (*node_list)[index].child); }
+  bool is_map() const {
+    return std::get_if<map_t>(&tree[root].value);
+  }
+  bool is_list() const {
+    return std::get_if<list_t>(&tree[root].value);
+  }
+  bool is_null() const {
+    return std::get_if<null_t>(&tree[root].value);
+  }
+  bool is_primitive() const {
+    return !is_map() && !is_list() && !is_null();
+  }
 
-inline Iterator Object::end() { return Iterator(); }
+  OBJECT_PRIMITIVE_METHODS(number_t, number)
+  OBJECT_PRIMITIVE_METHODS(bool, boolean)
+  OBJECT_PRIMITIVE_METHODS(std::string, string)
+  OBJECT_PRIMITIVE_METHODS(binary_t, binary)
 
-inline ConstIterator Object::begin() const {
-  return ConstIterator(node_list, (*node_list)[index].child);
-}
+  ContainerItems& items() {
+    return items_;
+  }
+  const ContainerItems& items() const {
+    return items_;
+  }
+  ContainerValues& values() {
+    return values_;
+  }
+  const ContainerValues& values() const {
+    return values_;
+  }
 
-inline ConstIterator Object::end() const { return ConstIterator(); };
+  Ptr ptr() {
+    return Ptr(&tree, root);
+  }
+  ConstPtr ptr() const {
+    return ConstPtr(&tree, root);
+  }
 
-inline ConstIterator Object::cbegin() {
-  return ConstIterator(node_list, (*node_list)[index].child);
-}
-inline ConstIterator Object::cend() { return ConstIterator(); }
+private:
+  Tree tree;
+  const int root = 0;
+  ContainerItems items_;
+  ContainerValues values_;
+};
 
 std::ostream& operator<<(std::ostream& os, const Object& object);
+std::ostream& operator<<(std::ostream& os, const ConstRef& ref);
 
 } // namespace datapack
 
 namespace std {
 
-template <>
-struct tuple_size<::datapack::Pair> {
+template <bool Const>
+struct tuple_size<::datapack::ContainerItems::PairRef<Const>> {
   static constexpr size_t value = 2;
 };
 
-template <>
-struct tuple_element<0, ::datapack::Pair> {
+template <bool Const>
+struct tuple_element<0, ::datapack::ContainerItems::PairRef<Const>> {
   using type = std::string;
 };
 
-template <>
-struct tuple_element<1, ::datapack::Pair> {
-  using type = ::datapack::Object;
+template <bool Const>
+struct tuple_element<1, ::datapack::ContainerItems::PairRef<Const>> {
+  using type = ::datapack::Ref_<Const>;
 };
 
 } // namespace std

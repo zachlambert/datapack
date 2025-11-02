@@ -10,14 +10,14 @@ static void indent(std::ostream& os, std::size_t depth) {
   }
 }
 
-static std::ostream& print_value(std::ostream& os, const Object& object, std::size_t depth) {
-  if (auto x = object.number_if()) {
+static void print_value(std::ostream& os, ConstRef value, std::size_t depth) {
+  if (auto x = value.number_if()) {
     os << *x;
-  } else if (auto x = object.boolean_if()) {
+  } else if (auto x = value.boolean_if()) {
     os << (*x ? "true" : "false");
-  } else if (auto x = object.string_if()) {
+  } else if (auto x = value.string_if()) {
     os << *x;
-  } else if (auto x = object.binary_if()) {
+  } else if (auto x = value.binary_if()) {
     os << "[\n";
     indent(os, depth + 1);
     os << std::hex;
@@ -33,27 +33,26 @@ static std::ostream& print_value(std::ostream& os, const Object& object, std::si
     }
     indent(os, depth);
     os << "]";
-  } else if (object.is_map()) {
+  } else if (value.is_map()) {
     os << "[map]";
-  } else if (object.is_list()) {
+  } else if (value.is_list()) {
     os << "[list]";
   }
-  return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const Object& object) {
-  print_value(os, object, 0);
-  if (object.is_primitive()) {
-    return os;
+static void print_ptr(std::ostream& os, ConstPtr ptr) {
+  print_value(os, *ptr, 0);
+  if (ptr->is_primitive()) {
+    return;
   }
 
   struct State {
-    ConstIterator iter;
+    ConstPtr ptr;
     std::size_t depth;
-    State(ConstIterator iter, std::size_t depth) : iter(iter), depth(depth) {}
+    State(ConstPtr ptr, std::size_t depth) : ptr(ptr), depth(depth) {}
   };
   std::stack<State> stack;
-  stack.emplace(object.begin(), 0);
+  stack.emplace(ptr.child(), 0);
 
   while (!stack.empty()) {
     auto [iter, depth] = stack.top();
@@ -61,25 +60,32 @@ std::ostream& operator<<(std::ostream& os, const Object& object) {
 
     os << "\n";
     indent(os, depth);
-    if (iter->key().empty()) {
+    if (ptr.key().empty()) {
       os << "- ";
     } else {
-      os << iter->key() << ": ";
+      os << ptr.key() << ": ";
     }
-    auto next = iter;
-    next++;
-    if (next != object.end()) {
+    auto next = ptr.next();
+    if (next) {
       stack.emplace(next, depth);
     }
 
-    print_value(os, iter->value(), depth);
+    print_value(os, *ptr, depth);
 
-    auto child = iter->value().begin();
-    if (child != object.end()) {
+    auto child = ptr.child();
+    if (child) {
       stack.emplace(child, depth + 1);
     }
   }
+}
 
+std::ostream& operator<<(std::ostream& os, const Object& object) {
+  print_ptr(os, object.ptr());
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const ConstRef& ref) {
+  print_ptr(os, ref.ptr());
   return os;
 }
 

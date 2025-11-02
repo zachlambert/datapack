@@ -47,32 +47,32 @@ std::ostream& operator<<(std::ostream& os, ConstObject object) {
   }
 
   struct State {
-    ConstPtr ptr;
+    ConstNodeHandle node;
     std::size_t depth;
-    State(ConstPtr ptr, std::size_t depth) : ptr(ptr), depth(depth) {}
+    State(ConstNodeHandle node, std::size_t depth) : node(node), depth(depth) {}
   };
   std::stack<State> stack;
-  stack.emplace(object.ptr().child(), 1);
+  stack.emplace(object.handle().child(), 1);
 
   while (!stack.empty()) {
-    auto [ptr, depth] = stack.top();
+    auto [node, depth] = stack.top();
     stack.pop();
 
     os << "\n";
     indent(os, depth);
-    if (ptr.key().empty()) {
+    if (node.key().empty()) {
       os << "- ";
     } else {
-      os << ptr.key() << ": ";
+      os << node.key() << ": ";
     }
-    auto next = ptr.next();
+    auto next = node.next();
     if (next) {
       stack.emplace(next, depth);
     }
 
-    print_value(os, *ptr, depth);
+    print_value(os, *node, depth);
 
-    auto child = ptr.child();
+    auto child = node.child();
     if (child) {
       stack.emplace(child, depth + 1);
     }

@@ -338,10 +338,10 @@ using Object = Object_<false>;
 using ConstObject = Object_<true>;
 
 template <bool Const>
-class Ptr_;
+class NodeHandle_;
 
-using Ptr = Ptr_<false>;
-using ConstPtr = Ptr_<true>;
+using NodeHandle = NodeHandle_<false>;
+using ConstNodeHandle = NodeHandle_<true>;
 
 // ===================================
 // ContainerItems
@@ -472,7 +472,7 @@ public:
   class Iterator_ {
   public:
     Object_<Const> operator*() const;
-    Ptr_<Const> operator->() const;
+    NodeHandle_<Const> operator->() const;
 
     Iterator_& operator++() {
       node = (*tree)[node].next;
@@ -574,7 +574,10 @@ public:
       node(0),
       items_(std::const_pointer_cast<Tree>(tree), node),
       values_(std::const_pointer_cast<Tree>(tree), node) {
-    tree->insert_node(null_t(), "", -1, -1);
+    static_assert(!Const);
+    if constexpr (!Const) {
+      tree->insert_node(null_t(), "", -1, -1);
+    }
   }
 
   template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
@@ -613,7 +616,7 @@ public:
     return Object_(tree, tree->find_map_node(node, key, true));
   }
 
-  Ptr_<Const> find(const std::string& key);
+  NodeHandle_<Const> find(const std::string& key);
 
   void insert(const std::string& key, const primitive_t& value) {
     tree->insert_map_node(node, key, value);
@@ -666,7 +669,7 @@ public:
     return values_;
   }
 
-  Ptr_<Const> ptr() const;
+  NodeHandle_<Const> handle() const;
 
 private:
   shared_ptr_t<Const, Tree> tree;
@@ -677,7 +680,7 @@ private:
   template <bool Const_>
   friend class PairRef;
   template <bool Const_>
-  friend class Ptr_;
+  friend class NodeHandle_;
 
   template <bool Const_>
   friend class Object_;
@@ -706,10 +709,10 @@ std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Object_<Const>> 
 }
 
 // ===================================
-// Ptr_
+// NodeHandle_
 
 template <bool Const>
-class Ptr_ {
+class NodeHandle_ {
 public:
   Object_<Const>& operator*() const {
     return ref;
@@ -722,23 +725,23 @@ public:
     return ref.node != -1;
   }
 
-  Ptr_ child() const {
-    return Ptr_(ref.tree, (*ref.tree)[ref.node].child);
+  NodeHandle_ child() const {
+    return NodeHandle_(ref.tree, (*ref.tree)[ref.node].child);
   }
-  Ptr_ next() const {
-    return Ptr_(ref.tree, (*ref.tree)[ref.node].next);
+  NodeHandle_ next() const {
+    return NodeHandle_(ref.tree, (*ref.tree)[ref.node].next);
   }
   const_ref_t<Const, std::string> key() const {
     return (*ref.tree)[ref.node].key;
   }
 
-  Ptr_() : ref(nullptr, -1) {}
+  NodeHandle_() : ref(nullptr, -1) {}
 
   template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
-  Ptr_(const Ptr_<OtherConst>& other) : ref(other.ref) {}
+  NodeHandle_(const NodeHandle_<OtherConst>& other) : ref(other.ref) {}
 
 private:
-  Ptr_(shared_ptr_t<Const, Tree> tree, int node) : ref(tree, node) {}
+  NodeHandle_(shared_ptr_t<Const, Tree> tree, int node) : ref(tree, node) {}
 
   mutable Object_<Const> ref;
 
@@ -747,8 +750,8 @@ private:
 };
 
 template <bool Const>
-Ptr_<Const> Object_<Const>::ptr() const {
-  return Ptr_<Const>(tree, node);
+NodeHandle_<Const> Object_<Const>::handle() const {
+  return NodeHandle_<Const>(tree, node);
 }
 
 std::ostream& operator<<(std::ostream& os, ConstObject ref);

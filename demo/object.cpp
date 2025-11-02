@@ -1,21 +1,19 @@
 #include <datapack/object.hpp>
 #include <iostream>
 
-#if 0
 void demo_mutation() {
-  datapack::Ref a;
+  datapack::Object a;
   a = 1.0;
   std::cout << "a: " << a << std::endl;
 
-  datapack::Ref b;
-  b = "Hello";
-  std::cout << "b: " << b << std::endl;
+  datapack::ConstObject b;
+  // b = "Hello";
+  // std::cout << "b: " << b << std::endl;
 
-  datapack::Ref c;
+  datapack::Object c;
   c.push_back(1);
   c.push_back(2.0);
 }
-#endif
 
 int main() {
   using namespace datapack;

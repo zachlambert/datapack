@@ -2,6 +2,7 @@
 
 #include "datapack/datapack.hpp"
 #include <assert.h>
+#include <initializer_list>
 #include <memory>
 #include <ostream>
 #include <stack>
@@ -36,6 +37,9 @@ inline value_t primitive_to_value(const primitive_t& value) {
       },
       value);
 }
+
+// ===================================
+// template Const helpers
 
 template <bool Const, typename T>
 using const_value_t = std::conditional_t<Const, const T, T>;
@@ -606,6 +610,42 @@ public:
     return *this;
   }
 
+  Object_(std::initializer_list<primitive_t> list) :
+      tree(std::make_shared<Tree>()),
+      node(0),
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {
+    tree->insert_node(null_t(), "", -1, -1);
+    for (const auto& value : list) {
+      push_back(value);
+    }
+  }
+
+  Object_(std::initializer_list<std::pair<std::string, primitive_t>> list) :
+      tree(std::make_shared<Tree>()),
+      node(0),
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {
+    tree->insert_node(null_t(), "", -1, -1);
+    for (const auto& [key, value] : list) {
+      (*this)[key] = value;
+    }
+  }
+
+  Object_& operator=(std::initializer_list<Object> list) {
+    for (const auto& value : list) {
+      push_back(value);
+    }
+    return *this;
+  }
+
+  Object_& operator=(std::initializer_list<std::pair<std::string, Object>> list) {
+    for (const auto& [key, value] : list) {
+      (*this)[key] = value;
+    }
+    return *this;
+  }
+
   Object_ operator[](const std::string& key) {
     if constexpr (!Const) {
       if (is_null()) {
@@ -625,7 +665,7 @@ public:
   NodeHandle_<Const> find(const std::string& key);
 
   void insert(const std::string& key, const primitive_t& value) {
-    tree->insert_map_node(node, key, value);
+    tree->insert_map_node(node, key, primitive_to_value(value));
   }
   void push_back(const primitive_t& value) {
     if (is_null()) {

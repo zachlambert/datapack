@@ -80,9 +80,24 @@ void demo_iterators() {
   }
 }
 
+void demo_initializer_list() {
+  datapack::Object a;
+  a = {1, 2, 3};
+  std::cout << "a: " << a << std::endl;
+
+  datapack::Object b;
+  b = {{"a", 1}, {"b", 2}, {"c", 3}};
+  std::cout << "b: " << b << std::endl;
+
+  datapack::Object c;
+  c = {{"foo", {1, 2, 3}}, {"bar", {{"alpha", true}, {"beta", false}}}};
+  std::cout << "c: " << c << std::endl;
+}
+
 int main() {
   demo_build_primitive();
   demo_build_map();
   demo_clone_copy();
   demo_iterators();
+  demo_initializer_list();
 }

@@ -179,11 +179,11 @@ private:
   friend class Item;
 
   template <bool Const_>
-  friend class ItemsIterator;
+  friend class ItemsIterator_;
 };
 
 template <bool Const>
-class ItemsIterator {
+class ItemsIterator_ {
 public:
   const Item<Const>& operator*() const {
     return item;
@@ -192,25 +192,25 @@ public:
     return &item;
   }
 
-  ItemsIterator& operator++() {
+  ItemsIterator_& operator++() {
     item.node = (*item.tree)[item.node].next;
     return *this;
   }
-  ItemsIterator operator++(int) {
-    ItemsIterator temp = (*this);
+  ItemsIterator_ operator++(int) {
+    ItemsIterator_ temp = (*this);
     ++(*this);
     return temp;
   }
 
-  friend bool operator==(const ItemsIterator& lhs, const ItemsIterator& rhs) {
+  friend bool operator==(const ItemsIterator_& lhs, const ItemsIterator_& rhs) {
     return lhs.item.is(rhs.item);
   }
-  friend bool operator!=(const ItemsIterator& lhs, const ItemsIterator& rhs) {
+  friend bool operator!=(const ItemsIterator_& lhs, const ItemsIterator_& rhs) {
     return !lhs.item.is(rhs.item);
   }
 
 private:
-  ItemsIterator(shared_ptr_t<Const, Tree> tree, int node) : item(tree, node) {}
+  ItemsIterator_(shared_ptr_t<Const, Tree> tree, int node) : item(tree, node) {}
 
   Item<Const> item;
 
@@ -223,7 +223,7 @@ class ItemsWrapper {
 public:
   ItemsWrapper(shared_ptr_t<Const, Tree> tree, const int node) : tree(tree), node(node) {}
 
-  using Iterator = ItemsIterator<Const>;
+  using Iterator = ItemsIterator_<Const>;
 
   Iterator begin() const {
     assert_map();
@@ -275,22 +275,22 @@ namespace datapack::object {
 // ValuesWrapper
 
 template <bool Const>
-class ValuesIterator {
+class ValuesIterator_ {
 public:
   Object_<Const> operator*() const;
   Ptr_<Const> operator->() const;
 
-  ValuesIterator& operator++() {
+  ValuesIterator_& operator++() {
     node = (*tree)[node].next;
     return *this;
   }
-  ValuesIterator operator++(int) {
-    ValuesIterator temp = (*this);
+  ValuesIterator_ operator++(int) {
+    ValuesIterator_ temp = (*this);
     ++(*this);
     return temp;
   }
 
-  friend bool operator==(const ValuesIterator& lhs, const ValuesIterator& rhs) {
+  friend bool operator==(const ValuesIterator_& lhs, const ValuesIterator_& rhs) {
     if (lhs.tree != rhs.tree || (*lhs.tree)[lhs.node].parent != (*rhs.tree)[rhs.node].parent) {
       throw IteratorError("Cannot compare iterators from different containers");
     }
@@ -298,7 +298,7 @@ public:
   }
 
 private:
-  ValuesIterator(shared_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
+  ValuesIterator_(shared_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
 
   shared_ptr_t<Const, Tree> tree;
   int node;
@@ -312,7 +312,7 @@ class ValuesWrapper {
 public:
   ValuesWrapper(shared_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
 
-  using Iterator = ValuesIterator<Const>;
+  using Iterator = ValuesIterator_<Const>;
 
   Iterator begin() const {
     assert_container();
@@ -646,9 +646,11 @@ public:
 
   Ptr_<Const> ptr() const;
 
+  // Make these classes "public" via Object::
+
   using Ptr = Ptr_<Const>;
-  using ValuesIterator = ::datapack::object::ValuesIterator<Const>;
-  using ItemsIterator = ::datapack::object::ValuesIterator<Const>;
+  using ValuesIterator = ValuesIterator_<Const>;
+  using ItemsIterator = ValuesIterator_<Const>;
 
   using TypeError = ::datapack::object::TypeError;
   using KeyError = ::datapack::object::KeyError;
@@ -668,7 +670,7 @@ private:
   friend class Object_;
 
   template <bool Const_>
-  friend class ::datapack::object::ValuesIterator;
+  friend class ValuesIterator_;
 };
 
 template <bool Const>
@@ -746,7 +748,7 @@ private:
   friend class Object_;
 
   template <bool Const_>
-  friend class ValuesIterator;
+  friend class ValuesIterator_;
 };
 
 template <bool Const>
@@ -763,12 +765,12 @@ Ptr_<Const> Object_<Const>::ptr() const {
 }
 
 template <bool Const>
-Object_<Const> ValuesIterator<Const>::operator*() const {
+Object_<Const> ValuesIterator_<Const>::operator*() const {
   return Object_<Const>(tree, node);
 }
 
 template <bool Const>
-Ptr_<Const> ValuesIterator<Const>::operator->() const {
+Ptr_<Const> ValuesIterator_<Const>::operator->() const {
   return Ptr_<Const>(tree, node);
 }
 
@@ -777,6 +779,8 @@ std::ostream& operator<<(std::ostream& os, ConstObject ref);
 } // namespace datapack::object
 
 namespace datapack {
+
+// Only Object is "public" within the datapack:: namespace
 
 template <bool Const>
 using Object_ = object::Object_<Const>;

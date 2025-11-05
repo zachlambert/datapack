@@ -20,7 +20,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         # src/encode/base64.cpp
         # src/encode/floating_string.cpp
         src/object/object.cpp
-        src/object/operations.cpp
         # src/object/reader.cpp
         src/object/tree.cpp
         # src/object/writer.cpp

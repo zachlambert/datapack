@@ -3,6 +3,7 @@
 #include <datapack/examples/entity.hpp>
 #include <datapack/object.hpp>
 #include <gtest/gtest.h>
+#include <sstream>
 
 TEST(Object, ConstructFromPrimitive) {
   using namespace datapack;
@@ -598,6 +599,38 @@ TEST(Object, CanTraverseWithHandle) {
     EXPECT_FALSE(d.child());
     EXPECT_FALSE(d.next());
   }
+}
+
+TEST(Object, Stdout) {
+  using namespace datapack;
+
+  ConstObject object = {
+      {"a", {1, 2, 3}},
+      {"b", Object(false)},
+      {"c",
+       {
+           {"foo", "FOO"},
+           {"bar", "BAR"},
+       }},
+      {"d", Object(std::vector<std::uint8_t>{0x0A, 0x1B, 0x2C})}};
+
+  std::stringstream ss;
+  ss << object << std::endl;
+
+  const std::string expected = R"([map]
+  a: [list]
+    - 1
+    - 2
+    - 3
+  b: false
+  c: [map]
+    foo: FOO
+    bar: BAR
+  d: [binary]
+    0A 1B 2C
+)";
+
+  EXPECT_EQ(ss.str(), expected);
 }
 
 #if 0

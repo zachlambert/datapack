@@ -18,21 +18,22 @@ static void print_value(std::ostream& os, ConstObject value, std::size_t depth) 
   } else if (auto x = value.string_if()) {
     os << *x;
   } else if (auto x = value.binary_if()) {
-    os << "[\n";
+    os << "[binary]\n";
     indent(os, depth + 1);
-    os << std::hex;
+    const auto flags = os.flags();
+    os << std::hex << std::uppercase << std::setfill('0') << std::setw(2);
     for (std::size_t i = 0; i < x->size(); i++) {
-      os << std::setfill('0') << std::setw(2) << (*x)[i] << " ";
-      if ((i + 1) % 8 == 0) {
-        os << "\n";
-        indent(os, depth + 1);
+      os << int((*x)[i]);
+      if (i != x->size() - 1) {
+        if ((i + 1) % 8 == 0) {
+          os << "\n";
+          indent(os, depth + 1);
+        } else {
+          os << " ";
+        }
       }
     }
-    if (x->size() % 8 != 0) {
-      os << "\n";
-    }
-    indent(os, depth);
-    os << "]";
+    os.flags(flags);
   } else if (value.is_map()) {
     os << "[map]";
   } else if (value.is_list()) {

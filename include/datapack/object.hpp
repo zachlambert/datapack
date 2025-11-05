@@ -273,7 +273,7 @@ public:
     int prev = -1;
     while (node != -1) {
       if (nodes[node].key == key) {
-        throw TypeError("Element with key '" + key + "' already exists");
+        throw KeyError("Element with key '" + key + "' already exists");
       }
       prev = node;
       node = nodes[node].next;
@@ -786,11 +786,128 @@ public:
     return values_;
   }
 
+  // NOTE: Currently only returns true if the order of elements are the same such that
+  // two maps that have the same key/value pairs in different orders will return false
+  friend bool operator==(Object_ lhs, Object_ rhs) {
+
+    std::stack<std::pair<int, int>> stack;
+    stack.emplace(lhs.node, rhs.node);
+    bool at_root = true;
+
+    while (!stack.empty()) {
+      auto [lhs_node, rhs_node] = stack.top();
+      stack.pop();
+
+      const auto& lhs_value = (*lhs.tree)[lhs_node].value;
+      const auto& rhs_value = (*rhs.tree)[rhs_node].value;
+      if (!at_root) {
+        const std::string& lhs_key = (*lhs.tree)[lhs_node].key;
+        const std::string& rhs_key = (*rhs.tree)[rhs_node].key;
+        if (lhs_key != rhs_key) {
+          return false;
+        }
+      }
+
+      bool nodes_equal = std::visit(
+          [&](const auto& rhs_type) {
+            using T = std::decay_t<decltype(rhs_type)>;
+            const T* lhs_type = std::get_if<T>(&lhs_value);
+            if (!lhs_type) {
+              return false;
+            }
+            if constexpr (std::is_same_v<T, number_t>) {
+              return *lhs_type == rhs_type;
+            }
+            if constexpr (std::is_same_v<T, std::string>) {
+              return *lhs_type == rhs_type;
+            }
+            if constexpr (std::is_same_v<T, bool>) {
+              return *lhs_type == rhs_type;
+            }
+            if constexpr (std::is_same_v<T, binary_t>) {
+              if (lhs_type->size() != rhs_type.size()) {
+                return false;
+              }
+              for (std::size_t i = 0; i < lhs_type->size(); i++) {
+                if ((*lhs_type)[i] != rhs_type[i]) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          },
+          rhs_value);
+      if (!nodes_equal) {
+        return false;
+      }
+
+      int lhs_next = (*lhs.tree)[lhs_node].next;
+      int rhs_next = (*lhs.tree)[lhs_node].next;
+      if ((lhs_next == -1) != (rhs_next == -1)) {
+        return false;
+      }
+      if (lhs_next != -1) {
+        stack.emplace(lhs_next, rhs_next);
+      }
+
+      int lhs_child = (*lhs.tree)[lhs_node].child;
+      int rhs_child = (*lhs.tree)[lhs_node].child;
+      if ((lhs_child == -1) != (rhs_child == -1)) {
+        return false;
+      }
+      if (lhs_child != -1) {
+        stack.emplace(lhs_child, rhs_child);
+      }
+
+      at_root = false;
+    }
+    return true;
+  }
+
+  friend bool operator!=(Object_ lhs, Object_ rhs) {
+    return !(lhs == rhs);
+  }
+
+  friend bool operator==(Object_ lhs, const primitive_t& rhs) {
+    const auto& lhs_value = (*lhs.tree)[lhs.node].value;
+    return std::visit(
+        [&lhs_value](const auto& rhs_type) -> bool {
+          using T = std::decay_t<decltype(rhs_type)>;
+          if constexpr (std::is_same_v<T, int>) {
+            const double* lhs_type = std::get_if<double>(&lhs_value);
+            if (!lhs_type) {
+              return false;
+            }
+            return (*lhs_type) == rhs_type;
+          }
+          if constexpr (!std::is_same_v<T, int>) {
+            const T* lhs_type = std::get_if<T>(&lhs_value);
+            if (!lhs_type) {
+              return false;
+            }
+            return (*lhs_type) == rhs_type;
+          }
+        },
+        rhs);
+  }
+
+  friend bool operator!=(Object_ lhs, const primitive_t& rhs) {
+    return !(lhs == rhs);
+  }
+
+  friend bool operator==(const primitive_t& lhs, Object_ rhs) {
+    return (rhs == lhs);
+  }
+
+  friend bool operator!=(const primitive_t& lhs, Object_ rhs) {
+    return !(rhs == lhs);
+  }
+
   NodeHandle_<Const> handle() const;
 
 private:
   shared_ptr_t<Const, Tree> tree;
-  const int node;
+  int node;
   ContainerItems items_;
   ContainerValues values_;
 
@@ -834,7 +951,7 @@ std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Object_<Const>> 
 template <bool Const>
 class NodeHandle_ {
 public:
-  Object_<Const>& operator*() const {
+  Object_<Const> operator*() const {
     return ref;
   }
   Object_<Const>* operator->() const {
@@ -857,8 +974,38 @@ public:
 
   NodeHandle_() : ref(nullptr, -1) {}
 
+  NodeHandle_(const NodeHandle_& other) : ref(other.ref.tree, other.ref.node) {}
+  NodeHandle_(NodeHandle_&& other) : ref(std::move(other.ref.tree), other.ref.node) {}
+
   template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
-  NodeHandle_(const NodeHandle_<OtherConst>& other) : ref(other.ref) {}
+  NodeHandle_(const NodeHandle_<OtherConst>& other) : ref(other.ref.tree, other.ref.node) {}
+
+  template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
+  NodeHandle_(NodeHandle_<OtherConst>&& other) : ref(std::move(other.ref.tree), other.ref.node) {}
+
+  NodeHandle_& operator=(const NodeHandle_& other) {
+    ref.tree = other.ref.tree;
+    ref.node = other.ref.node;
+    return *this;
+  }
+
+  NodeHandle_& operator=(NodeHandle_&& other) {
+    ref.tree = std::move(other.ref.tree);
+    ref.node = other.ref.node;
+    return *this;
+  }
+
+  template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
+  NodeHandle_& operator=(const NodeHandle_<OtherConst>& other) {
+    ref.tree = other.ref.tree;
+    ref.node = other.ref.node;
+  }
+
+  template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
+  NodeHandle_& operator=(NodeHandle_<OtherConst>&& other) {
+    ref.tree = std::move(other.ref.tree);
+    ref.node = other.ref.node;
+  }
 
 private:
   NodeHandle_(shared_ptr_t<Const, Tree> tree, int node) : ref(tree, node) {}

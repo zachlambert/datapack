@@ -88,7 +88,7 @@ void demo_initializer_list() {
   Object b = {{"a", 1}, {"b", 2}, {"c", 3}};
   std::cout << "b: " << b << std::endl;
 
-  Object b2 = Object::as_list({{"a", 1}, {"b", 2}, {"c", 3}});
+  Object b2 = Object::make_list({{"a", 1}, {"b", 2}, {"c", 3}});
   std::cout << "b2: " << b2 << std::endl;
 
   Object c;

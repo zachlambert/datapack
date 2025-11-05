@@ -206,7 +206,9 @@ public:
       stack.pop();
 
       nodes[to].value = nodes_from[from].value;
-      nodes[to].key = nodes_from[from].key;
+      if (!at_root) {
+        nodes[to].key = nodes_from[from].key;
+      }
 
       int from_next = nodes_from[from].next;
       if (!at_root && from_next != -1) {
@@ -307,6 +309,16 @@ public:
       node = nodes[node].next;
     }
     return insert_node(value, "", root, prev);
+  }
+
+  std::size_t node_child_count(int node) const {
+    node = nodes[node].child;
+    std::size_t count = 0;
+    while (node != -1) {
+      count++;
+      node = nodes[node].next;
+    }
+    return count;
   }
 
 private:
@@ -596,7 +608,8 @@ public:
       node(0),
       items_(std::const_pointer_cast<Tree>(tree), node),
       values_(std::const_pointer_cast<Tree>(tree), node) {
-    tree->insert_node(primitive_to_value(value), "", -1, -1);
+    auto mutable_tree = std::const_pointer_cast<Tree>(tree);
+    mutable_tree->insert_node(primitive_to_value(value), "", -1, -1);
   }
 
   Object_(std::initializer_list<primitive_t> list) :
@@ -604,24 +617,14 @@ public:
       node(0),
       items_(std::const_pointer_cast<Tree>(tree), node),
       values_(std::const_pointer_cast<Tree>(tree), node) {
-    tree->insert_node(null_t(), "", -1, -1);
+    auto mutable_tree = std::const_pointer_cast<Tree>(tree);
+    int list_node = mutable_tree->insert_node(list_t(), "", -1, -1);
     for (const auto& value : list) {
-      push_back(value);
+      mutable_tree->insert_list_node(list_node, primitive_to_value(value));
     }
   }
 
-  Object_(std::initializer_list<std::pair<std::string, primitive_t>> list) :
-      tree(std::make_shared<Tree>()),
-      node(0),
-      items_(std::const_pointer_cast<Tree>(tree), node),
-      values_(std::const_pointer_cast<Tree>(tree), node) {
-    tree->insert_node(null_t(), "", -1, -1);
-    for (const auto& [key, value] : list) {
-      (*this)[key] = value;
-    }
-  }
-
-  static Object as_list(std::initializer_list<Object> list) {
+  static Object make_list(std::initializer_list<Object> list) {
     Object result;
     for (const auto& value : list) {
       result.push_back(value);
@@ -629,14 +632,28 @@ public:
     return result;
   }
 
+  Object_(std::initializer_list<std::pair<std::string, primitive_t>> list) :
+      tree(std::make_shared<Tree>()),
+      node(0),
+      items_(std::const_pointer_cast<Tree>(tree), node),
+      values_(std::const_pointer_cast<Tree>(tree), node) {
+    auto mutable_tree = std::const_pointer_cast<Tree>(tree);
+    int map_node = mutable_tree->insert_node(map_t(), "", -1, -1);
+    for (const auto& [key, value] : list) {
+      mutable_tree->insert_map_node(map_node, key, primitive_to_value(value));
+    }
+  }
+
   Object_(std::initializer_list<std::pair<std::string, Object>> list) :
       tree(std::make_shared<Tree>()),
       node(0),
       items_(std::const_pointer_cast<Tree>(tree), node),
       values_(std::const_pointer_cast<Tree>(tree), node) {
-    tree->insert_node(null_t(), "", -1, -1);
+    auto mutable_tree = std::const_pointer_cast<Tree>(tree);
+    int map_node = mutable_tree->insert_node(map_t(), "", -1, -1);
     for (const auto& [key, value] : list) {
-      (*this)[key] = value;
+      int child_node = mutable_tree->insert_map_node(map_node, key, null_t());
+      mutable_tree->copy_node(child_node, *value.tree, value.node);
     }
   }
 
@@ -644,6 +661,18 @@ public:
     Object_ result;
     result = (*this);
     return result;
+  }
+
+  Object_& to_map() {
+    static_assert(!Const);
+    tree->set_node(node, map_t());
+    return *this;
+  }
+
+  Object_& to_list() {
+    static_assert(!Const);
+    tree->set_node(node, list_t());
+    return *this;
   }
 
   Object_& operator=(const Object_& other) {
@@ -654,19 +683,11 @@ public:
 
   Object_& operator=(primitive_t value) {
     static_assert(!Const);
-    tree->clear_node(node);
-    (*tree)[node].value = primitive_to_value(value);
+    tree->set_node(node, primitive_to_value(value));
     return *this;
   }
 
 #if 0
-  Object_& operator=(std::initializer_list<Object> list) {
-    for (const auto& value : list) {
-      push_back(value);
-    }
-    return *this;
-  }
-
   Object_& operator=(std::initializer_list<std::pair<std::string, Object>> list) {
     for (const auto& [key, value] : list) {
       (*this)[key] = value;
@@ -687,13 +708,27 @@ public:
     }
   }
 
+  Object_ operator[](const std::size_t index) {
+    return Object_(tree, tree->find_list_node(node, index));
+  }
+
   Object_ at(const std::string& key) {
     return Object_(tree, tree->find_map_node(node, key, true));
   }
 
   NodeHandle_<Const> find(const std::string& key);
 
+  bool contains(const std::string& key) {
+    if (!is_map()) {
+      throw TypeError("Can only call contains() on a map node");
+    }
+    return tree->find_map_node(node, key, false) != -1;
+  }
+
   void insert(const std::string& key, const primitive_t& value) {
+    if (is_null()) {
+      tree->set_node(node, map_t());
+    }
     tree->insert_map_node(node, key, primitive_to_value(value));
   }
   void push_back(const primitive_t& value) {
@@ -704,6 +739,9 @@ public:
   }
 
   void insert(const std::string& key, const ConstObject& value) {
+    if (is_null()) {
+      tree->set_node(node, map_t());
+    }
     int new_node = tree->insert_map_node(node, key, null_t());
     tree->copy_node(new_node, *value.tree, value.node);
   }
@@ -717,6 +755,10 @@ public:
 
   void erase() {
     tree->erase_node(node);
+  }
+
+  std::size_t size() {
+    return tree->node_child_count(node);
   }
 
   bool is_map() const {
@@ -826,6 +868,14 @@ private:
   template <bool Const_>
   friend class Object_;
 };
+
+template <bool Const>
+NodeHandle_<Const> Object_<Const>::find(const std::string& key) {
+  if (!is_map()) {
+    throw TypeError("Can only call find() on a map node");
+  }
+  return NodeHandle_<Const>(tree, tree->find_map_node(node, key, false));
+}
 
 template <bool Const>
 NodeHandle_<Const> Object_<Const>::handle() const {

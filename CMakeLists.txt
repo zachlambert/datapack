@@ -51,7 +51,7 @@ endif()
 if (BUILD_ADDITIONAL_TARGETS AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_subdirectory(examples)
     add_subdirectory(demo)
-    # add_subdirectory(test)
+    add_subdirectory(test)
 endif()
 
 

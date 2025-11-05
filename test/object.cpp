@@ -234,12 +234,12 @@ TEST(Object, OverwriteToPrimitive) {
   ASSERT_FALSE(object.number_if());
   EXPECT_EQ(object.string(), "Hello");
 
-  EXPECT_THROW(object["a"] = 1, TypeError);
+  EXPECT_THROW(object["a"] = 1, Object::TypeError);
   object.to_map();
   object["a"] = 1;
   ASSERT_TRUE(object.is_map());
 
-  EXPECT_THROW(object.push_back(1), TypeError);
+  EXPECT_THROW(object.push_back(1), Object::TypeError);
   object.to_list();
   object.push_back(1);
   ASSERT_TRUE(object.is_list());
@@ -273,9 +273,9 @@ TEST(Object, AccessViaAtWillNotModify) {
   using namespace datapack;
 
   Object object;
-  EXPECT_THROW(object.at("a"), TypeError);
+  EXPECT_THROW(object.at("a"), Object::TypeError);
   object.to_map();
-  EXPECT_THROW(object.at("a"), KeyError);
+  EXPECT_THROW(object.at("a"), Object::KeyError);
 }
 
 TEST(Object, AccessViaOperatorSquareBracketWillThrowForConstObject) {
@@ -286,7 +286,7 @@ TEST(Object, AccessViaOperatorSquareBracketWillThrowForConstObject) {
 
   ConstObject const_object = object;
   EXPECT_NO_THROW(const_object["a"]);
-  EXPECT_THROW(const_object["b"], KeyError);
+  EXPECT_THROW(const_object["b"], Object::KeyError);
 
   EXPECT_NO_THROW(object["a"]);
   EXPECT_NO_THROW(object["b"]);
@@ -297,7 +297,7 @@ TEST(Object, DuplicateInsertionWillThrow) {
 
   Object object;
   object.insert("a", "Hello");
-  EXPECT_THROW(object.insert("a", "Again"), KeyError);
+  EXPECT_THROW(object.insert("a", "Again"), Object::KeyError);
 }
 
 TEST(Object, ObjectContains) {
@@ -309,7 +309,7 @@ TEST(Object, ObjectContains) {
   EXPECT_FALSE(map.contains("c"));
 
   ConstObject list = {1, 2, 3};
-  EXPECT_THROW(list.contains("a"), TypeError);
+  EXPECT_THROW(list.contains("a"), Object::TypeError);
 }
 
 TEST(Object, ObjectFindReturnsPtr) {
@@ -321,7 +321,7 @@ TEST(Object, ObjectFindReturnsPtr) {
   EXPECT_FALSE(map.find("c"));
 
   ConstObject list = {1, 2, 3};
-  EXPECT_THROW(list.find("a"), TypeError);
+  EXPECT_THROW(list.find("a"), Object::TypeError);
 }
 
 TEST(Object, ObjectEraseRemovesAndDecreasesSize) {
@@ -365,8 +365,8 @@ TEST(Object, ObjectCanIterateOverListValues) {
     }
   }
 
-  EXPECT_THROW(object.items().begin(), TypeError);
-  EXPECT_THROW(object.items().end(), TypeError);
+  EXPECT_THROW(object.items().begin(), Object::TypeError);
+  EXPECT_THROW(object.items().end(), Object::TypeError);
 }
 
 TEST(Object, ObjectCanIterateOverMapValuesAndItems) {
@@ -524,23 +524,23 @@ TEST(Object, CanTraverseWithPtr) {
        }},
       {"d", Object(std::vector<std::uint8_t>{0x01, 0x23, 0x45})}};
 
-  ConstPtr iter = object.ptr();
+  ConstObject::Ptr iter = object.ptr();
   ASSERT_TRUE(iter);
   ASSERT_TRUE(iter->is_map());
 
-  ConstPtr a = iter.child();
+  ConstObject::Ptr a = iter.child();
   ASSERT_TRUE(a);
   EXPECT_EQ(a.key(), "a");
 
-  ConstPtr b = a.next();
+  ConstObject::Ptr b = a.next();
   ASSERT_TRUE(b);
   EXPECT_EQ(b.key(), "b");
 
-  ConstPtr c = b.next();
+  ConstObject::Ptr c = b.next();
   ASSERT_TRUE(c);
   EXPECT_EQ(c.key(), "c");
 
-  ConstPtr d = c.next();
+  ConstObject::Ptr d = c.next();
   ASSERT_TRUE(d);
   EXPECT_EQ(d.key(), "d");
 

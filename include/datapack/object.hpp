@@ -13,7 +13,7 @@
 #include <variant>
 #include <vector>
 
-namespace datapack {
+namespace datapack::object {
 
 using number_t = double;
 using binary_t = std::vector<std::uint8_t>;
@@ -248,28 +248,28 @@ private:
   friend class Object_;
 };
 
-} // namespace datapack
+} // namespace datapack::object
 
 namespace std {
 
 template <bool Const>
-struct tuple_size<::datapack::Item<Const>> {
+struct tuple_size<::datapack::object::Item<Const>> {
   static constexpr size_t value = 2;
 };
 
 template <bool Const>
-struct tuple_element<0, ::datapack::Item<Const>> {
-  using type = datapack::const_ref_t<Const, std::string>;
+struct tuple_element<0, ::datapack::object::Item<Const>> {
+  using type = datapack::object::const_ref_t<Const, std::string>;
 };
 
 template <bool Const>
-struct tuple_element<1, ::datapack::Item<Const>> {
-  using type = ::datapack::Object_<Const>;
+struct tuple_element<1, ::datapack::object::Item<Const>> {
+  using type = ::datapack::object::Object_<Const>;
 };
 
 } // namespace std
 
-namespace datapack {
+namespace datapack::object {
 
 // ===================================
 // ValuesWrapper
@@ -646,6 +646,15 @@ public:
 
   Ptr_<Const> ptr() const;
 
+  using Ptr = Ptr_<Const>;
+  using ValuesIterator = ::datapack::object::ValuesIterator<Const>;
+  using ItemsIterator = ::datapack::object::ValuesIterator<Const>;
+
+  using TypeError = ::datapack::object::TypeError;
+  using KeyError = ::datapack::object::KeyError;
+  using UsageError = ::datapack::object::UsageError;
+  using IteratorError = ::datapack::object::IteratorError;
+
 private:
   shared_ptr_t<Const, Tree> tree;
   int node;
@@ -659,7 +668,7 @@ private:
   friend class Object_;
 
   template <bool Const_>
-  friend class ValuesIterator;
+  friend class ::datapack::object::ValuesIterator;
 };
 
 template <bool Const>
@@ -764,5 +773,14 @@ Ptr_<Const> ValuesIterator<Const>::operator->() const {
 }
 
 std::ostream& operator<<(std::ostream& os, ConstObject ref);
+
+} // namespace datapack::object
+
+namespace datapack {
+
+template <bool Const>
+using Object_ = object::Object_<Const>;
+using Object = Object_<false>;
+using ConstObject = Object_<true>;
 
 } // namespace datapack

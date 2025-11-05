@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stack>
 
-namespace datapack {
+namespace datapack::object {
 
 #if 0
 Object merge(const Object::ConstReference& base, const Object::ConstReference& diff) {
@@ -264,4 +264,4 @@ std::ostream& operator<<(std::ostream& os, ConstObject object) {
   return os;
 }
 
-} // namespace datapack
+} // namespace datapack::object

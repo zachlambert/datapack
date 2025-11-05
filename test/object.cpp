@@ -312,7 +312,7 @@ TEST(Object, ObjectContains) {
   EXPECT_THROW(list.contains("a"), TypeError);
 }
 
-TEST(Object, ObjectFindReturnsHandle) {
+TEST(Object, ObjectFindReturnsPtr) {
   using namespace datapack;
 
   ConstObject map = {{"a", 1}, {"b", 2}};
@@ -511,7 +511,7 @@ TEST(Object, CanCompareObjects) {
   EXPECT_TRUE(one != six);
 }
 
-TEST(Object, CanTraverseWithHandle) {
+TEST(Object, CanTraverseWithPtr) {
   using namespace datapack;
 
   ConstObject object = {
@@ -524,23 +524,23 @@ TEST(Object, CanTraverseWithHandle) {
        }},
       {"d", Object(std::vector<std::uint8_t>{0x01, 0x23, 0x45})}};
 
-  ConstNodeHandle iter = object.handle();
+  ConstPtr iter = object.ptr();
   ASSERT_TRUE(iter);
   ASSERT_TRUE(iter->is_map());
 
-  ConstNodeHandle a = iter.child();
+  ConstPtr a = iter.child();
   ASSERT_TRUE(a);
   EXPECT_EQ(a.key(), "a");
 
-  ConstNodeHandle b = a.next();
+  ConstPtr b = a.next();
   ASSERT_TRUE(b);
   EXPECT_EQ(b.key(), "b");
 
-  ConstNodeHandle c = b.next();
+  ConstPtr c = b.next();
   ASSERT_TRUE(c);
   EXPECT_EQ(c.key(), "c");
 
-  ConstNodeHandle d = c.next();
+  ConstPtr d = c.next();
   ASSERT_TRUE(d);
   EXPECT_EQ(d.key(), "d");
 

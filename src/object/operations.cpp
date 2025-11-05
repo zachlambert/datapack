@@ -231,12 +231,12 @@ std::ostream& operator<<(std::ostream& os, ConstObject object) {
   }
 
   struct State {
-    ConstNodeHandle node;
+    ConstPtr node;
     std::size_t depth;
-    State(ConstNodeHandle node, std::size_t depth) : node(node), depth(depth) {}
+    State(ConstPtr node, std::size_t depth) : node(node), depth(depth) {}
   };
   std::stack<State> stack;
-  stack.emplace(object.handle().child(), 1);
+  stack.emplace(object.ptr().child(), 1);
 
   while (!stack.empty()) {
     auto [node, depth] = stack.top();

@@ -141,10 +141,10 @@ using Object = Object_<false>;
 using ConstObject = Object_<true>;
 
 template <bool Const>
-class NodeHandle_;
+class Ptr_;
 
-using NodeHandle = NodeHandle_<false>;
-using ConstNodeHandle = NodeHandle_<true>;
+using Ptr = Ptr_<false>;
+using ConstPtr = Ptr_<true>;
 
 // ===================================
 // ItemsWrapper
@@ -278,7 +278,7 @@ template <bool Const>
 class ValuesIterator {
 public:
   Object_<Const> operator*() const;
-  NodeHandle_<Const> operator->() const;
+  Ptr_<Const> operator->() const;
 
   ValuesIterator& operator++() {
     node = (*tree)[node].next;
@@ -450,7 +450,7 @@ public:
     return Object_(tree, tree->find_map_node(node, key, true));
   }
 
-  NodeHandle_<Const> find(const std::string& key) const;
+  Ptr_<Const> find(const std::string& key) const;
 
   bool contains(const std::string& key) const {
     if (!is_map()) {
@@ -644,7 +644,7 @@ public:
     return !(rhs == lhs);
   }
 
-  NodeHandle_<Const> handle() const;
+  Ptr_<Const> ptr() const;
 
 private:
   shared_ptr_t<Const, Tree> tree;
@@ -653,7 +653,7 @@ private:
   template <bool Const_>
   friend class Item;
   template <bool Const_>
-  friend class NodeHandle_;
+  friend class Ptr_;
 
   template <bool Const_>
   friend class Object_;
@@ -682,10 +682,10 @@ std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Object_<Const>> 
 }
 
 // ===================================
-// NodeHandle_
+// Ptr_
 
 template <bool Const>
-class NodeHandle_ {
+class Ptr_ {
 public:
   Object_<Const> operator*() const {
     return object;
@@ -698,39 +698,38 @@ public:
     return object.node != -1;
   }
 
-  NodeHandle_ child() const {
-    return NodeHandle_(object.tree, (*object.tree)[object.node].child);
+  Ptr_ child() const {
+    return Ptr_(object.tree, (*object.tree)[object.node].child);
   }
-  NodeHandle_ next() const {
-    return NodeHandle_(object.tree, (*object.tree)[object.node].next);
+  Ptr_ next() const {
+    return Ptr_(object.tree, (*object.tree)[object.node].next);
   }
   const_ref_t<Const, std::string> key() const {
     return (*object.tree)[object.node].key;
   }
 
-  NodeHandle_() : object(nullptr, -1) {}
+  Ptr_() : object(nullptr, -1) {}
 
-  NodeHandle_(const NodeHandle_& other) : object(other.object.tree, other.object.node) {}
-  NodeHandle_(NodeHandle_&& other) : object(std::move(other.object.tree), other.object.node) {}
+  Ptr_(const Ptr_& other) : object(other.object.tree, other.object.node) {}
+  Ptr_(Ptr_&& other) : object(std::move(other.object.tree), other.object.node) {}
 
-  NodeHandle_& operator=(const NodeHandle_& other) {
+  Ptr_& operator=(const Ptr_& other) {
     object.tree = other.object.tree;
     object.node = other.object.node;
     return *this;
   }
 
-  NodeHandle_& operator=(NodeHandle_&& other) {
+  Ptr_& operator=(Ptr_&& other) {
     object.tree = std::move(other.object.tree);
     object.node = other.object.node;
     return *this;
   }
 
   template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
-  NodeHandle_(const NodeHandle_<OtherConst>& other) :
-      object(other.object.tree, other.object.node) {}
+  Ptr_(const Ptr_<OtherConst>& other) : object(other.object.tree, other.object.node) {}
 
 private:
-  NodeHandle_(shared_ptr_t<Const, Tree> tree, int node) : object(tree, node) {}
+  Ptr_(shared_ptr_t<Const, Tree> tree, int node) : object(tree, node) {}
 
   Object_<Const> object;
 
@@ -742,16 +741,16 @@ private:
 };
 
 template <bool Const>
-NodeHandle_<Const> Object_<Const>::find(const std::string& key) const {
+Ptr_<Const> Object_<Const>::find(const std::string& key) const {
   if (!is_map()) {
     throw TypeError("Can only call find() on a map node");
   }
-  return NodeHandle_<Const>(tree, tree->find_map_node(node, key, false));
+  return Ptr_<Const>(tree, tree->find_map_node(node, key, false));
 }
 
 template <bool Const>
-NodeHandle_<Const> Object_<Const>::handle() const {
-  return NodeHandle_<Const>(tree, node);
+Ptr_<Const> Object_<Const>::ptr() const {
+  return Ptr_<Const>(tree, node);
 }
 
 template <bool Const>
@@ -760,8 +759,8 @@ Object_<Const> ValuesIterator<Const>::operator*() const {
 }
 
 template <bool Const>
-NodeHandle_<Const> ValuesIterator<Const>::operator->() const {
-  return NodeHandle_<Const>(tree, node);
+Ptr_<Const> ValuesIterator<Const>::operator->() const {
+  return Ptr_<Const>(tree, node);
 }
 
 std::ostream& operator<<(std::ostream& os, ConstObject ref);

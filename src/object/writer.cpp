@@ -4,10 +4,10 @@
 
 namespace datapack {
 
-ObjectWriter::ObjectWriter(Object::Reference object) : object(object), next_stride(0) {}
+ObjectWriter::ObjectWriter(Object object) : node(object.ptr()), container_begin(false) {}
 
 void ObjectWriter::number(NumberType type, const void* value_in) {
-  Object::number_t value;
+  object::number_t value;
   switch (type) {
   case NumberType::I32:
     value = *(std::int32_t*)value_in;
@@ -31,26 +31,30 @@ void ObjectWriter::number(NumberType type, const void* value_in) {
     value = *(double*)value_in;
     break;
   }
-  set_value(value);
+  *node = value;
 }
 
-void ObjectWriter::boolean(bool value) { set_value(value); }
+void ObjectWriter::boolean(bool value) {
+  *node = value;
+}
 
-void ObjectWriter::string(const char* value) { set_value(std::string(value)); }
+void ObjectWriter::string(const char* value) {
+  *node = value;
+}
 
 void ObjectWriter::enumerate(int value, const std::span<const char*>& labels) {
-  set_value(std::string(labels[value]));
+  *node = std::string(labels[value]);
 }
 
 void ObjectWriter::binary(const std::span<const std::uint8_t>& data) {
-  std::vector<std::uint8_t> vec(data.size());
-  std::memcpy(vec.data(), data.data(), data.size());
-  set_value(vec);
+  std::vector<std::uint8_t> bytes(data.size());
+  std::memcpy(bytes.data(), data.data(), data.size());
+  *node = bytes;
 }
 
 void ObjectWriter::optional_begin(bool has_value) {
   if (!has_value) {
-    set_value(Object::null_t());
+    node->to_null();
   }
 }
 
@@ -66,46 +70,74 @@ void ObjectWriter::variant_begin(int value, const std::span<const char*>& labels
   object_next(value_key.c_str());
 }
 
-void ObjectWriter::variant_end() { object_end(); }
+void ObjectWriter::variant_end() {
+  object_end();
+}
 
-void ObjectWriter::object_begin() { set_value(Object::map_t()); }
+void ObjectWriter::object_begin() {
+  node->to_map();
+  container_begin = true;
+}
 
-void ObjectWriter::object_end() { nodes.pop(); }
+void ObjectWriter::object_end() {
+  if (!container_begin) {
+    node = node.parent();
+  }
+  container_begin = false;
+}
 
-void ObjectWriter::object_next(const char* key) { next_key = key; }
-
-void ObjectWriter::tuple_begin() { set_value(Object::list_t()); }
-
-void ObjectWriter::tuple_end() { nodes.pop(); }
-
-void ObjectWriter::tuple_next() { next_key = ""; }
-
-void ObjectWriter::list_begin() { set_value(Object::list_t()); }
-
-void ObjectWriter::list_end() { nodes.pop(); }
-
-void ObjectWriter::list_next() { next_key = ""; }
-
-void ObjectWriter::set_value(const Object::value_t& value) {
-  Object::Iterator next;
-
-  if (nodes.empty()) {
-    object = value;
-    next = object.iter();
+void ObjectWriter::object_next(const char* key) {
+  if (container_begin) {
+    node = node->emplace(key).ptr();
   } else {
-    const auto& node = nodes.top();
-    if (node->is_map()) {
-      next = node->insert(next_key, value);
-    } else if (node->is_list()) {
-      next = node->push_back(value);
-    } else {
-      throw std::runtime_error("Shouldn't reach here");
-    }
+    node = node.parent()->emplace(key).ptr();
   }
+  container_begin = false;
+  assert(node);
+}
 
-  if (next->is_map() || next->is_list()) {
-    nodes.push(next);
+void ObjectWriter::tuple_begin() {
+  node->to_list();
+  container_begin = true;
+}
+
+void ObjectWriter::tuple_end() {
+  if (!container_begin) {
+    node = node.parent();
   }
+  container_begin = false;
+}
+
+void ObjectWriter::tuple_next() {
+  if (container_begin) {
+    node = node->emplace_back().ptr();
+  } else {
+    node = node.parent()->emplace_back().ptr();
+  }
+  container_begin = false;
+  assert(node);
+}
+
+void ObjectWriter::list_begin() {
+  node->to_list();
+  container_begin = true;
+}
+
+void ObjectWriter::list_end() {
+  if (!container_begin) {
+    node = node.parent();
+  }
+  container_begin = false;
+}
+
+void ObjectWriter::list_next() {
+  if (container_begin) {
+    node = node->emplace_back().ptr();
+  } else {
+    node = node.parent()->emplace_back().ptr();
+  }
+  container_begin = false;
+  assert(node);
 }
 
 } // namespace datapack

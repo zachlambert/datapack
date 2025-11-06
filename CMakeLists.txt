@@ -15,14 +15,14 @@ endif()
 
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_library(datapack SHARED
-        # src/binary/reader.cpp
-        # src/binary/writer.cpp
-        # src/encode/base64.cpp
-        # src/encode/floating_string.cpp
+        src/binary/reader.cpp
+        src/binary/writer.cpp
+        src/encode/base64.cpp
+        src/encode/floating_string.cpp
         src/object/object.cpp
-        # src/object/reader.cpp
+        src/object/reader.cpp
         src/object/tree.cpp
-        # src/object/writer.cpp
+        src/object/writer.cpp
         # src/schema/token.cpp
         # src/schema/tokenizer.cpp
         # src/schema/schema.cpp

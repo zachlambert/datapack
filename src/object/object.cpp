@@ -147,22 +147,26 @@ std::ostream& operator<<(std::ostream& os, ConstObject object) {
     } else if (auto x = node->string_if()) {
       os << *x;
     } else if (auto x = node->binary_if()) {
-      os << "[binary]\n";
-      indent(depth + 1);
-      const auto flags = os.flags();
-      os << std::hex << std::uppercase << std::setfill('0') << std::setw(2);
-      for (std::size_t i = 0; i < x->size(); i++) {
-        os << int((*x)[i]);
-        if (i != x->size() - 1) {
-          if ((i + 1) % 8 == 0) {
-            os << "\n";
-            indent(depth + 1);
-          } else {
-            os << " ";
+      if (x->size() > 0) {
+        os << "[binary]\n";
+        indent(depth + 1);
+        const auto flags = os.flags();
+        os << std::hex << std::uppercase << std::setfill('0') << std::setw(2);
+        for (std::size_t i = 0; i < x->size(); i++) {
+          os << int((*x)[i]);
+          if (i != x->size() - 1) {
+            if ((i + 1) % 8 == 0) {
+              os << "\n";
+              indent(depth + 1);
+            } else {
+              os << " ";
+            }
           }
         }
+        os.flags(flags);
+      } else {
+        os << "[binary]";
       }
-      os.flags(flags);
     } else if (node->is_map()) {
       os << "[map]";
     } else if (node->is_list()) {

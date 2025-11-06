@@ -3,11 +3,10 @@
 
 namespace datapack {
 
-ObjectReader::ObjectReader(Object::ConstReference object) :
-    node(object.iter()), list_start(false), next_variant_label(nullptr) {}
+ObjectReader::ObjectReader(ConstObject object) : node(object.ptr()), container_begin(false) {}
 
 void ObjectReader::number(NumberType type, void* value_out) {
-  Object::number_t value;
+  object::number_t value;
   if (auto x = node->number_if()) {
     value = *x;
   } else {
@@ -112,16 +111,16 @@ int ObjectReader::variant_begin(const std::span<const char*>& labels) {
   return 0;
 }
 
-void ObjectReader::variant_end() { object_end(); }
+void ObjectReader::variant_end() {
+  object_end();
+}
 
 void ObjectReader::object_begin() {
-  nodes.push(node);
   node = node.child();
 }
 
 void ObjectReader::object_end() {
-  node = nodes.top();
-  nodes.pop();
+  node = node.parent();
 }
 
 void ObjectReader::object_next(const char* key) {
@@ -147,26 +146,34 @@ void ObjectReader::tuple_begin() {
     invalidate();
     return;
   }
-  list_start = true;
-  nodes.push(node);
-  node = node.child();
+  container_begin = true;
 }
 
 void ObjectReader::tuple_next() {
-  if (!list_start) {
-    node = node.next();
+  if (container_begin) {
+    auto child = node.child();
+    if (!child) {
+      invalidate();
+      return;
+    }
+    container_begin = false;
+    node = child;
+    return;
   }
-  list_start = false;
-  if (!node) {
+
+  auto next = node.next();
+  if (!next) {
     invalidate();
     return;
   }
+  node = next;
 }
 
 void ObjectReader::tuple_end() {
-  list_start = false;
-  node = nodes.top();
-  nodes.pop();
+  if (!container_begin) {
+    node = node.parent();
+  }
+  container_begin = false;
 }
 
 void ObjectReader::list_begin() {
@@ -174,23 +181,33 @@ void ObjectReader::list_begin() {
     invalidate();
     return;
   }
-  list_start = true;
-  nodes.push(node);
-  node = node.child();
+  container_begin = true;
 }
 
 bool ObjectReader::list_next() {
-  if (!list_start) {
-    node = node.next();
+  if (container_begin) {
+    auto child = node.child();
+    if (!child) {
+      return false;
+    }
+    node = child;
+    container_begin = false;
+    return true;
   }
-  list_start = false;
-  return bool(node);
+
+  auto next = node.next();
+  if (!next) {
+    return false;
+  }
+  node = next;
+  return true;
 }
 
 void ObjectReader::list_end() {
-  list_start = false;
-  node = nodes.top();
-  nodes.pop();
+  if (!container_begin) {
+    node = node.parent();
+  }
+  container_begin = false;
 }
 
 } // namespace datapack

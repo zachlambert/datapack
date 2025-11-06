@@ -425,6 +425,12 @@ public:
     return *this;
   }
 
+  const Object_& to_null() const {
+    static_assert(!Const);
+    tree->set_node(node, null_t());
+    return *this;
+  }
+
   const Object_& operator=(const Object_& other) const {
     static_assert(!Const);
     tree->copy_node(node, *other.tree, other.node);
@@ -473,32 +479,51 @@ public:
     return tree->find_map_node(node, key, false) != -1;
   }
 
-  void insert(const std::string& key, const primitive_t& value) const {
+  Object_ insert(const std::string& key, const primitive_t& value) const {
     if (is_null()) {
       tree->set_node(node, map_t());
     }
-    tree->insert_map_node(node, key, primitive_to_value(value));
+    int new_node = tree->insert_map_node(node, key, primitive_to_value(value));
+    return Object_(tree, new_node);
   }
-  void push_back(const primitive_t& value) {
+  Object_ push_back(const primitive_t& value) {
     if (is_null()) {
       tree->set_node(node, list_t());
     }
-    tree->insert_list_node(node, primitive_to_value(value));
+    int new_node = tree->insert_list_node(node, primitive_to_value(value));
+    return Object_(tree, new_node);
   }
 
-  void insert(const std::string& key, const ConstObject& value) const {
+  Object_ insert(const std::string& key, const ConstObject& value) const {
     if (is_null()) {
       tree->set_node(node, map_t());
     }
     int new_node = tree->insert_map_node(node, key, null_t());
     tree->copy_node(new_node, *value.tree, value.node);
+    return Object_(tree, new_node);
   }
-  void push_back(const ConstObject& value) const {
+  Object_ push_back(const ConstObject& value) const {
     if (is_null()) {
       tree->set_node(node, list_t());
     }
     int new_node = tree->insert_list_node(node, null_t());
     tree->copy_node(new_node, *value.tree, value.node);
+    return Object_(tree, new_node);
+  }
+
+  Object_ emplace(const std::string& key) const {
+    if (is_null()) {
+      tree->set_node(node, map_t());
+    }
+    int new_node = tree->insert_map_node(node, key, null_t());
+    return Object_(tree, new_node);
+  }
+  Object_ emplace_back() const {
+    if (is_null()) {
+      tree->set_node(node, list_t());
+    }
+    int new_node = tree->insert_list_node(node, null_t());
+    return Object_(tree, new_node);
   }
 
   void erase() const {
@@ -736,5 +761,89 @@ Object object_merge(ConstObject base, ConstObject diff);
  * @return The diff object that when applied on top of base, returns modified
  */
 Object object_diff(ConstObject base, ConstObject modified);
+
+class ObjectWriter : public Writer {
+public:
+  ObjectWriter(Object object);
+
+  void number(NumberType type, const void* value) override;
+  void boolean(bool value) override;
+  void string(const char* value) override;
+  void enumerate(int value, const std::span<const char*>& labels) override;
+  void binary(const std::span<const std::uint8_t>& data) override;
+
+  void optional_begin(bool has_value) override;
+  void optional_end() override;
+
+  void variant_begin(int value, const std::span<const char*>& labels) override;
+  void variant_end() override;
+
+  void object_begin() override;
+  void object_next(const char* key) override;
+  void object_end() override;
+
+  void tuple_begin() override;
+  void tuple_next() override;
+  void tuple_end() override;
+
+  void list_begin() override;
+  void list_next() override;
+  void list_end() override;
+
+private:
+  Object::Ptr node;
+  bool container_begin;
+};
+
+class ObjectReader : public Reader {
+public:
+  ObjectReader(ConstObject object);
+
+  void number(NumberType type, void* value) override;
+  bool boolean() override;
+  const char* string() override;
+  int enumerate(const std::span<const char*>& labels) override;
+  std::span<const std::uint8_t> binary() override;
+
+  bool optional_begin() override;
+  void optional_end() override;
+
+  int variant_begin(const std::span<const char*>& labels) override;
+  void variant_end() override;
+
+  void object_begin() override;
+  void object_end() override;
+  void object_next(const char* key) override;
+
+  void tuple_begin() override;
+  void tuple_end() override;
+  void tuple_next() override;
+
+  void list_begin() override;
+  bool list_next() override;
+  void list_end() override;
+
+private:
+  ConstObject::Ptr node;
+  bool container_begin;
+  // std::stack<ConstObject::Ptr> nodes;
+  // bool list_start;
+  // const char* next_variant_label;
+  std::vector<std::uint8_t> data_temp;
+};
+
+template <readable T>
+T read_object(ConstObject object) {
+  T result;
+  ObjectReader(object).value(result);
+  return result;
+}
+
+template <writeable T>
+Object write_object(const T& value) {
+  Object object;
+  ObjectWriter(object).value(value);
+  return object;
+}
 
 } // namespace datapack

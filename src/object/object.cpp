@@ -4,263 +4,304 @@
 
 namespace datapack::object {
 
-#if 0
-Object merge(const Object::ConstReference& base, const Object::ConstReference& diff) {
-  Object merged;
-
-  if (base.is_primitive()) {
-    merged = diff;
-    return merged;
+static bool binary_match(const binary_t& lhs, const binary_t& rhs) {
+  if (lhs.size() != rhs.size()) {
+    return false;
   }
-
-  std::stack<Object::ConstIterator> base_nodes;
-  std::stack<Object::ConstIterator> diff_nodes;
-  std::stack<Object::Iterator> merged_nodes;
-
-  diff_nodes.push(diff.iter());
-
-  while (!diff_nodes.empty()) {
-    auto diff_iter = diff_nodes.top();
-    auto base_iter = base_nodes.top();
-    diff_iter->is_map();
-  }
-
-  return merged;
-}
-
-Object diff(const Object::ConstReference& base, const Object::ConstReference& modified) {
-  Object diff;
-  return diff;
-}
-
-bool operator==(const Object::ConstReference& lhs, const Object::ConstReference& rhs) {
-  static constexpr double float_threshold = 1e-12;
-  std::stack<Object::ConstIterator> nodes_lhs;
-  std::stack<Object::ConstIterator> nodes_rhs;
-  nodes_lhs.push(lhs.iter());
-  nodes_rhs.push(rhs.iter());
-
-  while (!nodes_lhs.empty()) {
-    auto lhs = nodes_lhs.top();
-    auto rhs = nodes_rhs.top();
-    nodes_lhs.pop();
-    nodes_rhs.pop();
-
-    if (bool(lhs) != bool(rhs)) {
-      return false;
-    }
-    if (!lhs) { // && !rhs
-      continue;
-    }
-
-    if (!nodes_lhs.empty() && lhs.parent() && lhs.parent()->is_map()) {
-      auto lhs_next = lhs.next();
-      nodes_lhs.push(lhs_next);
-      nodes_rhs.push(rhs.parent()->find(lhs_next->key()));
-    }
-    if (!nodes_lhs.empty() && lhs.parent() && lhs.parent()->is_list()) {
-      nodes_lhs.push(lhs.next());
-      nodes_rhs.push(rhs.next());
-    }
-
-    if (lhs->value().index() != rhs->value().index()) {
-      return false;
-    }
-
-    if (lhs->is_map()) {
-      auto lhs_child = lhs.child();
-      auto rhs_child = rhs->find(lhs_child->key());
-      nodes_lhs.push(lhs_child);
-      nodes_rhs.push(rhs_child);
-      continue;
-    }
-    if (lhs->is_list()) {
-      nodes_lhs.push(lhs.child());
-      nodes_rhs.push(rhs.child());
-      continue;
-    }
-
-    bool values_equal = std::visit(
-        [&rhs](const auto& lhs_value) -> bool {
-          using T = std::decay_t<decltype(lhs_value)>;
-          auto rhs_value_iter = std::get_if<T>(&rhs->value());
-          if (!rhs_value_iter) {
-            return false;
-          }
-          const auto& rhs_value = *rhs_value_iter;
-
-          if constexpr (std::is_same_v<Object::number_t, T>) {
-            return std::abs(rhs_value - lhs_value) < float_threshold;
-          }
-          if constexpr (std::is_same_v<bool, T>) {
-            return (rhs_value == lhs_value);
-          }
-          if constexpr (std::is_same_v<std::string, T>) {
-            return (rhs_value == lhs_value);
-          }
-          if constexpr (std::is_same_v<Object::null_t, T>) {
-            return true;
-          }
-          if constexpr (std::is_same_v<Object::binary_t, T>) {
-            if (lhs_value.size() != rhs_value.size()) {
-              return false;
-            }
-            for (std::size_t i = 0; i < lhs_value.size(); i++) {
-              if (lhs_value[i] != rhs_value[i]) {
-                return false;
-              }
-            }
-            return true;
-          }
-          if constexpr (std::is_same_v<Object::map_t, T>) {
-            return true; // Unreachable
-          }
-          if constexpr (std::is_same_v<Object::list_t, T>) {
-            return true; // Unreachable
-          }
-        },
-        lhs->value());
-    if (!values_equal) {
+  for (std::size_t i = 0; i < lhs.size(); i++) {
+    if (lhs[i] != rhs[i]) {
       return false;
     }
   }
   return true;
 }
 
-std::ostream& operator<<(std::ostream& os, Object::ConstReference object) {
-  std::stack<datapack::Object::ConstIterator> nodes;
-  nodes.push(object.iter());
-  int depth = 0;
-  bool first = true;
+bool operator==(ConstObject lhs_root, ConstObject rhs_root) {
+  std::stack<std::pair<ConstObject::Ptr, ConstObject::Ptr>> stack;
+  stack.emplace(lhs_root.ptr(), rhs_root.ptr());
+  bool at_root = true;
 
-  while (!nodes.empty()) {
-    auto node = nodes.top();
-    nodes.pop();
+  while (!stack.empty()) {
+    auto [lhs, rhs] = stack.top();
+    stack.pop();
 
-    if (!node) {
-      depth--;
-      continue;
-    }
-    if (!first) {
-      os << "\n";
-    }
-    first = false;
-
-    for (int i = 0; i < depth; i++) {
-      os << "    ";
-    }
-    if (depth > 0) {
-      if (!node->key().empty()) {
-        os << node->key() << ": ";
-      } else {
-        os << "- ";
+    if (!at_root) {
+      if (lhs.key() != rhs.key()) {
+        return false;
       }
     }
 
-    if (node->is_map()) {
-      os << "map:";
-    } else if (node->is_list()) {
-      os << "list:";
-    } else if (auto value = node->number_if()) {
-      os << *value;
-    } else if (auto value = node->boolean_if()) {
-      os << (*value ? "true" : "false");
-    } else if (auto value = node->string_if()) {
-      os << *value;
-    } else if (node->is_null()) {
-      os << "null";
-    } else if (auto value = node->binary_if()) {
-      os << "binary (size=" << value->size() << ")";
+    if (auto lhs_number = lhs->number_if()) {
+      auto rhs_number = rhs->number_if();
+      if (!rhs_number || *lhs_number != *rhs_number) {
+        return false;
+      }
+    }
+    if (auto lhs_string = lhs->string_if()) {
+      auto rhs_string = rhs->string_if();
+      if (!rhs_string || *lhs_string != *rhs_string) {
+        return false;
+      }
+    }
+    if (auto lhs_boolean = lhs->boolean_if()) {
+      auto rhs_boolean = rhs->boolean_if();
+      if (!rhs_boolean || *lhs_boolean != *rhs_boolean) {
+        return false;
+      }
+    }
+    if (auto lhs_binary = lhs->binary_if()) {
+      auto rhs_binary = rhs->binary_if();
+      if (!rhs_binary || !binary_match(*lhs_binary, *rhs_binary)) {
+        return false;
+      }
     }
 
-    if (depth > 0) {
-      nodes.push(node.next());
-    }
-
-    if (node->is_map() | node->is_list()) {
-      nodes.push(node.child());
-      depth++;
-    }
-  }
-  return os;
-}
-#endif
-
-static void indent(std::ostream& os, std::size_t depth) {
-  for (std::size_t i = 0; i < depth; i++) {
-    os << "  ";
-  }
-}
-
-static void print_value(std::ostream& os, ConstObject value, std::size_t depth) {
-  if (auto x = value.number_if()) {
-    os << *x;
-  } else if (auto x = value.boolean_if()) {
-    os << (*x ? "true" : "false");
-  } else if (auto x = value.string_if()) {
-    os << *x;
-  } else if (auto x = value.binary_if()) {
-    os << "[binary]\n";
-    indent(os, depth + 1);
-    const auto flags = os.flags();
-    os << std::hex << std::uppercase << std::setfill('0') << std::setw(2);
-    for (std::size_t i = 0; i < x->size(); i++) {
-      os << int((*x)[i]);
-      if (i != x->size() - 1) {
-        if ((i + 1) % 8 == 0) {
-          os << "\n";
-          indent(os, depth + 1);
-        } else {
-          os << " ";
+    if (!at_root) {
+      if (lhs.next()) {
+        if (!rhs.next()) {
+          return false;
         }
+        stack.emplace(lhs.next(), rhs.next());
+      } else if (rhs.next()) {
+        return false;
       }
     }
-    os.flags(flags);
-  } else if (value.is_map()) {
-    os << "[map]";
-  } else if (value.is_list()) {
-    os << "[list]";
+
+    if (lhs.child()) {
+      if (!rhs.child()) {
+        return false;
+      }
+      stack.emplace(lhs.child(), rhs.child());
+    } else if (rhs.child()) {
+      return false;
+    }
+
+    at_root = false;
   }
+  return true;
+}
+
+bool operator==(ConstObject lhs, const object::primitive_t& rhs) {
+  if (auto rhs_int = std::get_if<int>(&rhs)) {
+    auto lhs_number = lhs.number_if();
+    return lhs_number && *lhs_number == *rhs_int;
+  }
+  if (auto rhs_double = std::get_if<double>(&rhs)) {
+    auto lhs_number = lhs.number_if();
+    return lhs_number && *lhs_number == *rhs_double;
+  }
+  if (auto rhs_string = std::get_if<std::string>(&rhs)) {
+    auto lhs_string = lhs.string_if();
+    return lhs_string && *lhs_string == *rhs_string;
+  }
+  if (auto rhs_boolean = std::get_if<bool>(&rhs)) {
+    auto lhs_boolean = lhs.boolean_if();
+    return lhs_boolean && *lhs_boolean == *rhs_boolean;
+  }
+  if (auto rhs_binary = std::get_if<object::binary_t>(&rhs)) {
+    auto lhs_binary = lhs.binary_if();
+    return lhs_binary && binary_match(*lhs_binary, *rhs_binary);
+  }
+  // Unreachable
+  assert(false);
 }
 
 std::ostream& operator<<(std::ostream& os, ConstObject object) {
-  print_value(os, object, 0);
-  if (object.is_primitive()) {
-    return os;
-  }
-
   struct State {
-    ConstPtr node;
+    ConstObject::Ptr node;
     std::size_t depth;
-    State(ConstPtr node, std::size_t depth) : node(node), depth(depth) {}
+    State(ConstObject::Ptr node, std::size_t depth) : node(node), depth(depth) {}
   };
   std::stack<State> stack;
-  stack.emplace(object.ptr().child(), 1);
+  stack.emplace(object.ptr(), 0);
+  bool is_root = true;
+
+  auto indent = [&os](std::size_t depth) {
+    for (std::size_t i = 0; i < depth; i++) {
+      os << "  ";
+    }
+  };
 
   while (!stack.empty()) {
     auto [node, depth] = stack.top();
     stack.pop();
 
-    os << "\n";
-    indent(os, depth);
-    if (node.key().empty()) {
-      os << "- ";
-    } else {
-      os << node.key() << ": ";
-    }
-    auto next = node.next();
-    if (next) {
-      stack.emplace(next, depth);
+    if (!is_root) {
+      os << "\n";
+      indent(depth);
+      if (node.key().empty()) {
+        os << "- ";
+      } else {
+        os << node.key() << ": ";
+      }
+      auto next = node.next();
+      if (next) {
+        stack.emplace(next, depth);
+      }
     }
 
-    print_value(os, *node, depth);
+    if (auto x = node->number_if()) {
+      os << *x;
+    } else if (auto x = node->boolean_if()) {
+      os << (*x ? "true" : "false");
+    } else if (auto x = node->string_if()) {
+      os << *x;
+    } else if (auto x = node->binary_if()) {
+      os << "[binary]\n";
+      indent(depth + 1);
+      const auto flags = os.flags();
+      os << std::hex << std::uppercase << std::setfill('0') << std::setw(2);
+      for (std::size_t i = 0; i < x->size(); i++) {
+        os << int((*x)[i]);
+        if (i != x->size() - 1) {
+          if ((i + 1) % 8 == 0) {
+            os << "\n";
+            indent(depth + 1);
+          } else {
+            os << " ";
+          }
+        }
+      }
+      os.flags(flags);
+    } else if (node->is_map()) {
+      os << "[map]";
+    } else if (node->is_list()) {
+      os << "[list]";
+    }
 
     auto child = node.child();
     if (child) {
       stack.emplace(child, depth + 1);
     }
+
+    is_root = false;
   }
   return os;
 }
 
 } // namespace datapack::object
+
+namespace datapack {
+
+void prune(Object object) {
+  if (!object.is_map()) {
+    return;
+  }
+
+  struct State {
+    Object::Ptr node;
+    bool processed;
+    State(Object::Ptr node) : node(node), processed(false) {}
+  };
+  std::stack<State> stack;
+  stack.push(object.ptr());
+
+  while (!stack.empty()) {
+    auto& state = stack.top();
+    auto node = state.node;
+    if (state.processed) {
+      stack.pop();
+      if (node->size() == 0) {
+        node->erase();
+      }
+      continue;
+    }
+    state.processed = true;
+
+    auto child = node.child();
+    while (child) {
+      if (child->is_null()) {
+        auto next = child.next();
+        child->erase();
+        child = next;
+        continue;
+      }
+      if (child->is_map()) {
+        stack.push(child);
+      }
+      child = child.next();
+    }
+  }
+}
+
+Object merge(ConstObject base_root, ConstObject diff_root) {
+  Object merged_root;
+
+  struct State {
+    ConstObject::Ptr base;
+    ConstObject::Ptr diff;
+    Object::Ptr merged;
+  };
+  std::stack<State> stack;
+  stack.emplace(base_root.ptr(), diff_root.ptr(), merged_root.ptr());
+
+  while (!stack.empty()) {
+    auto [base, diff, merged] = stack.top();
+    stack.pop();
+
+    if (!base->is_map() || !diff->is_map()) {
+      *merged = *diff;
+      continue;
+    }
+    merged->to_map();
+
+    for (auto [key, value] : base->items()) {
+      if (!diff->contains(key)) {
+        (*merged)[key] = value;
+      } else {
+        stack.emplace(value.ptr(), diff->find(key), (*merged)[key].ptr());
+      }
+    }
+    for (auto [key, value] : diff->items()) {
+      if (!base->contains(key)) {
+        (*merged)[key] = value;
+      }
+    }
+  }
+
+  prune(merged_root);
+
+  return merged_root;
+}
+
+Object diff(ConstObject base_root, ConstObject modified_root) {
+  Object diff_root;
+
+  struct State {
+    ConstObject::Ptr base;
+    ConstObject::Ptr modified;
+    Object::Ptr diff;
+  };
+  std::stack<State> stack;
+  stack.emplace(base_root.ptr(), modified_root.ptr(), diff_root.ptr());
+
+  while (!stack.empty()) {
+    auto [base, modified, diff] = stack.top();
+    stack.pop();
+
+    if (!base->is_map() || !modified->is_map()) {
+      if (*base != *modified) {
+        *diff = *modified;
+      }
+      continue;
+    }
+    diff->to_map();
+
+    for (auto [key, value] : base->items()) {
+      if (!modified->contains(key)) {
+        (*diff)[key]; // Sets to null to erase
+      } else {
+        stack.emplace(value.ptr(), modified->find(key), (*diff)[key].ptr());
+      }
+    }
+    for (auto [key, value] : modified->items()) {
+      if (!base->contains(key)) {
+        (*diff)[key] = value;
+      }
+    }
+  }
+
+  return diff_root;
+}
+
+} // namespace datapack

@@ -452,7 +452,8 @@ TEST(Object, CanCompareObjects) {
       {"d", Object(std::vector<std::uint8_t>{0x01, 0x23, 0x45})}};
 
   Object two;
-  two["a"] = {1, 2}, two.at("a").push_back(3);
+  two["a"] = {1, 2};
+  two.at("a").push_back(3);
   two.insert("b", false);
   two["c"].to_map();
   two.at("c")["foo"] = "FOO";
@@ -631,6 +632,36 @@ TEST(Object, Stdout) {
 )";
 
   EXPECT_EQ(ss.str(), expected);
+}
+
+TEST(Object, ObjectPrune) {
+  using namespace datapack;
+
+  Object object;
+  object["a"]["a"]["a"].to_map();
+  object["a"]["a"]["b"];
+  object["a"]["b"]["a"].to_map();
+  object["a"]["b"]["b"];
+  object["a"]["b"]["c"] = 12;
+  object["b"];
+  object["c"]["a"].to_list();
+  prune(object);
+
+  Object pruned;
+  pruned["a"]["b"]["c"] = 12;
+  pruned["c"]["a"].to_list();
+
+  EXPECT_EQ(object, pruned);
+}
+
+TEST(Object, ObjectMerge) {
+  using namespace datapack;
+  // TODO
+}
+
+TEST(Object, ObjectDiff) {
+  using namespace datapack;
+  // TODO
 }
 
 #if 0

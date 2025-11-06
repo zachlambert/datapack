@@ -418,7 +418,7 @@ public:
     return *this;
   }
 
-  const Object_& operator=(const Object_& other) const {
+  const Object_& operator=(const Object_<true>& other) const {
     static_assert(!Const);
     tree->copy_node(node, *other.tree, other.node);
     return *this;
@@ -527,123 +527,6 @@ public:
     return ValuesWrapper<true>(tree, node);
   }
 
-  // NOTE: Currently only returns true if the order of elements are the same such that
-  // two maps that have the same key/value pairs in different orders will return false
-  friend bool operator==(Object_ lhs, Object_ rhs) {
-
-    std::stack<std::pair<int, int>> stack;
-    stack.emplace(lhs.node, rhs.node);
-    bool at_root = true;
-
-    while (!stack.empty()) {
-      auto [lhs_node, rhs_node] = stack.top();
-      stack.pop();
-
-      const auto& lhs_value = (*lhs.tree)[lhs_node].value;
-      const auto& rhs_value = (*rhs.tree)[rhs_node].value;
-      if (!at_root) {
-        const std::string& lhs_key = (*lhs.tree)[lhs_node].key;
-        const std::string& rhs_key = (*rhs.tree)[rhs_node].key;
-        if (lhs_key != rhs_key) {
-          return false;
-        }
-      }
-
-      bool nodes_equal = std::visit(
-          [&](const auto& rhs_type) {
-            using T = std::decay_t<decltype(rhs_type)>;
-            const T* lhs_type = std::get_if<T>(&lhs_value);
-            if (!lhs_type) {
-              return false;
-            }
-            if constexpr (std::is_same_v<T, number_t>) {
-              return *lhs_type == rhs_type;
-            }
-            if constexpr (std::is_same_v<T, std::string>) {
-              return *lhs_type == rhs_type;
-            }
-            if constexpr (std::is_same_v<T, bool>) {
-              return *lhs_type == rhs_type;
-            }
-            if constexpr (std::is_same_v<T, binary_t>) {
-              if (lhs_type->size() != rhs_type.size()) {
-                return false;
-              }
-              for (std::size_t i = 0; i < lhs_type->size(); i++) {
-                if ((*lhs_type)[i] != rhs_type[i]) {
-                  return false;
-                }
-              }
-            }
-            return true;
-          },
-          rhs_value);
-      if (!nodes_equal) {
-        return false;
-      }
-
-      int lhs_next = (*lhs.tree)[lhs_node].next;
-      int rhs_next = (*lhs.tree)[lhs_node].next;
-      if ((lhs_next == -1) != (rhs_next == -1)) {
-        return false;
-      }
-      if (lhs_next != -1) {
-        stack.emplace(lhs_next, rhs_next);
-      }
-
-      int lhs_child = (*lhs.tree)[lhs_node].child;
-      int rhs_child = (*lhs.tree)[lhs_node].child;
-      if ((lhs_child == -1) != (rhs_child == -1)) {
-        return false;
-      }
-      if (lhs_child != -1) {
-        stack.emplace(lhs_child, rhs_child);
-      }
-
-      at_root = false;
-    }
-    return true;
-  }
-
-  friend bool operator!=(Object_ lhs, Object_ rhs) {
-    return !(lhs == rhs);
-  }
-
-  friend bool operator==(Object_ lhs, const primitive_t& rhs) {
-    const auto& lhs_value = (*lhs.tree)[lhs.node].value;
-    return std::visit(
-        [&lhs_value](const auto& rhs_type) -> bool {
-          using T = std::decay_t<decltype(rhs_type)>;
-          if constexpr (std::is_same_v<T, int>) {
-            const double* lhs_type = std::get_if<double>(&lhs_value);
-            if (!lhs_type) {
-              return false;
-            }
-            return (*lhs_type) == rhs_type;
-          }
-          if constexpr (!std::is_same_v<T, int>) {
-            const T* lhs_type = std::get_if<T>(&lhs_value);
-            if (!lhs_type) {
-              return false;
-            }
-            return (*lhs_type) == rhs_type;
-          }
-        },
-        rhs);
-  }
-
-  friend bool operator!=(Object_ lhs, const primitive_t& rhs) {
-    return !(lhs == rhs);
-  }
-
-  friend bool operator==(const primitive_t& lhs, Object_ rhs) {
-    return (rhs == lhs);
-  }
-
-  friend bool operator!=(const primitive_t& lhs, Object_ rhs) {
-    return !(rhs == lhs);
-  }
-
   Ptr_<Const> ptr() const;
 
   // Make these classes "public" via Object::
@@ -709,8 +592,14 @@ public:
     return object.node != -1;
   }
 
+  Ptr_ parent() const {
+    return Ptr_(object.tree, (*object.tree)[object.node].parent);
+  }
   Ptr_ child() const {
     return Ptr_(object.tree, (*object.tree)[object.node].child);
+  }
+  Ptr_ prev() const {
+    return Ptr_(object.tree, (*object.tree)[object.node].prev);
   }
   Ptr_ next() const {
     return Ptr_(object.tree, (*object.tree)[object.node].next);
@@ -749,6 +638,9 @@ private:
 
   template <bool Const_>
   friend class ValuesIterator_;
+
+  template <bool Const_>
+  friend class Ptr_;
 };
 
 template <bool Const>
@@ -775,6 +667,21 @@ Ptr_<Const> ValuesIterator_<Const>::operator->() const {
 }
 
 std::ostream& operator<<(std::ostream& os, ConstObject ref);
+bool operator==(ConstObject lhs, ConstObject rhs);
+bool operator==(ConstObject lhs, const primitive_t& rhs);
+
+inline bool operator==(const primitive_t& lhs, ConstObject rhs) {
+  return (rhs == lhs);
+}
+inline bool operator!=(ConstObject lhs, ConstObject rhs) {
+  return !(lhs == rhs);
+}
+inline bool operator!=(ConstObject lhs, const primitive_t& rhs) {
+  return !(lhs == rhs);
+}
+inline bool operator!=(const primitive_t& lhs, ConstObject rhs) {
+  return !(rhs == lhs);
+}
 
 } // namespace datapack::object
 
@@ -786,5 +693,9 @@ template <bool Const>
 using Object_ = object::Object_<Const>;
 using Object = Object_<false>;
 using ConstObject = Object_<true>;
+
+void prune(Object object);
+Object merge(ConstObject base, ConstObject diff);
+Object diff(ConstObject base, ConstObject modified);
 
 } // namespace datapack

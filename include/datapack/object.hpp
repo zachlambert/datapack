@@ -3,7 +3,6 @@
 #include "datapack/datapack.hpp"
 #include <assert.h>
 #include <initializer_list>
-#include <iostream> // TEMP
 #include <memory>
 #include <ostream>
 #include <stack>
@@ -367,7 +366,7 @@ public:
   template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
   Object_(const Object_<OtherConst>& other) : tree(other.tree), node(other.node) {}
 
-  Object_(const primitive_t& value) : tree(std::make_shared<Tree>()), node(0) {
+  explicit Object_(const primitive_t& value) : tree(std::make_shared<Tree>()), node(0) {
     auto mutable_tree = std::const_pointer_cast<Tree>(tree);
     mutable_tree->insert_node(primitive_to_value(value), "", -1, -1);
   }

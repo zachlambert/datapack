@@ -183,7 +183,7 @@ std::ostream& operator<<(std::ostream& os, ConstObject object) {
 
 namespace datapack {
 
-void prune(Object object) {
+void object_prune(Object object) {
   if (!object.is_map()) {
     return;
   }
@@ -224,7 +224,7 @@ void prune(Object object) {
   }
 }
 
-Object merge(ConstObject base_root, ConstObject diff_root) {
+Object object_merge(ConstObject base_root, ConstObject diff_root) {
   Object merged_root;
 
   struct State {
@@ -245,7 +245,8 @@ Object merge(ConstObject base_root, ConstObject diff_root) {
     }
     merged->to_map();
 
-    for (auto [key, value] : base->items()) {
+    for (auto iter = base->items().begin(); iter != base->items().end(); iter++) {
+      auto [key, value] = *iter;
       if (!diff->contains(key)) {
         (*merged)[key] = value;
       } else {
@@ -259,12 +260,12 @@ Object merge(ConstObject base_root, ConstObject diff_root) {
     }
   }
 
-  prune(merged_root);
+  object_prune(merged_root);
 
   return merged_root;
 }
 
-Object diff(ConstObject base_root, ConstObject modified_root) {
+Object object_diff(ConstObject base_root, ConstObject modified_root) {
   Object diff_root;
 
   struct State {
@@ -287,19 +288,22 @@ Object diff(ConstObject base_root, ConstObject modified_root) {
     }
     diff->to_map();
 
-    for (auto [key, value] : base->items()) {
-      if (!modified->contains(key)) {
-        (*diff)[key]; // Sets to null to erase
-      } else {
-        stack.emplace(value.ptr(), modified->find(key), (*diff)[key].ptr());
-      }
-    }
     for (auto [key, value] : modified->items()) {
-      if (!base->contains(key)) {
+      if (auto base_ptr = base->find(key)) {
+        stack.emplace(base_ptr, value.ptr(), (*diff)[key].ptr());
+      } else {
         (*diff)[key] = value;
       }
     }
+    for (auto [key, value] : base->items()) {
+      if (!modified->contains(key)) {
+        throw object::UsageError("Cannot evaluate object_diff(base, modified) where there are keys "
+                                 "in base that aren't in modified ");
+      }
+    }
   }
+
+  object_prune(diff_root);
 
   return diff_root;
 }

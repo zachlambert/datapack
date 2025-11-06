@@ -645,7 +645,7 @@ TEST(Object, ObjectPrune) {
   object["a"]["b"]["c"] = 12;
   object["b"];
   object["c"]["a"].to_list();
-  prune(object);
+  object_prune(object);
 
   Object pruned;
   pruned["a"]["b"]["c"] = 12;
@@ -656,12 +656,60 @@ TEST(Object, ObjectPrune) {
 
 TEST(Object, ObjectMerge) {
   using namespace datapack;
-  // TODO
+
+  Object base;
+  base["a"] = 12;
+  base["b"] = 24;
+
+  Object diff;
+  diff["a"] = 6;
+  diff["c"] = 3;
+
+  ConstObject merged = object_merge(base, diff);
+
+  Object expected;
+  expected["a"] = 6;
+  expected["b"] = 24;
+  expected["c"] = 3;
+
+  EXPECT_EQ(merged, expected);
+  EXPECT_EQ(object_diff(base, merged), diff);
 }
 
 TEST(Object, ObjectDiff) {
   using namespace datapack;
-  // TODO
+
+  Object base;
+  base["a"] = 12;
+  base["b"] = {{"foo", 1}, {"bar", 2}};
+
+  Object modified;
+  modified["a"] = 12;
+  modified["b"] = {{"foo", 1}, {"bar", 3}};
+  modified["c"] = true;
+
+  ConstObject diff = object_diff(base, modified);
+
+  Object expected;
+  expected["b"]["bar"] = 3;
+  expected["c"] = true;
+
+  EXPECT_EQ(diff, expected);
+  EXPECT_EQ(object_merge(base, diff), modified);
+}
+
+TEST(Object, ObjectDiffUsageError) {
+  using namespace datapack;
+
+  Object base;
+  base["a"] = 12;
+  base["b"] = {{"foo", 1}, {"bar", 2}};
+
+  Object modified;
+  modified["a"] = 12;
+  modified["b"] = {{"foo", 1}};
+
+  EXPECT_THROW(object_diff(base, modified), Object::UsageError);
 }
 
 #if 0

@@ -3,6 +3,7 @@
 #include "datapack/datapack.hpp"
 #include <assert.h>
 #include <initializer_list>
+#include <iostream> // TEMP
 #include <memory>
 #include <ostream>
 #include <stack>
@@ -150,6 +151,9 @@ using ConstPtr = Ptr_<true>;
 // ItemsWrapper
 
 template <bool Const>
+class ItemsIterator_;
+
+template <bool Const>
 class Item {
 public:
   Item(shared_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
@@ -164,13 +168,6 @@ public:
   requires(Index <= 2)
   std::conditional_t<Index == 0, const_ref_t<Const, std::string>, Object_<Const>> get() const;
 
-  bool is(const Item& other) const {
-    if (tree != other.tree || (*tree)[node].parent != (*other.tree)[other.node].parent) {
-      throw IteratorError("Cannot compare iterators from different containers");
-    }
-    return node == other.node;
-  }
-
 private:
   shared_ptr_t<Const, Tree> tree;
   int node;
@@ -180,6 +177,9 @@ private:
 
   template <bool Const_>
   friend class ItemsIterator_;
+
+  friend bool operator==(const ItemsIterator_<true>& lhs, const ItemsIterator_<true>& rhs);
+  friend bool operator==(const ItemsIterator_<false>& lhs, const ItemsIterator_<false>& rhs);
 };
 
 template <bool Const>
@@ -203,15 +203,20 @@ public:
   }
 
   friend bool operator==(const ItemsIterator_& lhs, const ItemsIterator_& rhs) {
-    return lhs.item.is(rhs.item);
+    if (lhs.item.tree.get() != rhs.item.tree.get() || lhs.parent != rhs.parent) {
+      throw IteratorError("Cannot compare iterators from different containers");
+    }
+    return lhs.item.node == rhs.item.node;
   }
   friend bool operator!=(const ItemsIterator_& lhs, const ItemsIterator_& rhs) {
-    return !lhs.item.is(rhs.item);
+    return !(lhs == rhs);
   }
 
 private:
-  ItemsIterator_(shared_ptr_t<Const, Tree> tree, int node) : item(tree, node) {}
+  ItemsIterator_(shared_ptr_t<Const, Tree> tree, int parent, int node) :
+      parent(parent), item(tree, node) {}
 
+  int parent;
   Item<Const> item;
 
   template <bool Const_>
@@ -227,11 +232,11 @@ public:
 
   Iterator begin() const {
     assert_map();
-    return Iterator(tree, (*tree)[node].child);
+    return Iterator(tree, node, (*tree)[node].child);
   };
   Iterator end() const {
     assert_map();
-    return Iterator(tree, -1);
+    return Iterator(tree, node, -1);
   };
 
 private:
@@ -291,16 +296,18 @@ public:
   }
 
   friend bool operator==(const ValuesIterator_& lhs, const ValuesIterator_& rhs) {
-    if (lhs.tree != rhs.tree || (*lhs.tree)[lhs.node].parent != (*rhs.tree)[rhs.node].parent) {
+    if (lhs.tree.get() != rhs.tree.get() || lhs.parent != rhs.parent) {
       throw IteratorError("Cannot compare iterators from different containers");
     }
     return (lhs.node == rhs.node);
   }
 
 private:
-  ValuesIterator_(shared_ptr_t<Const, Tree> tree, int node) : tree(tree), node(node) {}
+  ValuesIterator_(shared_ptr_t<Const, Tree> tree, int parent, int node) :
+      tree(tree), parent(parent), node(node) {}
 
   shared_ptr_t<Const, Tree> tree;
+  int parent;
   int node;
 
   template <bool Const_>
@@ -316,11 +323,11 @@ public:
 
   Iterator begin() const {
     assert_container();
-    return Iterator(tree, (*tree)[node].child);
+    return Iterator(tree, node, (*tree)[node].child);
   };
   Iterator end() const {
     assert_container();
-    return Iterator(tree, -1);
+    return Iterator(tree, node, -1);
   };
 
 private:
@@ -701,8 +708,33 @@ using Object_ = object::Object_<Const>;
 using Object = Object_<false>;
 using ConstObject = Object_<true>;
 
-void prune(Object object);
-Object merge(ConstObject base, ConstObject diff);
-Object diff(ConstObject base, ConstObject modified);
+void object_prune(Object object);
+
+/* @brief Merges the object "diff" on top of "base"
+ *
+ * Both base and diff must be maps.
+ * - The result contains the union of the two
+ * - If a key exists in both, diff will take priority
+ *   - If both values are maps, these are merged in the same way
+ *   - Otherwise, the diff object overwrites the base object
+ *   - This includes lists, lists aren't merged but are treated as immutable
+ *
+ * @param base The base object
+ * @param diff The object applied on top
+ * @return The merged object
+ */
+Object object_merge(ConstObject base, ConstObject diff);
+
+/* @brief Finds the difference between the objects "base" and "modified"
+ *
+ * Returns the object diff, such that object_merge(base, diff) = modified
+ * This requires that every key that exists in base must also exist in modified, since
+ * the diff cannot erase objects.
+ *
+ * @param base The base object
+ * @param modified The modified object to compare base to
+ * @return The diff object that when applied on top of base, returns modified
+ */
+Object object_diff(ConstObject base, ConstObject modified);
 
 } // namespace datapack

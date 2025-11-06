@@ -418,7 +418,14 @@ public:
     return *this;
   }
 
-  const Object_& operator=(const Object_<true>& other) const {
+  const Object_& operator=(const Object_& other) const {
+    static_assert(!Const);
+    tree->copy_node(node, *other.tree, other.node);
+    return *this;
+  }
+
+  template <bool OtherConst, typename = std::enable_if_t<!Const && OtherConst>>
+  const Object_& operator=(const Object_<OtherConst>& other) const {
     static_assert(!Const);
     tree->copy_node(node, *other.tree, other.node);
     return *this;

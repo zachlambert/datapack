@@ -167,10 +167,7 @@ TEST(Object, AssignToListFromInitializerList) {
 TEST(Object, ConstructMapOfObjectsWithInitializerList) {
   using namespace datapack;
 
-  ConstObject object = {
-      {"foo", {{"a", "a"}, {"b", "b"}}},
-      {"bar", Object(true)},
-      {"baz", {1, 2, 3}}};
+  ConstObject object = {{"foo", {{"a", "a"}, {"b", "b"}}}, {"bar", true}, {"baz", {1, 2, 3}}};
 
   ASSERT_TRUE(object.is_map());
   ASSERT_TRUE(object.contains("foo"));
@@ -200,7 +197,7 @@ TEST(Object, ConstructMapOfObjectsWithInitializerList) {
 TEST(Object, ConstructListOfObjectsWithInitializerList) {
   using namespace datapack;
 
-  ConstObject object = Object::make_list({Object("string"), {{"a", 10}, {"b", 20}}, {1, 2, 3}});
+  ConstObject object = Object::make_list({"string", {{"a", 10}, {"b", 20}}, {1, 2, 3}});
 
   ASSERT_TRUE(object.is_list());
   ASSERT_EQ(object.size(), 3);
@@ -443,13 +440,13 @@ TEST(Object, CanCompareObjects) {
 
   ConstObject one = {
       {"a", {1, 2, 3}},
-      {"b", Object(false)},
+      {"b", false},
       {"c",
        {
            {"foo", "FOO"},
            {"bar", "BAR"},
        }},
-      {"d", Object(std::vector<std::uint8_t>{0x01, 0x23, 0x45})}};
+      {"d", std::vector<std::uint8_t>{0x01, 0x23, 0x45}}};
 
   Object two;
   two["a"] = {1, 2};

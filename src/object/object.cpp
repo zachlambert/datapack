@@ -81,6 +81,7 @@ bool operator==(ConstObject lhs_root, ConstObject rhs_root) {
   return true;
 }
 
+#if 0
 bool operator==(ConstObject lhs, const object::primitive_t& rhs) {
   if (auto rhs_int = std::get_if<int>(&rhs)) {
     auto lhs_number = lhs.number_if();
@@ -105,6 +106,7 @@ bool operator==(ConstObject lhs, const object::primitive_t& rhs) {
   // Unreachable
   assert(false);
 }
+#endif
 
 std::ostream& operator<<(std::ostream& os, ConstObject object) {
   struct State {

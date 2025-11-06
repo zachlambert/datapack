@@ -2,6 +2,7 @@
 
 #include "datapack/datapack.hpp"
 #include <assert.h>
+#include <concepts>
 #include <initializer_list>
 #include <memory>
 #include <ostream>
@@ -20,23 +21,13 @@ using binary_t = std::vector<std::uint8_t>;
 struct null_t {};
 struct map_t {};
 struct list_t {};
-
-using primitive_t = std::variant<int, double, bool, std::string, binary_t>;
 using value_t = std::variant<number_t, bool, std::string, binary_t, null_t, map_t, list_t>;
 
-inline value_t primitive_to_value(const primitive_t& value) {
-  return std::visit(
-      [](const auto& value) {
-        using T = std::decay_t<decltype(value)>;
-        if constexpr (std::is_same_v<T, int>) {
-          return value_t(double(value));
-        }
-        if constexpr (!std::is_same_v<T, int>) {
-          return value_t(value);
-        }
-      },
-      value);
-}
+template <typename T>
+concept primitive_arg =
+    std::is_same_v<T, int> || std::is_same_v<T, double> || std::is_same_v<T, const std::string&> ||
+    std::is_same_v<T, std::string> || std::is_same_v<T, const char*> || std::is_same_v<T, bool> ||
+    std::is_same_v<T, binary_t> || std::is_same_v<T, const binary_t&>;
 
 // ===================================
 // template Const helpers
@@ -366,16 +357,34 @@ public:
   template <bool OtherConst, typename = std::enable_if_t<!(!Const && OtherConst)>>
   Object_(const Object_<OtherConst>& other) : tree(other.tree), node(other.node) {}
 
-  explicit Object_(const primitive_t& value) : tree(std::make_shared<Tree>()), node(0) {
+  template <primitive_arg T>
+  Object_(T value) : tree(std::make_shared<Tree>()), node(0) {
     auto mutable_tree = std::const_pointer_cast<Tree>(tree);
-    mutable_tree->insert_node(primitive_to_value(value), "", -1, -1);
+    if constexpr (std::is_same_v<T, const char*>) {
+      mutable_tree->insert_node(std::string(value), "", -1, -1);
+    }
+    if constexpr (std::is_same_v<T, int>) {
+      mutable_tree->insert_node(double(value), "", -1, -1);
+    }
+    if constexpr (!std::is_same_v<T, const char*> && !std::is_same_v<T, int>) {
+      mutable_tree->insert_node(value, "", -1, -1);
+    }
   }
 
-  Object_(std::initializer_list<primitive_t> list) : tree(std::make_shared<Tree>()), node(0) {
+  template <primitive_arg T>
+  Object_(std::initializer_list<T> list) : tree(std::make_shared<Tree>()), node(0) {
     auto mutable_tree = std::const_pointer_cast<Tree>(tree);
     int list_node = mutable_tree->insert_node(list_t(), "", -1, -1);
     for (const auto& value : list) {
-      mutable_tree->insert_list_node(list_node, primitive_to_value(value));
+      if constexpr (std::is_same_v<T, const char*>) {
+        mutable_tree->insert_list_node(list_node, std::string(value));
+      }
+      if constexpr (std::is_same_v<T, int>) {
+        mutable_tree->insert_list_node(list_node, double(value));
+      }
+      if constexpr (!std::is_same_v<T, const char*> && !std::is_same_v<T, int>) {
+        mutable_tree->insert_list_node(list_node, value);
+      }
     }
   }
 
@@ -385,15 +394,6 @@ public:
       result.push_back(value);
     }
     return result;
-  }
-
-  Object_(std::initializer_list<std::pair<std::string, primitive_t>> list) :
-      tree(std::make_shared<Tree>()), node(0) {
-    auto mutable_tree = std::const_pointer_cast<Tree>(tree);
-    int map_node = mutable_tree->insert_node(map_t(), "", -1, -1);
-    for (const auto& [key, value] : list) {
-      mutable_tree->insert_map_node(map_node, key, primitive_to_value(value));
-    }
   }
 
   Object_(std::initializer_list<std::pair<std::string, Object>> list) :
@@ -443,11 +443,13 @@ public:
     return *this;
   }
 
+#if 0
   const Object_& operator=(primitive_t value) const {
     static_assert(!Const);
     tree->set_node(node, primitive_to_value(value));
     return *this;
   }
+#endif
 
   Object_ operator[](const std::string& key) const {
     if constexpr (!Const) {
@@ -478,6 +480,7 @@ public:
     return tree->find_map_node(node, key, false) != -1;
   }
 
+#if 0
   Object_ insert(const std::string& key, const primitive_t& value) const {
     if (is_null()) {
       tree->set_node(node, map_t());
@@ -492,6 +495,7 @@ public:
     int new_node = tree->insert_list_node(node, primitive_to_value(value));
     return Object_(tree, new_node);
   }
+#endif
 
   Object_ insert(const std::string& key, const ConstObject& value) const {
     if (is_null()) {
@@ -706,8 +710,11 @@ Ptr_<Const> ValuesIterator_<Const>::operator->() const {
 
 std::ostream& operator<<(std::ostream& os, ConstObject ref);
 bool operator==(ConstObject lhs, ConstObject rhs);
+#if 0
 bool operator==(ConstObject lhs, const primitive_t& rhs);
+#endif
 
+#if 0
 inline bool operator==(const primitive_t& lhs, ConstObject rhs) {
   return (rhs == lhs);
 }
@@ -720,6 +727,7 @@ inline bool operator!=(ConstObject lhs, const primitive_t& rhs) {
 inline bool operator!=(const primitive_t& lhs, ConstObject rhs) {
   return !(rhs == lhs);
 }
+#endif
 
 } // namespace datapack::object
 

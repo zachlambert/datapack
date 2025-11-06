@@ -2,9 +2,9 @@ name: tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   tests:
@@ -13,6 +13,12 @@ jobs:
       - name: checkout repo
         uses: actions/checkout@main
       - name: build library and tests
-        run: make build_release
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake --build .
       - name: run tests
-        run: make test_release
+        run: |
+          cd build
+          ctest --output-on-failure

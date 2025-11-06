@@ -23,9 +23,9 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/object/reader.cpp
         src/object/tree.cpp
         src/object/writer.cpp
-        # src/schema/token.cpp
-        # src/schema/tokenizer.cpp
-        # src/schema/schema.cpp
+        src/schema/token.cpp
+        src/schema/tokenizer.cpp
+        src/schema/schema.cpp
         src/debug.cpp
         src/json.cpp
         src/random.cpp

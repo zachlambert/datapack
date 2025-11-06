@@ -11,7 +11,7 @@ public:
 };
 
 Object load_json(const std::string& json);
-std::string dump_json(const Object::ConstReference& object);
+std::string dump_json(ConstObject object);
 
 template <readable T>
 T read_json(const std::string& json) {

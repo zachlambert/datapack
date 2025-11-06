@@ -27,7 +27,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         # src/schema/tokenizer.cpp
         # src/schema/schema.cpp
         src/debug.cpp
-        # src/json.cpp
+        src/json.cpp
         src/random.cpp
     )
     target_include_directories(datapack PUBLIC

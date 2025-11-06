@@ -17,7 +17,7 @@ Object load_json(const std::string& json) {
   std::stack<int> states;
   states.push(EXPECT_VALUE);
   Object object;
-  Object::Iterator iter = object.iter();
+  Object::Ptr ptr = object.ptr();
 
   while (true) {
     int& state = states.top();
@@ -26,7 +26,7 @@ Object load_json(const std::string& json) {
       if (!(state & EXPECT_END) || (state & IS_OBJECT) || (state & IS_ARRAY)) {
         throw JsonLoadError("Not expecting the document end");
       }
-      assert(!iter);
+      assert(!ptr);
       assert(states.size() == 1);
       break;
     }
@@ -36,7 +36,7 @@ Object load_json(const std::string& json) {
       pos++;
       continue;
     }
-    assert(iter);
+    assert(ptr);
 
     if (c == '"' && (state & IS_OBJECT) && (state & EXPECT_ELEMENT)) {
       pos++;
@@ -71,14 +71,14 @@ Object load_json(const std::string& json) {
       state &= ~EXPECT_ELEMENT;
       state |= EXPECT_VALUE;
       std::string key = json.substr(begin, end - begin);
-      iter = iter->insert(key, Object::null_t());
+      ptr = ptr->emplace(key).ptr();
       continue;
     }
 
     if ((state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
       state &= ~EXPECT_ELEMENT;
       state |= EXPECT_VALUE;
-      iter = iter->push_back(Object::null_t());
+      ptr = ptr->emplace_back().ptr();
       continue;
     }
 
@@ -88,7 +88,7 @@ Object load_json(const std::string& json) {
       }
       pos++;
       states.push(IS_OBJECT | EXPECT_ELEMENT | EXPECT_END);
-      *iter = Object::map_t();
+      ptr->to_map();
       continue;
     }
     if (c == '[') {
@@ -97,7 +97,7 @@ Object load_json(const std::string& json) {
       }
       pos++;
       states.push(IS_ARRAY | EXPECT_ELEMENT | EXPECT_END);
-      *iter = Object::list_t();
+      ptr->to_list();
       continue;
     }
     if (c == '}') {
@@ -110,7 +110,7 @@ Object load_json(const std::string& json) {
       int& new_state = states.top();
       new_state &= ~EXPECT_VALUE;
       new_state |= EXPECT_NEXT | EXPECT_END;
-      iter = iter.parent();
+      ptr = ptr.parent();
       continue;
     }
     if (c == ']') {
@@ -123,7 +123,7 @@ Object load_json(const std::string& json) {
       int& new_state = states.top();
       new_state &= ~EXPECT_VALUE;
       new_state |= EXPECT_NEXT | EXPECT_END;
-      iter = iter.parent();
+      ptr = ptr.parent();
       continue;
     }
     if (c == ',') {
@@ -158,8 +158,8 @@ Object load_json(const std::string& json) {
       }
       std::size_t end = pos;
       pos++;
-      *iter = json.substr(begin, end - begin);
-      iter = iter.parent();
+      *ptr = json.substr(begin, end - begin);
+      ptr = ptr.parent();
       continue;
     }
 
@@ -178,24 +178,24 @@ Object load_json(const std::string& json) {
 
     std::string value = json.substr(begin, end - begin);
     if (value == "true") {
-      *iter = true;
-      iter = iter.parent();
+      *ptr = true;
+      ptr = ptr.parent();
       continue;
     }
     if (value == "false") {
-      *iter = false;
-      iter = iter.parent();
+      *ptr = false;
+      ptr = ptr.parent();
       continue;
     }
     if (value == "null") {
-      *iter = Object::null_t();
-      iter = iter.parent();
+      ptr->to_null();
+      ptr = ptr.parent();
       continue;
     }
     try {
-      Object::number_t result = std::strtod(value.c_str(), nullptr);
-      *iter = result;
-      iter = iter.parent();
+      object::number_t result = std::strtod(value.c_str(), nullptr);
+      *ptr = result;
+      ptr = ptr.parent();
       continue;
     } catch (std::invalid_argument) {
     } catch (std::out_of_range) {
@@ -207,17 +207,17 @@ Object load_json(const std::string& json) {
   return object;
 }
 
-std::string dump_json(const Object::ConstReference& object) {
+std::string dump_json(ConstObject object) {
   std::string json = "";
 
-  std::stack<Object::ConstIterator> stack;
-  stack.push(object.iter());
+  std::stack<ConstObject::Ptr> stack;
+  stack.push(object.ptr());
   bool start = true;
   bool end = false;
 
   while (!stack.empty()) {
-    auto iter = stack.top();
-    if (!iter) {
+    auto ptr = stack.top();
+    if (!ptr) {
       stack.pop();
       end = true;
       continue;
@@ -232,16 +232,16 @@ std::string dump_json(const Object::ConstReference& object) {
         }
       }
       start = false;
-      if (iter->is_map()) {
+      if (ptr->is_map()) {
         json += "}";
         stack.pop();
-        stack.push(iter.next());
+        stack.push(ptr.next());
         continue;
       }
-      if (iter->is_list()) {
+      if (ptr->is_list()) {
         json += "]";
         stack.pop();
-        stack.push(iter.next());
+        stack.push(ptr.next());
         continue;
       }
       stack.pop();
@@ -257,37 +257,37 @@ std::string dump_json(const Object::ConstReference& object) {
     for (int i = 0; i < (stack.size() - 1); i++) {
       json += "    ";
     }
-    if (!iter->key().empty()) {
-      json += "\"" + iter->key() + "\": ";
+    if (!ptr.key().empty()) {
+      json += "\"" + ptr.key() + "\": ";
     }
 
-    if (iter->is_map()) {
+    if (ptr->is_map()) {
       json += "{\n";
-      stack.push(iter.child());
+      stack.push(ptr.child());
       start = true;
       continue;
     }
-    if (iter->is_list()) {
+    if (ptr->is_list()) {
       json += "[\n";
-      stack.push(iter.child());
+      stack.push(ptr.child());
       start = true;
       continue;
     }
 
-    if (auto value = iter->number_if()) {
+    if (auto value = ptr->number_if()) {
       json += floating_to_string(*value);
-    } else if (auto value = iter->string_if()) {
+    } else if (auto value = ptr->string_if()) {
       json += "\"" + *value + "\"";
-    } else if (iter->is_null()) {
+    } else if (ptr->is_null()) {
       json += "null";
-    } else if (auto value = iter->boolean_if()) {
+    } else if (auto value = ptr->boolean_if()) {
       json += (*value ? "true" : "false");
-    } else if (auto value = iter->binary_if()) {
+    } else if (auto value = ptr->binary_if()) {
       json += "\"" + base64_encode(*value) + "\"";
     }
 
     stack.pop();
-    stack.push(iter.next());
+    stack.push(ptr.next());
   }
 
   return json;

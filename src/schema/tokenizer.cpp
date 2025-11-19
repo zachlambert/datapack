@@ -7,15 +7,17 @@ Tokenizer::Tokenizer(std::vector<Token>& tokens) :
   tokens.clear();
 }
 
-void Tokenizer::number(NumberType type, void* value) { tokens.push_back(type); }
+void Tokenizer::number(NumberType type, void* value) {
+  tokens.push_back(token::Number(type));
+}
 
 bool Tokenizer::boolean() {
-  tokens.push_back(bool());
+  tokens.push_back(token::Boolean());
   return false;
 }
 
 const char* Tokenizer::string() {
-  tokens.push_back(std::string());
+  tokens.push_back(token::String());
   return nullptr;
 }
 
@@ -43,21 +45,37 @@ int Tokenizer::variant_begin(const std::span<const char*>& labels) {
   return 0;
 }
 
-void Tokenizer::variant_tokenize(int index) { tokens.push_back(token::VariantNext(index)); }
+void Tokenizer::variant_tokenize(int index) {
+  tokens.push_back(token::VariantNext(index));
+}
 
-void Tokenizer::variant_end() { tokens.push_back(token::VariantEnd()); }
+void Tokenizer::variant_end() {
+  tokens.push_back(token::VariantEnd());
+}
 
-void Tokenizer::object_begin() { tokens.push_back(token::ObjectBegin()); }
+void Tokenizer::object_begin() {
+  tokens.push_back(token::ObjectBegin());
+}
 
-void Tokenizer::object_next(const char* key) { tokens.push_back(token::ObjectNext(key)); }
+void Tokenizer::object_next(const char* key) {
+  tokens.push_back(token::ObjectNext(key));
+}
 
-void Tokenizer::object_end() { tokens.push_back(token::ObjectEnd()); }
+void Tokenizer::object_end() {
+  tokens.push_back(token::ObjectEnd());
+}
 
-void Tokenizer::tuple_begin() { tokens.push_back(token::TupleBegin()); }
+void Tokenizer::tuple_begin() {
+  tokens.push_back(token::TupleBegin());
+}
 
-void Tokenizer::tuple_next() { tokens.push_back(token::TupleNext()); }
+void Tokenizer::tuple_next() {
+  tokens.push_back(token::TupleNext());
+}
 
-void Tokenizer::tuple_end() { tokens.push_back(token::TupleEnd()); }
+void Tokenizer::tuple_end() {
+  tokens.push_back(token::TupleEnd());
+}
 
 void Tokenizer::list_begin() {
   tokens.push_back(token::List());

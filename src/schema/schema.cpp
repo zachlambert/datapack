@@ -193,17 +193,17 @@ void Schema::apply(Reader& reader, Writer& writer) {
       continue;
     }
 
-    if (auto type = std::get_if<NumberType>(&*iter)) {
+    if (auto number = std::get_if<token::Number>(&*iter)) {
       char buffer[8];
-      reader.number(*type, (void*)buffer);
-      writer.number(*type, (void*)buffer);
+      reader.number(number->type, (void*)buffer);
+      writer.number(number->type, (void*)buffer);
       continue;
     }
-    if (std::get_if<bool>(&*iter)) {
+    if (std::get_if<token::Boolean>(&*iter)) {
       writer.boolean(reader.boolean());
       continue;
     }
-    if (std::get_if<std::string>(&*iter)) {
+    if (std::get_if<token::String>(&*iter)) {
       writer.string(reader.string());
       continue;
     }

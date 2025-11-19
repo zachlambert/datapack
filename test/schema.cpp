@@ -12,11 +12,11 @@
 TEST(Schema, Iterator) {
   using namespace datapack;
   {
-    Schema schema = Schema::FromTokens({});
+    Schema schema = Schema::from_tokens({});
     EXPECT_EQ(schema.begin(), schema.end());
   }
   {
-    Schema schema = Schema::FromTokens({
+    Schema schema = Schema::from_tokens({
         token::ObjectBegin(),
         token::ObjectNext(),
         token::Number::F64(),
@@ -29,7 +29,7 @@ TEST(Schema, Iterator) {
     EXPECT_EQ(child.skip(), last.next());
   }
   {
-    Schema schema = Schema::FromTokens({
+    Schema schema = Schema::from_tokens({
         token::ObjectBegin(),
         token::ObjectNext(),
         token::TupleBegin(),
@@ -61,7 +61,7 @@ TEST(Schema, Iterator) {
 TEST(Schema, SchemaMake) {
   using namespace datapack;
 
-  Schema schema = Schema::Make<Entity>();
+  Schema schema = Schema::make<Entity>();
 
   std::vector<Token> tokens = {
       token::ObjectBegin(),
@@ -125,7 +125,7 @@ TEST(Schema, SchemaMake) {
       token::Number::I32(),
       token::TupleEnd(),
       token::ObjectEnd()};
-  auto expected = Schema::FromTokens(tokens);
+  auto expected = Schema::from_tokens(tokens);
 
   EXPECT_EQ(schema, expected);
 }
@@ -135,7 +135,7 @@ TEST(Schema, SchemaApply) {
 
   auto json_direct = datapack::write_json(example);
 
-  auto schema = datapack::Schema::Make<Entity>();
+  auto schema = datapack::Schema::make<Entity>();
   auto bytes = datapack::write_binary(example);
   datapack::Object object;
 

@@ -49,14 +49,14 @@ public:
   }
 
   template <typename T>
-  static Schema Make() {
+  static Schema make() {
     T dummy;
     Schema result;
     Tokenizer(result.tokens).value(dummy);
     return result;
   }
 
-  static Schema FromTokens(const std::vector<Token>& tokens) {
+  static Schema from_tokens(const std::vector<Token>& tokens) {
     Schema result;
     result.tokens = tokens;
     return result;

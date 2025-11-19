@@ -8,59 +8,43 @@
 
 namespace datapack {
 
-static std::size_t get_tokens_end(const std::vector<Token>& tokens, std::size_t begin) {
-  std::size_t pos = begin;
-  std::size_t depth = 0;
-  while (true) {
-    if (depth == 0 && pos != begin) {
-      break;
-    }
-    if (pos >= tokens.size()) {
-      throw std::runtime_error("Invalid binary schema");
-    }
-    const auto& token = tokens[pos];
-    pos++;
+void Schema::init_depth() {
+  depth.resize(tokens.size());
+  int depth_i = 0;
+  for (std::size_t i = 0; i < tokens.size(); i++) {
+    depth[i] = depth_i;
+    const auto& token = tokens[i];
 
-    // All these tokens are preceded by another value
-    // so skip to the next token, such that the loop doesn't exit
-    // if the depth is still zero
-    if (std::get_if<token::List>(&token)) {
-      continue;
-    } else if (std::get_if<token::Optional>(&token)) {
-      continue;
-    }
-    // Explicit container tokens, that increment or decrement depth
-    // Where depth is decreased, fall through to the end of the loop
-    // body to check if depth is zero
-    else if (std::get_if<token::ObjectBegin>(&token)) {
-      depth++;
-      continue;
+    if (std::get_if<token::ObjectBegin>(&token)) {
+      depth_i++;
     } else if (std::get_if<token::ObjectEnd>(&token)) {
-      depth--;
+      depth_i--;
     } else if (std::get_if<token::TupleBegin>(&token)) {
-      depth++;
-      continue;
+      depth_i++;
     } else if (std::get_if<token::TupleEnd>(&token)) {
-      depth--;
+      depth_i--;
     } else if (std::get_if<token::VariantBegin>(&token)) {
-      depth++;
-      continue;
+      depth_i++;
     } else if (std::get_if<token::VariantEnd>(&token)) {
-      depth--;
-    }
-    // Remaining tokens are values
-    // Either these are in a container and depth remains unchanged
-    // at a non-zero value, so continues, or they are the only value
-    // and depth is still at zero, which stops the loop
-
-    if (depth == 0) {
-      break;
+      depth_i--;
     }
   }
-  return pos;
 }
 
-void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
+Schema::Iterator Schema::Iterator::next() const {
+  return Iterator(schema, index + 1);
+}
+
+Schema::Iterator Schema::Iterator::skip() const {
+  int depth_start = schema->depth[index];
+  std::size_t end = index + 1;
+  while (end < schema->tokens.size() && schema->depth[end] > depth_start) {
+    end++;
+  }
+  return Iterator(schema, end);
+}
+
+void Schema::apply(Reader& reader, Writer& writer) {
   enum class StateType { None, List, Array, Optional, Variant };
   struct State {
     const StateType type;
@@ -82,7 +66,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
 
   std::size_t token_pos = 0;
   while (true) {
-    if (token_pos == schema.tokens.size()) {
+    if (token_pos == tokens.size()) {
       break;
     }
 
@@ -138,7 +122,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
       // Fall-through to processing value below
     }
 
-    const auto& token = schema.tokens[token_pos];
+    const auto& token = tokens[token_pos];
     token_pos++;
 
     if (std::get_if<token::ObjectBegin>(&token)) {
@@ -181,14 +165,13 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
       reader.list_begin();
       writer.list_begin();
 
-      states.push(State(StateType::List, token_pos, get_tokens_end(schema.tokens, token_pos), 0));
+      states.push(State(StateType::List, token_pos, get_tokens_end(tokens, token_pos), 0));
       continue;
     }
 
     if (std::get_if<token::Optional>(&token)) {
       // Call writer.optional() elsewhere
-      states.push(
-          State(StateType::Optional, token_pos, get_tokens_end(schema.tokens, token_pos), 1));
+      states.push(State(StateType::Optional, token_pos, get_tokens_end(tokens, token_pos), 1));
       continue;
     }
     if (auto variant = std::get_if<token::VariantBegin>(&token)) {
@@ -203,7 +186,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
       std::size_t variant_start;
       // Move token_pos forward to the corresponding variant value
       while (true) {
-        const auto& token = schema.tokens[token_pos];
+        const auto& token = tokens[token_pos];
         token_pos++;
         if (auto value = std::get_if<token::VariantNext>(&token)) {
           if (value->index == variant_index) {
@@ -214,7 +197,7 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
             variant_start = token_pos;
             writer.variant_begin(variant_index, labels_cstr);
           }
-          token_pos = get_tokens_end(schema.tokens, token_pos);
+          token_pos = get_tokens_end(tokens, token_pos);
           continue;
         } else if (auto value = std::get_if<token::VariantEnd>(&token)) {
           break;
@@ -255,7 +238,9 @@ void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
   }
 }
 
-bool operator==(const Schema& lhs, const Schema& rhs) { return lhs == rhs; }
+bool operator==(const Schema& lhs, const Schema& rhs) {
+  return lhs == rhs;
+}
 
 DATAPACK_IMPL(Schema, value, packer) {
   packer.object_begin();

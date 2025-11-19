@@ -1,5 +1,7 @@
+#include <datapack/binary.hpp>
 #include <datapack/debug.hpp>
 #include <datapack/examples/entity.hpp>
+#include <datapack/json.hpp>
 #include <datapack/random.hpp>
 #include <datapack/schema/schema.hpp>
 #include <datapack/std/string.hpp>
@@ -7,18 +9,7 @@
 #include <datapack/std/vector.hpp>
 #include <gtest/gtest.h>
 
-TEST(Schema, SchemaUsage) {
-  datapack::Schema schema = datapack::create_schema<Entity>();
-
-  std::stringstream ss;
-  datapack::RandomReader reader;
-  datapack::DebugWriter writer(ss);
-
-  datapack::use_schema(schema, reader, writer);
-  // No expect/assert, juts check it doesn't crash
-}
-
-TEST(Schema, Tokenizer) {
+TEST(Schema, SchemaBuilder) {
   using namespace datapack;
 
   std::vector<Token> tokens;
@@ -98,4 +89,19 @@ TEST(Schema, Tokenizer) {
     }
     EXPECT_TRUE(tokens[i] == expected[i]);
   }
+}
+
+TEST(Schema, SchemaUsage) {
+  auto schema = datapack::Schema::Make<Entity>();
+
+  Entity example = Entity::example();
+  auto bytes = datapack::write_binary(example);
+
+  auto json_direct = datapack::write_json(example);
+
+  datapack::Object object;
+  schema.apply(datapack::BinaryReader(bytes), datapack::ObjectWriter(object));
+  auto json_via_schema = datapack::dump_json(object);
+
+  EXPECT_EQ(json_direct, json_via_schema);
 }

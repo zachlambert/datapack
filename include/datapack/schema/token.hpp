@@ -10,11 +10,43 @@ namespace datapack {
 
 namespace token {
 
+struct Number {
+  NumberType type;
+  explicit Number() {}
+  explicit Number(NumberType type) : type(type) {}
+
+  static Number I32() {
+    return Number(NumberType::I32);
+  }
+  static Number I64() {
+    return Number(NumberType::I64);
+  }
+  static Number U32() {
+    return Number(NumberType::U32);
+  }
+  static Number U64() {
+    return Number(NumberType::U64);
+  }
+  static Number F32() {
+    return Number(NumberType::F32);
+  }
+  static Number F64() {
+    return Number(NumberType::F64);
+  }
+  static Number U8() {
+    return Number(NumberType::U8);
+  }
+};
+
+struct Boolean {};
+
+struct String {};
+
 struct Enumerate {
   std::vector<std::string> labels;
-  Enumerate() {}
-  Enumerate(const std::vector<std::string>& labels) : labels(labels) {}
-  Enumerate(const std::span<const char*>& labels) {
+  explicit Enumerate() {}
+  explicit Enumerate(const std::vector<std::string>& labels) : labels(labels) {}
+  explicit Enumerate(const std::span<const char*>& labels) {
     for (const char* str : labels) {
       this->labels.push_back(std::string(str));
     }
@@ -24,17 +56,17 @@ struct Enumerate {
 struct Binary {
   std::size_t length;
   std::size_t stride;
-  Binary() : length(0), stride(0) {}
-  Binary(std::size_t length, std::size_t stride) : length(length), stride(stride) {}
+  explicit Binary() : length(0), stride(0) {}
+  explicit Binary(std::size_t length, std::size_t stride) : length(length), stride(stride) {}
 };
 
 struct Optional {};
 
 struct VariantBegin {
   std::vector<std::string> labels;
-  VariantBegin() {}
-  VariantBegin(const std::vector<std::string>& labels) : labels(labels) {}
-  VariantBegin(const std::span<const char*>& labels) {
+  explicit VariantBegin() {}
+  explicit VariantBegin(const std::vector<std::string>& labels) : labels(labels) {}
+  explicit VariantBegin(const std::span<const char*>& labels) {
     for (const char* str : labels) {
       this->labels.push_back(std::string(str));
     }
@@ -43,16 +75,16 @@ struct VariantBegin {
 struct VariantEnd {};
 struct VariantNext {
   int index;
-  VariantNext() {}
-  VariantNext(int index) : index(index) {}
+  explicit VariantNext() {}
+  explicit VariantNext(int index) : index(index) {}
 };
 
 struct ObjectBegin {};
 struct ObjectEnd {};
 struct ObjectNext {
   std::string key;
-  ObjectNext() {}
-  ObjectNext(const std::string& key) : key(key) {}
+  explicit ObjectNext() {}
+  explicit ObjectNext(const std::string& key) : key(key) {}
 };
 
 struct TupleBegin {};
@@ -64,9 +96,9 @@ struct List {};
 } // namespace token
 
 using Token = std::variant<
-    NumberType,
-    bool,
-    std::string,
+    token::Number,
+    token::Boolean,
+    token::String,
     token::Enumerate,
     token::Binary,
     token::Optional,
@@ -82,6 +114,9 @@ using Token = std::variant<
     token::List>;
 
 DATAPACK_LABELLED_ENUM(NumberType, 7);
+DATAPACK(token::Number);
+DATAPACK_EMPTY(token::Boolean);
+DATAPACK_EMPTY(token::String);
 DATAPACK(token::Enumerate);
 DATAPACK(token::Binary);
 

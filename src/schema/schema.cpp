@@ -2,260 +2,239 @@
 #include "datapack/std/string.hpp"
 #include "datapack/std/variant.hpp"
 #include "datapack/std/vector.hpp"
-#include <stdexcept>
+#include <assert.h>
 
 #include <stack>
 
 namespace datapack {
 
-static std::size_t get_tokens_end(const std::vector<Token>& tokens, std::size_t begin) {
-  std::size_t pos = begin;
-  std::size_t depth = 0;
-  while (true) {
-    if (depth == 0 && pos != begin) {
-      break;
-    }
-    if (pos >= tokens.size()) {
-      throw std::runtime_error("Invalid binary schema");
-    }
-    const auto& token = tokens[pos];
-    pos++;
+Schema::Iterator Schema::Iterator::next() const {
+  return Iterator(schema, index + 1);
+}
 
-    // All these tokens are preceded by another value
-    // so skip to the next token, such that the loop doesn't exit
-    // if the depth is still zero
-    if (std::get_if<token::List>(&token)) {
-      continue;
-    } else if (std::get_if<token::Optional>(&token)) {
-      continue;
-    }
-    // Explicit container tokens, that increment or decrement depth
-    // Where depth is decreased, fall through to the end of the loop
-    // body to check if depth is zero
-    else if (std::get_if<token::ObjectBegin>(&token)) {
+Schema::Iterator Schema::Iterator::skip() const {
+  int depth = 0;
+  std::size_t skip_index = index;
+  while (skip_index < schema->tokens.size()) {
+    const auto& token = schema->tokens[skip_index];
+    if (std::get_if<token::ObjectBegin>(&token)) {
       depth++;
-      continue;
     } else if (std::get_if<token::ObjectEnd>(&token)) {
       depth--;
     } else if (std::get_if<token::TupleBegin>(&token)) {
       depth++;
-      continue;
     } else if (std::get_if<token::TupleEnd>(&token)) {
       depth--;
     } else if (std::get_if<token::VariantBegin>(&token)) {
       depth++;
-      continue;
     } else if (std::get_if<token::VariantEnd>(&token)) {
       depth--;
     }
-    // Remaining tokens are values
-    // Either these are in a container and depth remains unchanged
-    // at a non-zero value, so continues, or they are the only value
-    // and depth is still at zero, which stops the loop
-
+    skip_index++;
     if (depth == 0) {
       break;
     }
   }
-  return pos;
+  return Iterator(schema, skip_index);
 }
 
-void use_schema(const Schema& schema, Reader& reader, Writer& writer) {
-  enum class StateType { None, List, Array, Optional, Variant };
-  struct State {
-    const StateType type;
-    const std::size_t value_tokens_begin;
-    const std::size_t value_tokens_end;
-    int remaining;
-    State(
-        StateType type,
-        std::size_t value_tokens_begin,
-        std::size_t value_tokens_end,
-        int remaining) :
-        type(type),
-        value_tokens_begin(value_tokens_begin),
-        value_tokens_end(value_tokens_end),
-        remaining(remaining) {}
-  };
-  std::stack<State> states;
-  states.push(State(StateType::None, 0, 0, 0));
+void Schema::apply(Reader& reader, Writer& writer) {
+  std::stack<Iterator> stack;
 
-  std::size_t token_pos = 0;
-  while (true) {
-    if (token_pos == schema.tokens.size()) {
+  for (auto iter = begin(); iter != end(); iter = iter.next()) {
+    while (!stack.empty()) {
+      auto parent = stack.top();
+      if (std::get_if<token::ObjectBegin>(&*parent)) {
+        if (std::get_if<token::ObjectEnd>(&*iter)) {
+          reader.object_end();
+          writer.object_end();
+          stack.pop();
+          iter = iter.next();
+          continue;
+        }
+        auto object_next = std::get_if<token::ObjectNext>(&*iter);
+        if (!object_next) {
+          throw SchemaError("Expected ObjectNext token");
+        }
+        reader.object_next(object_next->key.c_str());
+        writer.object_next(object_next->key.c_str());
+
+        iter = iter.next();
+        if (iter == end()) {
+          throw SchemaError("Expected a valid token after ObjectNext");
+        }
+        break;
+      }
+
+      if (std::get_if<token::TupleBegin>(&*parent)) {
+        if (std::get_if<token::TupleEnd>(&*iter)) {
+          reader.tuple_end();
+          writer.tuple_end();
+          stack.pop();
+          iter = iter.next();
+          continue;
+        }
+        auto tuple_next = std::get_if<token::TupleNext>(&*iter);
+        if (!tuple_next) {
+          throw SchemaError("Expected TupleNext token");
+        }
+        reader.tuple_next();
+        writer.tuple_next();
+
+        iter = iter.next();
+        if (iter == end()) {
+          throw SchemaError("Expected a valid token after TupleNext");
+        }
+        break;
+      }
+
+      if (std::get_if<token::List>(&*parent)) {
+        if (!reader.list_next()) {
+          reader.list_end();
+          writer.list_end();
+          stack.pop();
+          continue;
+        }
+        writer.list_next();
+        iter = parent.next();
+        break;
+      }
+
+      if (std::get_if<token::Optional>(&*parent)) {
+        if (iter != parent.next()) {
+          assert(iter == parent.next().skip());
+          reader.optional_end();
+          writer.optional_end();
+          stack.pop();
+          continue;
+        }
+        break;
+      }
+
+      if (std::get_if<token::VariantNext>(&*parent)) {
+        if (iter != parent.next()) {
+          while (iter != end()) {
+            if (std::get_if<token::VariantEnd>(&*iter)) {
+              break;
+            }
+            if (!std::get_if<token::VariantNext>(&*iter)) {
+              throw SchemaError("Expected VariantNext");
+            }
+            iter = iter.next().skip();
+          }
+          reader.variant_end();
+          writer.variant_end();
+          stack.pop();
+          iter = iter.next();
+          continue;
+        }
+        break;
+      }
+      assert(false);
+    }
+    if (iter == end()) {
       break;
     }
 
-    auto& state = states.top();
-    if (state.type == StateType::List) {
-      if (!reader.list_next()) {
-        reader.list_end();
-        writer.list_end();
-        token_pos = state.value_tokens_end;
-        states.pop();
-        continue;
-      }
-      writer.list_next();
-      token_pos = state.value_tokens_begin;
-    } else if (state.type == StateType::Optional) {
-      bool has_value = false;
-      if (state.remaining) {
-        has_value = reader.optional_begin();
-        writer.optional_begin(has_value);
-        state.remaining = 0;
-      }
-      if (!has_value) {
-        reader.optional_end();
-        writer.optional_end();
-        token_pos = state.value_tokens_end;
-        states.pop();
-        continue;
-      }
-      token_pos = state.value_tokens_begin;
-    } else if (state.type == StateType::Variant) {
-      if (!state.remaining) {
-        reader.variant_end();
-        writer.variant_end();
-        token_pos = state.value_tokens_end;
-        states.pop();
-        continue;
-      }
-      state.remaining = 0;
-      token_pos = state.value_tokens_begin;
-      // Fall-through to processing value below
-    } else if (state.type == StateType::Array) {
-      if (state.remaining == 0) {
-        token_pos = state.value_tokens_end;
-        states.pop();
-        reader.list_end();
-        writer.list_end();
-        token_pos++;
-        continue;
-      }
-      writer.list_next();
-      state.remaining--;
-      token_pos = state.value_tokens_begin;
-      // Fall-through to processing value below
-    }
-
-    const auto& token = schema.tokens[token_pos];
-    token_pos++;
-
-    if (std::get_if<token::ObjectBegin>(&token)) {
-      states.push(State(StateType::None, 0, 0, 0));
+    if (std::get_if<token::ObjectBegin>(&*iter)) {
       reader.object_begin();
       writer.object_begin();
+      stack.push(iter);
       continue;
     }
-    if (std::get_if<token::ObjectEnd>(&token)) {
-      states.pop();
-      reader.object_end();
-      writer.object_end();
-      continue;
-    }
-    if (auto value = std::get_if<token::ObjectNext>(&token)) {
-      reader.object_next(value->key.c_str());
-      writer.object_next(value->key.c_str());
-      continue;
-    }
-
-    if (std::get_if<token::TupleBegin>(&token)) {
-      states.push(State(StateType::None, 0, 0, 0));
+    if (std::get_if<token::TupleBegin>(&*iter)) {
       reader.tuple_begin();
       writer.tuple_begin();
+      stack.push(iter);
       continue;
     }
-    if (std::get_if<token::TupleEnd>(&token)) {
-      states.pop();
-      reader.tuple_end();
-      writer.tuple_end();
-      continue;
-    }
-    if (std::get_if<token::TupleNext>(&token)) {
-      reader.tuple_next();
-      writer.tuple_next();
-      continue;
-    }
-
-    if (std::get_if<token::List>(&token)) {
+    if (std::get_if<token::List>(&*iter)) {
       reader.list_begin();
       writer.list_begin();
-
-      states.push(State(StateType::List, token_pos, get_tokens_end(schema.tokens, token_pos), 0));
+      stack.push(iter);
       continue;
     }
-
-    if (std::get_if<token::Optional>(&token)) {
-      // Call writer.optional() elsewhere
-      states.push(
-          State(StateType::Optional, token_pos, get_tokens_end(schema.tokens, token_pos), 1));
-      continue;
-    }
-    if (auto variant = std::get_if<token::VariantBegin>(&token)) {
-      std::vector<const char*> labels_cstr;
-      for (const auto& label : variant->labels) {
-        labels_cstr.push_back(label.c_str());
+    if (std::get_if<token::Optional>(&*iter)) {
+      bool has_value = reader.optional_begin();
+      writer.optional_begin(has_value);
+      if (has_value) {
+        stack.push(iter);
       }
+      continue;
+    }
+    if (auto variant = std::get_if<token::VariantBegin>(&*iter)) {
+      std::vector<const char*> labels_c_str;
+      for (const auto& label : variant->labels) {
+        labels_c_str.push_back(label.c_str());
+      }
+      int choice = reader.variant_begin(labels_c_str);
+      writer.variant_begin(choice, labels_c_str);
 
-      int variant_index = reader.variant_begin(labels_cstr);
+      // Don't push VariantBegin
 
-      bool found_match = false;
-      std::size_t variant_start;
-      // Move token_pos forward to the corresponding variant value
-      while (true) {
-        const auto& token = schema.tokens[token_pos];
-        token_pos++;
-        if (auto value = std::get_if<token::VariantNext>(&token)) {
-          if (value->index == variant_index) {
-            if (found_match) {
-              throw std::runtime_error("Repeated variant labels");
-            }
-            found_match = true;
-            variant_start = token_pos;
-            writer.variant_begin(variant_index, labels_cstr);
-          }
-          token_pos = get_tokens_end(schema.tokens, token_pos);
-          continue;
-        } else if (auto value = std::get_if<token::VariantEnd>(&token)) {
+      iter = iter.next();
+      while (iter != end()) {
+        auto variant_next = std::get_if<token::VariantNext>(&*iter);
+        if (!variant_next) {
+          throw SchemaError("Expected VariantNext");
+        }
+        if (variant_next->index == choice) {
           break;
         }
-        throw std::runtime_error("Invalid binary schema");
-      }
-      if (!found_match) {
-        throw std::runtime_error("No matching variant");
+        iter = iter.next().skip();
       }
 
-      states.push(State(StateType::Variant, variant_start, token_pos, 1));
+      if (iter == end()) {
+        throw SchemaError("Failed to find a valid VariantNext token");
+      }
+      // Push VariantNext
+      stack.push(iter);
+
       continue;
     }
 
-    if (auto x = std::get_if<NumberType>(&token)) {
-      std::uint8_t dummy_buffer[8]; // Large enough for all number types
-      reader.number(*x, dummy_buffer);
-      writer.number(*x, dummy_buffer);
-    } else if (std::get_if<bool>(&token)) {
-      writer.boolean(reader.boolean());
-    } else if (std::get_if<std::string>(&token)) {
-      std::string value;
-      const char* string = reader.string();
-      writer.string(string);
-    } else if (auto value = std::get_if<token::Enumerate>(&token)) {
-      std::vector<const char*> labels_cstr;
-      for (const auto& label : value->labels) {
-        labels_cstr.push_back(label.c_str());
-      }
-      int enum_value = reader.enumerate(labels_cstr);
-      writer.enumerate(enum_value, labels_cstr);
-    } else if (auto value = std::get_if<token::Binary>(&token)) {
-      auto data = reader.binary();
-      writer.binary(data);
-    } else {
-      throw std::runtime_error("Shouldn't be here");
+    if (auto number = std::get_if<token::Number>(&*iter)) {
+      char buffer[8];
+      reader.number(number->type, (void*)buffer);
+      writer.number(number->type, (void*)buffer);
+      continue;
     }
+    if (std::get_if<token::Boolean>(&*iter)) {
+      writer.boolean(reader.boolean());
+      continue;
+    }
+    if (std::get_if<token::String>(&*iter)) {
+      writer.string(reader.string());
+      continue;
+    }
+    if (auto enumerate = std::get_if<token::Enumerate>(&*iter)) {
+      std::vector<const char*> labels_c_str;
+      for (const auto& label : enumerate->labels) {
+        labels_c_str.push_back(label.c_str());
+      }
+      writer.enumerate(reader.enumerate(labels_c_str), labels_c_str);
+      continue;
+    }
+    if (std::get_if<token::Binary>(&*iter)) {
+      writer.binary(reader.binary());
+      continue;
+    }
+
+    throw SchemaError("Unexpected token");
   }
 }
 
-bool operator==(const Schema& lhs, const Schema& rhs) { return lhs == rhs; }
+bool operator==(const Schema& lhs, const Schema& rhs) {
+  if (lhs.tokens.size() != rhs.tokens.size()) {
+    return false;
+  }
+  for (std::size_t i = 0; i < lhs.tokens.size(); i++) {
+    if (lhs.tokens[i] != rhs.tokens[i]) {
+      return false;
+    }
+  }
+  return true;
+}
 
 DATAPACK_IMPL(Schema, value, packer) {
   packer.object_begin();

@@ -6,6 +6,10 @@ namespace datapack {
 
 DATAPACK_LABELLED_ENUM_DEF(NumberType) = {"i32", "i64", "u32", "u64", "u8", "f32", "f64"};
 
+DATAPACK_IMPL(token::Number, value, packer) {
+  packer.value(value.type);
+}
+
 DATAPACK_IMPL(token::Enumerate, value, packer) {
   packer.object_begin();
   packer.value("labels", value.labels);

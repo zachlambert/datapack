@@ -44,6 +44,10 @@ concept readable_trivial = packable_trivial<T, MODE_READ>;
   template <int Mode>                                                                              \
   void pack(packref<T, Mode> value, Packer<Mode>& packer)
 
+#define DATAPACK_FRIEND(T)                                                                         \
+  template <int Mode>                                                                              \
+  friend void pack(packref<T, Mode> value, Packer<Mode>& packer)
+
 #define DATAPACK_IMPL(T, value_name, packer_name)                                                  \
   template void pack(packref<T, MODE_WRITE>, Packer<MODE_WRITE>&);                                 \
   template void pack(packref<T, MODE_READ>, Packer<MODE_READ>&);                                   \
@@ -187,25 +191,49 @@ public:
 
   // Other
 
-  void invalidate() { valid_ = false; }
-  bool valid() const { return valid_; }
-  bool is_tokenizer() const { return is_tokenizer_; }
+  void invalidate() {
+    valid_ = false;
+  }
+  bool valid() const {
+    return valid_;
+  }
+  bool is_tokenizer() const {
+    return is_tokenizer_;
+  }
 
 private:
   bool valid_;
   const bool is_tokenizer_;
 };
 
-DATAPACK_INLINE(std::int32_t, value, packer) { packer.number(NumberType::I32, &value); }
-DATAPACK_INLINE(std::int64_t, value, packer) { packer.number(NumberType::I64, &value); }
-DATAPACK_INLINE(std::uint32_t, value, packer) { packer.number(NumberType::U32, &value); }
-DATAPACK_INLINE(std::uint64_t, value, packer) { packer.number(NumberType::U64, &value); }
-DATAPACK_INLINE(std::uint8_t, value, packer) { packer.number(NumberType::U8, &value); }
-DATAPACK_INLINE(float, value, packer) { packer.number(NumberType::F32, &value); }
-DATAPACK_INLINE(double, value, packer) { packer.number(NumberType::F64, &value); }
+DATAPACK_INLINE(std::int32_t, value, packer) {
+  packer.number(NumberType::I32, &value);
+}
+DATAPACK_INLINE(std::int64_t, value, packer) {
+  packer.number(NumberType::I64, &value);
+}
+DATAPACK_INLINE(std::uint32_t, value, packer) {
+  packer.number(NumberType::U32, &value);
+}
+DATAPACK_INLINE(std::uint64_t, value, packer) {
+  packer.number(NumberType::U64, &value);
+}
+DATAPACK_INLINE(std::uint8_t, value, packer) {
+  packer.number(NumberType::U8, &value);
+}
+DATAPACK_INLINE(float, value, packer) {
+  packer.number(NumberType::F32, &value);
+}
+DATAPACK_INLINE(double, value, packer) {
+  packer.number(NumberType::F64, &value);
+}
 
-inline void pack(const bool& value, Writer& writer) { writer.boolean(value); }
-inline void pack(bool& value, Reader& reader) { value = reader.boolean(); }
+inline void pack(const bool& value, Writer& writer) {
+  writer.boolean(value);
+}
+inline void pack(bool& value, Reader& reader) {
+  value = reader.boolean();
+}
 
 template <labelled_enum T>
 void pack(const T& value, Writer& writer) {

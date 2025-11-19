@@ -3,8 +3,14 @@
 #include "datapack/datapack.hpp"
 #include "datapack/schema/token.hpp"
 #include "datapack/schema/tokenizer.hpp"
+#include <stdexcept>
 
 namespace datapack {
+
+class SchemaError : public std::runtime_error {
+public:
+  SchemaError(const std::string& message) : std::runtime_error(message) {}
+};
 
 class Schema {
 public:
@@ -47,7 +53,6 @@ public:
     T dummy;
     Schema result;
     Tokenizer(result.tokens).value(dummy);
-    result.init_depth();
     return result;
   }
 
@@ -59,10 +64,7 @@ public:
   }
 
 private:
-  void init_depth();
-
   std::vector<Token> tokens;
-  std::vector<int> depth;
 
   DATAPACK_FRIEND(Schema);
   friend bool operator==(const Schema& lhs, const Schema& rhs);

@@ -9,16 +9,61 @@
 #include <datapack/std/vector.hpp>
 #include <gtest/gtest.h>
 
+TEST(Schema, Iterator) {
+  using namespace datapack;
+  {
+    Schema schema = Schema::FromTokens({});
+    EXPECT_EQ(schema.begin(), schema.end());
+  }
+  {
+    Schema schema = Schema::FromTokens({
+        token::ObjectBegin(),
+        token::ObjectNext(),
+        NumberType::F64,
+        token::ObjectEnd() //
+    });
+    EXPECT_EQ(schema.begin().skip(), schema.end());
+
+    auto child = schema.begin().next().next();
+    auto last = child;
+    EXPECT_EQ(child.skip(), last.next());
+  }
+  {
+    Schema schema = Schema::FromTokens({
+        token::ObjectBegin(),
+        token::ObjectNext(),
+        token::TupleBegin(),
+        token::TupleNext(),
+        std::string(),
+        token::TupleNext(),
+        std::string(),
+        token::TupleEnd(),
+        token::ObjectNext(),
+        token::Optional(),
+        token::ObjectNext(),
+        token::ObjectBegin(),
+        token::ObjectEnd(),
+        token::ObjectNext(),
+        NumberType::F32,
+        token::ObjectEnd() //
+    });
+    EXPECT_EQ(schema.begin().skip(), schema.end());
+
+    auto first_child = schema.begin().next().next();
+    auto last = first_child;
+    for (std::size_t i = 0; i < 5; i++) {
+      last = last.next();
+    }
+    EXPECT_EQ(first_child.skip(), last.next());
+  }
+}
+
 TEST(Schema, SchemaMake) {
   using namespace datapack;
 
-  std::vector<Token> tokens;
-  {
-    Entity dummy;
-    datapack::Tokenizer(tokens).value(dummy);
-  }
+  Schema schema = Schema::Make<Entity>();
 
-  std::vector<Token> expected = {
+  std::vector<Token> tokens = {
       token::ObjectBegin(),
       token::ObjectNext("index"),
       NumberType::I32,
@@ -80,15 +125,9 @@ TEST(Schema, SchemaMake) {
       NumberType::I32,
       token::TupleEnd(),
       token::ObjectEnd()};
+  auto expected = Schema::FromTokens(tokens);
 
-  ASSERT_EQ(tokens.size(), expected.size());
-  for (std::size_t i = 0; i < tokens.size(); i++) {
-    if (tokens[i] != expected[i]) {
-      std::cerr << "Token[" << i << "]:\n" << datapack::debug(tokens[i]) << std::endl;
-      std::cerr << "Expected:\n" << datapack::debug(expected[i]) << std::endl;
-    }
-    EXPECT_TRUE(tokens[i] == expected[i]);
-  }
+  EXPECT_EQ(schema, expected);
 }
 
 TEST(Schema, SchemaApply) {

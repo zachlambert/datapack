@@ -56,6 +56,12 @@ public:
     return result;
   }
 
+  static Schema FromTokens(const std::vector<Token>& tokens) {
+    Schema result;
+    result.tokens = tokens;
+    return result;
+  }
+
   Iterator begin() const {
     return Iterator(this, 0);
   }

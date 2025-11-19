@@ -9,7 +9,7 @@
 #include <datapack/std/vector.hpp>
 #include <gtest/gtest.h>
 
-TEST(Schema, SchemaBuilder) {
+TEST(Schema, SchemaMake) {
   using namespace datapack;
 
   std::vector<Token> tokens;
@@ -91,15 +91,15 @@ TEST(Schema, SchemaBuilder) {
   }
 }
 
-TEST(Schema, SchemaUsage) {
-  auto schema = datapack::Schema::Make<Entity>();
-
+TEST(Schema, SchemaApply) {
   Entity example = Entity::example();
-  auto bytes = datapack::write_binary(example);
 
   auto json_direct = datapack::write_json(example);
 
+  auto schema = datapack::Schema::Make<Entity>();
+  auto bytes = datapack::write_binary(example);
   datapack::Object object;
+
   schema.apply(datapack::BinaryReader(bytes), datapack::ObjectWriter(object));
   auto json_via_schema = datapack::dump_json(object);
 

@@ -42,28 +42,16 @@ void Schema::apply(Reader& reader, Writer& writer) {
   std::stack<Iterator> stack;
 
   for (auto iter = begin(); iter != end(); iter = iter.next()) {
-    if (std::get_if<token::ObjectEnd>(&*iter)) {
-      if (stack.empty() || !std::get_if<token::ObjectBegin>(&*stack.top())) {
-        throw SchemaError("Unexpected ObjectEnd token");
-      }
-      reader.object_end();
-      writer.object_end();
-      stack.pop();
-      continue;
-    }
-    if (std::get_if<token::TupleEnd>(&*iter)) {
-      if (stack.empty() || !std::get_if<token::TupleBegin>(&*stack.top())) {
-        throw SchemaError("Unexpected TupleEnd token");
-      }
-      reader.object_end();
-      writer.object_end();
-      stack.pop();
-      continue;
-    }
-
-    if (!stack.empty()) {
+    while (!stack.empty()) {
       auto parent = stack.top();
       if (std::get_if<token::ObjectBegin>(&*parent)) {
+        if (std::get_if<token::ObjectEnd>(&*iter)) {
+          reader.object_end();
+          writer.object_end();
+          stack.pop();
+          iter = iter.next();
+          continue;
+        }
         auto object_next = std::get_if<token::ObjectNext>(&*iter);
         if (!object_next) {
           throw SchemaError("Expected ObjectNext token");
@@ -75,11 +63,20 @@ void Schema::apply(Reader& reader, Writer& writer) {
         if (iter == end()) {
           throw SchemaError("Expected a valid token after ObjectNext");
         }
+        break;
+      }
 
-      } else if (std::get_if<token::TupleBegin>(&*parent)) {
-        auto tuple_next = std::get_if<token::ObjectNext>(&*iter);
+      if (std::get_if<token::TupleBegin>(&*parent)) {
+        if (std::get_if<token::TupleEnd>(&*iter)) {
+          reader.tuple_end();
+          writer.tuple_end();
+          stack.pop();
+          iter = iter.next();
+          continue;
+        }
+        auto tuple_next = std::get_if<token::TupleNext>(&*iter);
         if (!tuple_next) {
-          throw SchemaError("Expected ObjectNext token");
+          throw SchemaError("Expected TupleNext token");
         }
         reader.tuple_next();
         writer.tuple_next();
@@ -88,28 +85,34 @@ void Schema::apply(Reader& reader, Writer& writer) {
         if (iter == end()) {
           throw SchemaError("Expected a valid token after TupleNext");
         }
+        break;
+      }
 
-      } else if (std::get_if<token::List>(&*parent)) {
+      if (std::get_if<token::List>(&*parent)) {
         if (!reader.list_next()) {
           reader.list_end();
           writer.list_end();
           stack.pop();
-        } else {
-          writer.list_next();
-          iter = parent.next();
+          continue;
         }
+        writer.list_next();
+        iter = parent.next();
+        break;
+      }
 
-      } else if (std::get_if<token::Optional>(&*parent)) {
+      if (std::get_if<token::Optional>(&*parent)) {
         if (iter != parent.next()) {
           assert(iter == parent.next().skip());
           reader.optional_end();
           writer.optional_end();
           stack.pop();
+          continue;
         }
+        break;
+      }
 
-      } else if (std::get_if<token::VariantNext>(&*parent)) {
+      if (std::get_if<token::VariantNext>(&*parent)) {
         if (iter != parent.next()) {
-          iter = iter.next();
           while (iter != end()) {
             if (std::get_if<token::VariantEnd>(&*iter)) {
               break;
@@ -122,11 +125,15 @@ void Schema::apply(Reader& reader, Writer& writer) {
           reader.variant_end();
           writer.variant_end();
           stack.pop();
+          iter = iter.next();
           continue;
         }
-      } else {
-        assert(false);
+        break;
       }
+      assert(false);
+    }
+    if (iter == end()) {
+      break;
     }
 
     if (std::get_if<token::ObjectBegin>(&*iter)) {

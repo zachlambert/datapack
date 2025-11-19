@@ -38,7 +38,7 @@ public:
     }
 
   private:
-    Iterator(const Schema* schema, std::size_t index) : schema(schema) {}
+    Iterator(const Schema* schema, std::size_t index) : schema(schema), index(index) {}
     const Schema* schema;
     std::size_t index;
     friend class Schema;

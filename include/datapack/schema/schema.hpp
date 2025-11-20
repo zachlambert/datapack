@@ -23,8 +23,57 @@ public:
   public:
     Iterator() : schema(nullptr), index(0) {}
 
-    const Token& operator*() const {
-      return schema->tokens[index];
+    const token::Number* number() const {
+      return std::get_if<token::Number>(token());
+    }
+    bool boolean() const {
+      return std::get_if<token::Boolean>(token());
+    }
+    bool string() const {
+      return std::get_if<token::String>(token());
+    }
+    const token::Enumerate* enumerate() const {
+      return std::get_if<token::Enumerate>(token());
+    }
+    bool binary() const {
+      return std::get_if<token::Binary>(token());
+    }
+
+    bool optional() const {
+      return std::get_if<token::Optional>(token());
+    }
+    const token::VariantBegin* variant_begin() const {
+      return std::get_if<token::VariantBegin>(token());
+    }
+    const token::VariantNext* variant_next() const {
+      return std::get_if<token::VariantNext>(token());
+    }
+    bool variant_end() const {
+      return std::get_if<token::VariantEnd>(token());
+    }
+
+    bool object_begin() const {
+      return std::get_if<token::ObjectBegin>(token());
+    }
+    const token::ObjectNext* object_next() const {
+      return std::get_if<token::ObjectNext>(token());
+    }
+    bool object_end() const {
+      return std::get_if<token::ObjectEnd>(token());
+    }
+
+    bool tuple_begin() const {
+      return std::get_if<token::TupleBegin>(token());
+    }
+    bool tuple_next() const {
+      return std::get_if<token::TupleNext>(token());
+    }
+    bool tuple_end() const {
+      return std::get_if<token::TupleEnd>(token());
+    }
+
+    bool list() const {
+      return std::get_if<token::List>(token());
     }
 
     // Next immediate token
@@ -39,6 +88,11 @@ public:
 
   private:
     Iterator(const Schema* schema, std::size_t index) : schema(schema), index(index) {}
+
+    const Token* token() const {
+      return &schema->tokens[index];
+    }
+
     const Schema* schema;
     std::size_t index;
     friend class Schema;

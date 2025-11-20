@@ -44,15 +44,15 @@ void Schema::apply(Reader& reader, Writer& writer) {
   for (auto iter = begin(); iter != end(); iter = iter.next()) {
     while (!stack.empty()) {
       auto parent = stack.top();
-      if (std::get_if<token::ObjectBegin>(&*parent)) {
-        if (std::get_if<token::ObjectEnd>(&*iter)) {
+      if (parent.object_begin()) {
+        if (iter.object_end()) {
           reader.object_end();
           writer.object_end();
           stack.pop();
           iter = iter.next();
           continue;
         }
-        auto object_next = std::get_if<token::ObjectNext>(&*iter);
+        auto object_next = iter.object_next();
         if (!object_next) {
           throw SchemaError("Expected ObjectNext token");
         }
@@ -66,16 +66,15 @@ void Schema::apply(Reader& reader, Writer& writer) {
         break;
       }
 
-      if (std::get_if<token::TupleBegin>(&*parent)) {
-        if (std::get_if<token::TupleEnd>(&*iter)) {
+      if (parent.tuple_begin()) {
+        if (iter.tuple_end()) {
           reader.tuple_end();
           writer.tuple_end();
           stack.pop();
           iter = iter.next();
           continue;
         }
-        auto tuple_next = std::get_if<token::TupleNext>(&*iter);
-        if (!tuple_next) {
+        if (!iter.tuple_next()) {
           throw SchemaError("Expected TupleNext token");
         }
         reader.tuple_next();
@@ -88,7 +87,7 @@ void Schema::apply(Reader& reader, Writer& writer) {
         break;
       }
 
-      if (std::get_if<token::List>(&*parent)) {
+      if (parent.list()) {
         if (!reader.list_next()) {
           reader.list_end();
           writer.list_end();
@@ -100,7 +99,7 @@ void Schema::apply(Reader& reader, Writer& writer) {
         break;
       }
 
-      if (std::get_if<token::Optional>(&*parent)) {
+      if (parent.optional()) {
         if (iter != parent.next()) {
           assert(iter == parent.next().skip());
           reader.optional_end();
@@ -111,13 +110,13 @@ void Schema::apply(Reader& reader, Writer& writer) {
         break;
       }
 
-      if (std::get_if<token::VariantNext>(&*parent)) {
+      if (parent.variant_next()) {
         if (iter != parent.next()) {
           while (iter != end()) {
-            if (std::get_if<token::VariantEnd>(&*iter)) {
+            if (iter.variant_end()) {
               break;
             }
-            if (!std::get_if<token::VariantNext>(&*iter)) {
+            if (!iter.variant_next()) {
               throw SchemaError("Expected VariantNext");
             }
             iter = iter.next().skip();
@@ -136,25 +135,25 @@ void Schema::apply(Reader& reader, Writer& writer) {
       break;
     }
 
-    if (std::get_if<token::ObjectBegin>(&*iter)) {
+    if (iter.object_begin()) {
       reader.object_begin();
       writer.object_begin();
       stack.push(iter);
       continue;
     }
-    if (std::get_if<token::TupleBegin>(&*iter)) {
+    if (iter.tuple_begin()) {
       reader.tuple_begin();
       writer.tuple_begin();
       stack.push(iter);
       continue;
     }
-    if (std::get_if<token::List>(&*iter)) {
+    if (iter.list()) {
       reader.list_begin();
       writer.list_begin();
       stack.push(iter);
       continue;
     }
-    if (std::get_if<token::Optional>(&*iter)) {
+    if (iter.optional()) {
       bool has_value = reader.optional_begin();
       writer.optional_begin(has_value);
       if (has_value) {
@@ -162,9 +161,9 @@ void Schema::apply(Reader& reader, Writer& writer) {
       }
       continue;
     }
-    if (auto variant = std::get_if<token::VariantBegin>(&*iter)) {
+    if (auto variant_begin = iter.variant_begin()) {
       std::vector<const char*> labels_c_str;
-      for (const auto& label : variant->labels) {
+      for (const auto& label : variant_begin->labels) {
         labels_c_str.push_back(label.c_str());
       }
       int choice = reader.variant_begin(labels_c_str);
@@ -174,7 +173,7 @@ void Schema::apply(Reader& reader, Writer& writer) {
 
       iter = iter.next();
       while (iter != end()) {
-        auto variant_next = std::get_if<token::VariantNext>(&*iter);
+        auto variant_next = iter.variant_next();
         if (!variant_next) {
           throw SchemaError("Expected VariantNext");
         }
@@ -193,21 +192,21 @@ void Schema::apply(Reader& reader, Writer& writer) {
       continue;
     }
 
-    if (auto number = std::get_if<token::Number>(&*iter)) {
+    if (auto number = iter.number()) {
       char buffer[8];
       reader.number(number->type, (void*)buffer);
       writer.number(number->type, (void*)buffer);
       continue;
     }
-    if (std::get_if<token::Boolean>(&*iter)) {
+    if (iter.boolean()) {
       writer.boolean(reader.boolean());
       continue;
     }
-    if (std::get_if<token::String>(&*iter)) {
+    if (iter.string()) {
       writer.string(reader.string());
       continue;
     }
-    if (auto enumerate = std::get_if<token::Enumerate>(&*iter)) {
+    if (auto enumerate = iter.enumerate()) {
       std::vector<const char*> labels_c_str;
       for (const auto& label : enumerate->labels) {
         labels_c_str.push_back(label.c_str());
@@ -215,7 +214,7 @@ void Schema::apply(Reader& reader, Writer& writer) {
       writer.enumerate(reader.enumerate(labels_c_str), labels_c_str);
       continue;
     }
-    if (std::get_if<token::Binary>(&*iter)) {
+    if (iter.binary()) {
       writer.binary(reader.binary());
       continue;
     }

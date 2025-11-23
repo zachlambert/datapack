@@ -53,9 +53,9 @@ private:
   const T& value;
 };
 
-} // namespace datapack
-
 template <datapack::writeable T>
 std::ostream& operator<<(std::ostream& os, datapack::debug<T> manipulator) {
   return manipulator(os);
 }
+
+} // namespace datapack

@@ -15,8 +15,10 @@ Schema::Iterator Schema::Iterator::next() const {
 Schema::Iterator Schema::Iterator::skip() const {
   int depth = 0;
   std::size_t skip_index = index;
+  bool at_start = false;
   while (skip_index < schema->tokens.size()) {
     const auto& token = schema->tokens[skip_index];
+    bool is_wrapper = false;
     if (std::get_if<token::ObjectBegin>(&token)) {
       depth++;
     } else if (std::get_if<token::ObjectEnd>(&token)) {
@@ -29,10 +31,24 @@ Schema::Iterator Schema::Iterator::skip() const {
       depth++;
     } else if (std::get_if<token::VariantEnd>(&token)) {
       depth--;
+    } else if (std::get_if<token::List>(&token)) {
+      is_wrapper = true;
+    } else if (std::get_if<token::Optional>(&token)) {
+      is_wrapper = true;
     }
     skip_index++;
-    if (depth == 0) {
+
+    if (depth == 0 && is_wrapper) {
+      continue;
+    }
+    bool composite = false;
+    if (at_start) {
+    }
+    if (depth == 0 && !(at_start && is_wrapper)) {
       break;
+    }
+    if (depth > 0) {
+      at_start = false;
     }
   }
   return Iterator(schema, skip_index);
@@ -101,7 +117,7 @@ void Schema::apply(Reader& reader, Writer& writer) {
 
       if (parent.optional()) {
         if (iter != parent.next()) {
-          assert(iter == parent.next().skip());
+          assert(iter == parent.skip());
           reader.optional_end();
           writer.optional_end();
           stack.pop();

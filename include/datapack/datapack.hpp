@@ -11,67 +11,22 @@ namespace datapack {
 
 enum class NumberType { I32, I64, U32, U64, U8, F32, F64 };
 
-template <int Mode>
-class Packer;
+class Writer;
 
-static constexpr int MODE_WRITE = 0;
-static constexpr int MODE_READ = 1;
-
-template <typename T, int Mode>
-using packref = std::conditional_t<Mode == 0, const T&, T&>;
-
-template <typename T, int Mode>
-concept packable = requires(packref<T, Mode> value, Packer<Mode>& packer) {
-  { pack(value, packer) };
+template <typename T>
+concept writeable = requires(const T& value, Writer& writer) {
+  { write(value, writer) };
 };
 
-template <typename T, int Mode>
-concept packable_trivial = requires(packref<T, Mode> value, Packer<Mode>& packer) {
-  { pack_trivial(value, packer) };
+class Writeable {
+public:
+  virtual void write(Writer& writer) const = 0;
 };
-
-using Writer = Packer<MODE_WRITE>;
-template <typename T>
-concept writeable = packable<T, MODE_WRITE>;
-template <typename T>
-concept writeable_trivial = packable_trivial<T, MODE_WRITE>;
-
-using Reader = Packer<MODE_READ>;
-template <typename T>
-concept readable = packable<T, MODE_READ>;
-template <typename T>
-concept readable_trivial = packable_trivial<T, MODE_READ>;
-
-#define DATAPACK(T)                                                                                \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode> value, Packer<Mode>& packer)
-
-#define DATAPACK_FRIEND(T)                                                                         \
-  template <int Mode>                                                                              \
-  friend void pack(packref<T, Mode> value, Packer<Mode>& packer)
-
-#define DATAPACK_IMPL(T, value_name, packer_name)                                                  \
-  template void pack(packref<T, MODE_WRITE>, Packer<MODE_WRITE>&);                                 \
-  template void pack(packref<T, MODE_READ>, Packer<MODE_READ>&);                                   \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
-
-#define DATAPACK_INLINE(T, value_name, packer_name)                                                \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
-
-#define DATAPACK_EMPTY(T)                                                                          \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode>, Packer<Mode>& packer) {                                              \
-    packer.object_begin();                                                                         \
-    packer.object_end();                                                                           \
-  }
 
 // Writer
-template <>
-class Packer<MODE_WRITE> {
+class Writer {
 public:
-  Packer() {}
+  Writer() {}
 
   // Write values
 
@@ -84,17 +39,6 @@ public:
   void value(const char* key, const T& value) {
     object_next(key);
     pack(value, *this);
-  }
-
-  template <writeable_trivial T>
-  void value_trivial(T& value) {
-    pack_trivial(value, *this);
-  }
-
-  template <writeable_trivial T>
-  void value_trivial(const char* key, T& value) {
-    object_next(key);
-    pack_trivial(value, *this);
   }
 
   // Primitives
@@ -151,11 +95,22 @@ private:
   std::optional<Constraint> constraint_;
 };
 
-// Reader
-template <>
-class Packer<MODE_READ> {
+class Reader;
+
+template <typename T>
+concept readable = requires(T& value, Reader& reader) {
+  { read(value, reader) };
+};
+
+class Readable {
 public:
-  Packer(bool is_tokenizer = false) : valid_(true), is_tokenizer_(is_tokenizer) {}
+  virtual void read(Reader& reader) = 0;
+};
+
+// Reader
+class Reader {
+public:
+  Reader(bool is_tokenizer = false) : valid_(true), is_tokenizer_(is_tokenizer) {}
 
   template <readable T>
   void value(T& value) {
@@ -166,17 +121,6 @@ public:
   void value(const char* key, T& value) {
     object_next(key);
     pack(value, *this);
-  }
-
-  template <readable_trivial T>
-  void value_trivial(T& value) {
-    pack_trivial(value, *this);
-  }
-
-  template <readable_trivial T>
-  void value_trivial(const char* key, T& value) {
-    object_next(key);
-    pack_trivial(value, *this);
   }
 
   // Primitives
@@ -246,43 +190,47 @@ private:
   std::optional<Constraint> constraint_;
 };
 
-DATAPACK_INLINE(std::int32_t, value, packer) {
-  packer.number(NumberType::I32, &value);
-}
-DATAPACK_INLINE(std::int64_t, value, packer) {
-  packer.number(NumberType::I64, &value);
-}
-DATAPACK_INLINE(std::uint32_t, value, packer) {
-  packer.number(NumberType::U32, &value);
-}
-DATAPACK_INLINE(std::uint64_t, value, packer) {
-  packer.number(NumberType::U64, &value);
-}
-DATAPACK_INLINE(std::uint8_t, value, packer) {
-  packer.number(NumberType::U8, &value);
-}
-DATAPACK_INLINE(float, value, packer) {
-  packer.number(NumberType::F32, &value);
-}
-DATAPACK_INLINE(double, value, packer) {
-  packer.number(NumberType::F64, &value);
-}
+#define DATAPACK_NUMBER(Type, Enum)                                                                \
+  inline void write(const Type& value, Writer& writer) {                                           \
+    writer.number(NumberType::Enum, &value);                                                       \
+  }                                                                                                \
+  inline void read(Type& value, Reader& reader) {                                                  \
+    reader.number(NumberType::Enum, &value);                                                       \
+  }
 
-inline void pack(const bool& value, Writer& writer) {
+DATAPACK_NUMBER(std::int32_t, I32);
+DATAPACK_NUMBER(std::int64_t, I64);
+DATAPACK_NUMBER(std::uint32_t, U32);
+DATAPACK_NUMBER(std::uint64_t, U64);
+DATAPACK_NUMBER(std::uint8_t, U8);
+DATAPACK_NUMBER(float, F32);
+DATAPACK_NUMBER(double, F64);
+
+#undef DATAPACK_NUMBER
+
+inline void write(const bool& value, Writer& writer) {
   writer.boolean(value);
 }
-inline void pack(bool& value, Reader& reader) {
+inline void read(bool& value, Reader& reader) {
   value = reader.boolean();
 }
 
 template <labelled_enum T>
-void pack(const T& value, Writer& writer) {
+void write(const T& value, Writer& writer) {
   writer.enumerate((int)value, enum_labels<T>);
 }
 
 template <labelled_enum T>
-void pack(T& value, Reader& reader) {
+void read(T& value, Reader& reader) {
   value = (T)reader.enumerate(enum_labels<T>);
+}
+
+inline void write(const Writeable& value, Writer& writer) {
+  value.write(writer);
+}
+
+inline void read(Readable& value, Reader& reader) {
+  value.read(reader);
 }
 
 } // namespace datapack

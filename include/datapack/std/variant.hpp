@@ -6,7 +6,7 @@
 namespace datapack {
 
 template <labelled_variant T>
-void pack(const T& value, Writer& writer) {
+void write(const T& value, Writer& writer) {
   writer.variant_begin(value.index(), variant_labels<T>);
   std::visit([&](const auto& value) { writer.value(value); }, value);
   writer.variant_end();
@@ -36,7 +36,7 @@ void read_variant_next(Reader& reader, T& value, int value_index, int index) {
 
 template <typename... Args>
 requires labelled_variant<std::variant<Args...>>
-void pack(std::variant<Args...>& value, Reader& reader) {
+void read(std::variant<Args...>& value, Reader& reader) {
   using T = std::variant<Args...>;
   int value_int = reader.variant_begin(variant_labels<T>);
   read_variant_next<T, Args...>(reader, value, value_int, 0);

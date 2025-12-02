@@ -30,7 +30,9 @@ void BinaryReader::number(NumberType type, void* value) {
   }
 }
 
-bool BinaryReader::boolean() { return value_bool(); }
+bool BinaryReader::boolean() {
+  return value_bool();
+}
 
 const char* BinaryReader::string() {
   std::size_t max_len = buffer.size() - pos;
@@ -50,7 +52,9 @@ int BinaryReader::enumerate(const std::span<const char*>& labels) {
   return value;
 }
 
-bool BinaryReader::optional_begin() { return value_bool(); }
+bool BinaryReader::optional_begin() {
+  return value_bool();
+}
 
 int BinaryReader::variant_begin(const std::span<const char*>& labels) {
   int value = -1;

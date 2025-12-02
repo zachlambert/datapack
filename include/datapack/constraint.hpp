@@ -1,13 +1,12 @@
 #pragma once
 
-#include <optional>
 #include <variant>
 
 namespace datapack {
 
 struct ConstraintNumberRange {
-  std::optional<double> lower;
-  std::optional<double> upper;
+  double lower;
+  double upper;
 };
 
 struct ConstraintObjectColor {};

@@ -52,7 +52,7 @@ public:
       return std::get_if<token::VariantEnd>(token());
     }
 
-    bool object_begin() const {
+    const token::ObjectBegin* object_begin() const {
       return std::get_if<token::ObjectBegin>(token());
     }
     const token::ObjectNext* object_next() const {

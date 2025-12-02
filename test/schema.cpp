@@ -144,3 +144,31 @@ TEST(Schema, SchemaApply) {
 
   EXPECT_EQ(json_direct, json_via_schema);
 }
+
+struct WithLimit {
+  double number;
+};
+
+namespace datapack {
+DATAPACK_INLINE(WithLimit, value, packer) {
+  packer.constraint(ConstraintNumberRange(0, 1));
+  packer.value(value.number);
+}
+
+} // namespace datapack
+
+TEST(Schema, SchemaWithConstraints) {
+  auto schema = datapack::Schema::make<WithLimit>();
+  auto iter = schema.begin();
+
+  std::cerr << datapack::debug(schema) << std::endl;
+
+  auto number = iter.number();
+  ASSERT_TRUE(number);
+  ASSERT_TRUE(number->constraint.has_value());
+
+  auto range = std::get_if<datapack::ConstraintNumberRange>(&(*number->constraint));
+  ASSERT_TRUE(range);
+  EXPECT_EQ(range->lower, 0.0);
+  EXPECT_EQ(range->upper, 1.0);
+}

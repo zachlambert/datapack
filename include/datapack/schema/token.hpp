@@ -1,5 +1,6 @@
 #pragma once
 
+#include "datapack/constraint.hpp"
 #include "datapack/datapack.hpp"
 #include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
@@ -12,8 +13,11 @@ namespace token {
 
 struct Number {
   NumberType type;
+  std::optional<ConstraintNumber> constraint;
   explicit Number() {}
   explicit Number(NumberType type) : type(type) {}
+  explicit Number(NumberType type, ConstraintNumber&& constraint) :
+      type(type), constraint(std::move(constraint)) {}
 
   static Number I32() {
     return Number(NumberType::I32);
@@ -79,7 +83,11 @@ struct VariantNext {
   explicit VariantNext(int index) : index(index) {}
 };
 
-struct ObjectBegin {};
+struct ObjectBegin {
+  std::optional<ConstraintObject> constraint;
+  ObjectBegin() {}
+  ObjectBegin(ConstraintObject&& constraint) : constraint(std::move(constraint)) {}
+};
 struct ObjectEnd {};
 struct ObjectNext {
   std::string key;
@@ -125,7 +133,7 @@ DATAPACK(token::VariantBegin);
 DATAPACK_EMPTY(token::VariantEnd);
 DATAPACK(token::VariantNext);
 
-DATAPACK_EMPTY(token::ObjectBegin);
+DATAPACK(token::ObjectBegin);
 DATAPACK_EMPTY(token::ObjectEnd);
 DATAPACK(token::ObjectNext);
 
@@ -138,5 +146,14 @@ DATAPACK_EMPTY(token::List);
 DATAPACK_LABELLED_VARIANT(Token, 16);
 
 bool operator==(const Token& lhs, const Token& rhs);
+
+// Cannot put these in the constraint header, since this is included by datapack.hpp
+
+DATAPACK_LABELLED_VARIANT(Constraint, 2);
+DATAPACK_LABELLED_VARIANT(ConstraintObject, 1);
+DATAPACK_LABELLED_VARIANT(ConstraintNumber, 1);
+
+DATAPACK_EMPTY(ConstraintObjectColor);
+DATAPACK(ConstraintNumberRange);
 
 } // namespace datapack

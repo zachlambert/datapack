@@ -1,8 +1,10 @@
 #pragma once
 
+#include "datapack/constraint.hpp"
 #include "datapack/labelled_enum.hpp"
 #include <concepts>
 #include <cstdint>
+#include <optional>
 #include <span>
 
 namespace datapack {
@@ -126,6 +128,27 @@ public:
   virtual void list_begin() = 0;
   virtual void list_next() = 0;
   virtual void list_end() = 0;
+
+  // Other
+
+  void constraint(const Constraint& constraint) {
+    constraint_ = constraint;
+  }
+
+protected:
+  template <typename T>
+  std::optional<T> get_constraint() {
+    if (!constraint_.has_value()) {
+      return std::nullopt;
+    }
+    if (std::get_if<T>(&(*constraint_))) {
+      return std::move(std::get<T>(*constraint_));
+    }
+    return std::nullopt;
+  }
+
+private:
+  std::optional<Constraint> constraint_;
 };
 
 // Reader
@@ -201,9 +224,26 @@ public:
     return is_tokenizer_;
   }
 
+  void constraint(const Constraint& constraint) {
+    constraint_ = constraint;
+  }
+
+protected:
+  template <typename T>
+  std::optional<T> get_constraint() {
+    if (!constraint_.has_value()) {
+      return std::nullopt;
+    }
+    if (std::get_if<T>(&(*constraint_))) {
+      return std::move(std::get<T>(*constraint_));
+    }
+    return std::nullopt;
+  }
+
 private:
   bool valid_;
   const bool is_tokenizer_;
+  std::optional<Constraint> constraint_;
 };
 
 DATAPACK_INLINE(std::int32_t, value, packer) {

@@ -8,7 +8,11 @@ Tokenizer::Tokenizer(std::vector<Token>& tokens) :
 }
 
 void Tokenizer::number(NumberType type, void* value) {
-  tokens.push_back(token::Number(type));
+  if (auto constraint = get_constraint<ConstraintNumber>()) {
+    tokens.push_back(token::Number(type, std::move(*constraint)));
+  } else {
+    tokens.push_back(token::Number(type));
+  }
 }
 
 bool Tokenizer::boolean() {
@@ -54,7 +58,11 @@ void Tokenizer::variant_end() {
 }
 
 void Tokenizer::object_begin() {
-  tokens.push_back(token::ObjectBegin());
+  if (auto constraint = get_constraint<ConstraintObject>()) {
+    tokens.push_back(token::ObjectBegin(std::move(*constraint)));
+  } else {
+    tokens.push_back(token::ObjectBegin());
+  }
 }
 
 void Tokenizer::object_next(const char* key) {

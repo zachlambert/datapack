@@ -5,9 +5,11 @@
 
 namespace datapack {
 
-inline void pack(const std::string& value, Writer& writer) { writer.string(value.c_str()); }
+inline void write(Writer& writer, const std::string& value) {
+  writer.string(value.c_str());
+}
 
-inline void pack(std::string& value, Reader& reader) {
+inline void read(Reader& reader, std::string& value) {
   if (auto str = reader.string()) {
     value = str;
   } else {

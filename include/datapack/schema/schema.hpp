@@ -123,13 +123,11 @@ public:
     return Iterator(this, tokens.size());
   }
 
+  DATAPACK_CLASS_DECL();
 private:
   std::vector<Token> tokens;
 
-  DATAPACK_FRIEND(Schema);
   friend bool operator==(const Schema& lhs, const Schema& rhs);
 };
-
-DATAPACK(Schema);
 
 } // namespace datapack

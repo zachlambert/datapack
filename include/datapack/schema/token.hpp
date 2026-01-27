@@ -4,10 +4,25 @@
 #include "datapack/datapack.hpp"
 #include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
+#include "datapack/std/optional.hpp"
+#include "datapack/std/string.hpp"
+#include "datapack/std/variant.hpp"
+#include "datapack/std/vector.hpp"
 #include <string>
 #include <vector>
 
 namespace datapack {
+
+DATAPACK_LABELLED_ENUM(NumberType, 7);
+
+// Cannot put these in the constraint header, since this is included by datapack.hpp
+
+DATAPACK_LABELLED_VARIANT(Constraint, 2);
+DATAPACK_LABELLED_VARIANT(ConstraintObject, 1);
+DATAPACK_LABELLED_VARIANT(ConstraintNumber, 1);
+
+DATAPACK_INLINE(ConstraintObjectColor);
+DATAPACK_INLINE(ConstraintNumberRange, lower, upper);
 
 namespace token {
 
@@ -63,7 +78,6 @@ struct Binary {
   explicit Binary() : length(0), stride(0) {}
   explicit Binary(std::size_t length, std::size_t stride) : length(length), stride(stride) {}
 };
-
 struct Optional {};
 
 struct VariantBegin {
@@ -121,39 +135,25 @@ using Token = std::variant<
     token::TupleEnd,
     token::List>;
 
-DATAPACK_LABELLED_ENUM(NumberType, 7);
-DATAPACK(token::Number);
-DATAPACK_EMPTY(token::Boolean);
-DATAPACK_EMPTY(token::String);
-DATAPACK(token::Enumerate);
-DATAPACK(token::Binary);
-
-DATAPACK_EMPTY(token::Optional);
-DATAPACK(token::VariantBegin);
-DATAPACK_EMPTY(token::VariantEnd);
-DATAPACK(token::VariantNext);
-
-DATAPACK(token::ObjectBegin);
-DATAPACK_EMPTY(token::ObjectEnd);
-DATAPACK(token::ObjectNext);
-
-DATAPACK_EMPTY(token::TupleNext);
-DATAPACK_EMPTY(token::TupleBegin);
-DATAPACK_EMPTY(token::TupleEnd);
-
-DATAPACK_EMPTY(token::List);
+DATAPACK_INLINE(token::Number, type, constraint)
+DATAPACK_INLINE(token::Boolean)
+DATAPACK_INLINE(token::String)
+DATAPACK_INLINE(token::Enumerate, labels)
+DATAPACK_INLINE(token::Binary, length, stride)
+DATAPACK_INLINE(token::Optional)
+DATAPACK_INLINE(token::VariantBegin, labels)
+DATAPACK_INLINE(token::VariantNext, index)
+DATAPACK_INLINE(token::VariantEnd)
+DATAPACK_INLINE(token::ObjectBegin, constraint)
+DATAPACK_INLINE(token::ObjectNext, key)
+DATAPACK_INLINE(token::ObjectEnd)
+DATAPACK_INLINE(token::TupleBegin)
+DATAPACK_INLINE(token::TupleNext)
+DATAPACK_INLINE(token::TupleEnd)
+DATAPACK_INLINE(token::List)
 
 DATAPACK_LABELLED_VARIANT(Token, 16);
 
 bool operator==(const Token& lhs, const Token& rhs);
-
-// Cannot put these in the constraint header, since this is included by datapack.hpp
-
-DATAPACK_LABELLED_VARIANT(Constraint, 2);
-DATAPACK_LABELLED_VARIANT(ConstraintObject, 1);
-DATAPACK_LABELLED_VARIANT(ConstraintNumber, 1);
-
-DATAPACK_EMPTY(ConstraintObjectColor);
-DATAPACK(ConstraintNumberRange);
 
 } // namespace datapack

@@ -8,6 +8,7 @@
 #include <datapack/datapack.hpp>
 #include <datapack/labelled_enum.hpp>
 #include <datapack/labelled_variant.hpp>
+#include <datapack/std/string.hpp>
 
 struct Circle {
   double radius;
@@ -26,11 +27,13 @@ struct Pose {
   double x;
   double y;
   double angle;
+  DATAPACK_CLASS_INLINE(x, y, angle)
 };
 
 struct Item {
   std::size_t count;
   std::string name;
+  DATAPACK_CLASS_INLINE(count, name)
 };
 
 struct Sprite {
@@ -38,10 +41,12 @@ struct Sprite {
     double r;
     double g;
     double b;
+    DATAPACK_CLASS_INLINE(r, g, b)
   };
   std::size_t width;
   std::size_t height;
   std::vector<Pixel> data;
+  DATAPACK_CLASS_DECL()
 };
 
 struct Entity {
@@ -56,20 +61,17 @@ struct Entity {
   std::array<int, 3> assigned_items; // Tuple
 
   static Entity example();
+  DATAPACK_CLASS_DECL()
 };
 
 bool operator==(const Entity& a, const Entity& b);
 
 namespace datapack {
 
-DATAPACK(Circle);
-DATAPACK(Rect);
-DATAPACK_LABELLED_ENUM(Physics, 3);
-DATAPACK_LABELLED_VARIANT(Shape, 2);
-DATAPACK(Pose);
-DATAPACK(Item);
-DATAPACK(Sprite);
-DATAPACK(Sprite::Pixel);
-DATAPACK(Entity);
+DATAPACK_INLINE(Circle, radius)
+DATAPACK_INLINE(Rect, width, height)
 
-} // namespace datapack
+DATAPACK_LABELLED_ENUM(Physics, 3);
+DATAPACK_LABELLED_VARIANT(Shape, 3);
+
+}

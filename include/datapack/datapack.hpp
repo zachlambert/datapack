@@ -11,90 +11,57 @@ namespace datapack {
 
 enum class NumberType { I32, I64, U32, U64, U8, F32, F64 };
 
-template <int Mode>
-class Packer;
+class Writer;
 
-static constexpr int MODE_WRITE = 0;
-static constexpr int MODE_READ = 1;
-
-template <typename T, int Mode>
-using packref = std::conditional_t<Mode == 0, const T&, T&>;
-
-template <typename T, int Mode>
-concept packable = requires(packref<T, Mode> value, Packer<Mode>& packer) {
-  { pack(value, packer) };
+template <typename T>
+concept writeable = requires(Writer& writer, const T& value) {
+  { write(writer, value) };
 };
 
-template <typename T, int Mode>
-concept packable_trivial = requires(packref<T, Mode> value, Packer<Mode>& packer) {
-  { pack_trivial(value, packer) };
+template <typename T>
+concept writeable_method = requires(const T& value, Writer& writer) {
+  { value.write(writer) };
+};
+template <writeable_method T>
+inline void write(Writer& writer, const T& value) {
+  value.write(writer);
+}
+
+class Reader;
+
+template <typename T>
+concept readable = requires(Reader& reader, T& value) {
+  { read(reader, value) };
 };
 
-using Writer = Packer<MODE_WRITE>;
 template <typename T>
-concept writeable = packable<T, MODE_WRITE>;
+concept readable_method = requires(Reader& reader, T& value) {
+  { value.read(reader) };
+};
+template <readable_method T>
+inline void read(Reader& reader, T& value) {
+  value.read(reader);
+}
+
 template <typename T>
-concept writeable_trivial = packable_trivial<T, MODE_WRITE>;
-
-using Reader = Packer<MODE_READ>;
-template <typename T>
-concept readable = packable<T, MODE_READ>;
-template <typename T>
-concept readable_trivial = packable_trivial<T, MODE_READ>;
-
-#define DATAPACK(T)                                                                                \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode> value, Packer<Mode>& packer)
-
-#define DATAPACK_FRIEND(T)                                                                         \
-  template <int Mode>                                                                              \
-  friend void pack(packref<T, Mode> value, Packer<Mode>& packer)
-
-#define DATAPACK_IMPL(T, value_name, packer_name)                                                  \
-  template void pack(packref<T, MODE_WRITE>, Packer<MODE_WRITE>&);                                 \
-  template void pack(packref<T, MODE_READ>, Packer<MODE_READ>&);                                   \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
-
-#define DATAPACK_INLINE(T, value_name, packer_name)                                                \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode> value_name, Packer<Mode>& packer_name)
-
-#define DATAPACK_EMPTY(T)                                                                          \
-  template <int Mode>                                                                              \
-  void pack(packref<T, Mode>, Packer<Mode>& packer) {                                              \
-    packer.object_begin();                                                                         \
-    packer.object_end();                                                                           \
-  }
+concept supported = readable<T> && writeable<T>;
 
 // Writer
-template <>
-class Packer<MODE_WRITE> {
+class Writer {
 public:
-  Packer() {}
+  Writer() {}
 
   // Write values
 
   template <writeable T>
   void value(const T& value) {
-    pack(value, *this);
+    write(*this, value);
   }
 
   template <writeable T>
   void value(const char* key, const T& value) {
     object_next(key);
-    pack(value, *this);
-  }
-
-  template <writeable_trivial T>
-  void value_trivial(T& value) {
-    pack_trivial(value, *this);
-  }
-
-  template <writeable_trivial T>
-  void value_trivial(const char* key, T& value) {
-    object_next(key);
-    pack_trivial(value, *this);
+    write(*this, value);
   }
 
   // Primitives
@@ -152,31 +119,19 @@ private:
 };
 
 // Reader
-template <>
-class Packer<MODE_READ> {
+class Reader {
 public:
-  Packer(bool is_tokenizer = false) : valid_(true), is_tokenizer_(is_tokenizer) {}
+  Reader(bool is_tokenizer = false) : valid_(true), is_tokenizer_(is_tokenizer) {}
 
   template <readable T>
   void value(T& value) {
-    pack(value, *this);
+    read(*this, value);
   }
 
   template <readable T>
   void value(const char* key, T& value) {
     object_next(key);
-    pack(value, *this);
-  }
-
-  template <readable_trivial T>
-  void value_trivial(T& value) {
-    pack_trivial(value, *this);
-  }
-
-  template <readable_trivial T>
-  void value_trivial(const char* key, T& value) {
-    object_next(key);
-    pack_trivial(value, *this);
+    read(*this, value);
   }
 
   // Primitives
@@ -246,43 +201,148 @@ private:
   std::optional<Constraint> constraint_;
 };
 
-DATAPACK_INLINE(std::int32_t, value, packer) {
-  packer.number(NumberType::I32, &value);
-}
-DATAPACK_INLINE(std::int64_t, value, packer) {
-  packer.number(NumberType::I64, &value);
-}
-DATAPACK_INLINE(std::uint32_t, value, packer) {
-  packer.number(NumberType::U32, &value);
-}
-DATAPACK_INLINE(std::uint64_t, value, packer) {
-  packer.number(NumberType::U64, &value);
-}
-DATAPACK_INLINE(std::uint8_t, value, packer) {
-  packer.number(NumberType::U8, &value);
-}
-DATAPACK_INLINE(float, value, packer) {
-  packer.number(NumberType::F32, &value);
-}
-DATAPACK_INLINE(double, value, packer) {
-  packer.number(NumberType::F64, &value);
-}
+#define DATAPACK_NUMBER(Type, Enum)                                                                \
+  inline void write(Writer& writer, const Type& value) {                                           \
+    writer.number(NumberType::Enum, &value);                                                       \
+  }                                                                                                \
+  inline void read(Reader& reader, Type& value) {                                                  \
+    reader.number(NumberType::Enum, &value);                                                       \
+  }
 
-inline void pack(const bool& value, Writer& writer) {
+DATAPACK_NUMBER(std::int32_t, I32);
+DATAPACK_NUMBER(std::int64_t, I64);
+DATAPACK_NUMBER(std::uint32_t, U32);
+DATAPACK_NUMBER(std::uint64_t, U64);
+DATAPACK_NUMBER(std::uint8_t, U8);
+DATAPACK_NUMBER(float, F32);
+DATAPACK_NUMBER(double, F64);
+
+#undef DATAPACK_NUMBER
+
+inline void write(Writer& writer, const bool& value) {
   writer.boolean(value);
 }
-inline void pack(bool& value, Reader& reader) {
+inline void read(Reader& reader, bool& value) {
   value = reader.boolean();
 }
 
 template <labelled_enum T>
-void pack(const T& value, Writer& writer) {
+void write(Writer& writer, const T& value) {
   writer.enumerate((int)value, enum_labels<T>);
 }
 
 template <labelled_enum T>
-void pack(T& value, Reader& reader) {
+void read(Reader& reader, T& value) {
   value = (T)reader.enumerate(enum_labels<T>);
 }
+
+// Nasty macro magic!
+// Hopefully this can be replaced by C++ reflection at some point
+// https://stackoverflow.com/a/11994395
+
+#define _DATAPACK_FE_0(WHAT)
+#define _DATAPACK_FE_1(WHAT, X) WHAT(X)
+#define _DATAPACK_FE_2(WHAT, X, ...) WHAT(X) _DATAPACK_FE_1(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_3(WHAT, X, ...) WHAT(X) _DATAPACK_FE_2(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_4(WHAT, X, ...) WHAT(X) _DATAPACK_FE_3(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_5(WHAT, X, ...) WHAT(X) _DATAPACK_FE_4(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_6(WHAT, X, ...) WHAT(X) _DATAPACK_FE_5(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_7(WHAT, X, ...) WHAT(X) _DATAPACK_FE_6(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_8(WHAT, X, ...) WHAT(X) _DATAPACK_FE_7(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_9(WHAT, X, ...) WHAT(X) _DATAPACK_FE_8(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_10(WHAT, X, ...) WHAT(X) _DATAPACK_FE_9(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_11(WHAT, X, ...) WHAT(X) _DATAPACK_FE_10(WHAT, __VA_ARGS__)
+#define _DATAPACK_FE_12(WHAT, X, ...) WHAT(X) _DATAPACK_FE_11(WHAT, __VA_ARGS__)
+
+#define _DATAPACK_GET_MACRO(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, NAME, ...) NAME
+#define _DATAPACK_FOR_EACH(action, ...)                                                            \
+  _DATAPACK_GET_MACRO(                                                                             \
+      _0 __VA_OPT__(, ) __VA_ARGS__,                                                               \
+      _DATAPACK_FE_12,                                                                             \
+      _DATAPACK_FE_11,                                                                             \
+      _DATAPACK_FE_10,                                                                             \
+      _DATAPACK_FE_9,                                                                              \
+      _DATAPACK_FE_8,                                                                              \
+      _DATAPACK_FE_7,                                                                              \
+      _DATAPACK_FE_6,                                                                              \
+      _DATAPACK_FE_5,                                                                              \
+      _DATAPACK_FE_4,                                                                              \
+      _DATAPACK_FE_3,                                                                              \
+      _DATAPACK_FE_2,                                                                              \
+      _DATAPACK_FE_1,                                                                              \
+      _DATAPACK_FE_0)                                                                              \
+  (action __VA_OPT__(, ) __VA_ARGS__)
+
+#define _DATAPACK_VALUE(X) packer.value(#X, value.X);
+
+#define DATAPACK_DECL(Type)                                                                        \
+  void read(Reader& packer, Type& value);                                                          \
+  void write(Writer& packer, const Type& value);
+
+#define DATAPACK_DEF(Type, ...)                                                                    \
+  inline void read(Reader& packer, Type& value) {                                                  \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  inline void write(Writer& packer, const Type& value) {                                           \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_INLINE(Type, ...)                                                                 \
+  inline void read(Reader& packer, Type& value) {                                                  \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  inline void write(Writer& packer, const Type& value) {                                           \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_TEMPLATED(Templates, Type, ...)                                                   \
+  Templates void read(Reader& packer, Type& value) {                                               \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  Templates void write(Writer& packer, const Type& value) {                                        \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }
+
+#define _DATAPACK_CLASS_VALUE(X) packer.value(#X, X);
+
+#define DATAPACK_CLASS_DECL()                                                                      \
+  void read(::datapack::Reader& packer);                                                                       \
+  void write(::datapack::Writer& packer) const;
+
+#define DATAPACK_CLASS_INLINE(...)                                                                 \
+  inline void read(::datapack::Reader& packer) {                                                   \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  inline void write(::datapack::Writer& packer) const {                                            \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_CLASS_DEF(Class, ...)                                                             \
+  void Class::read(::datapack::Reader& packer) {                                                   \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  void Class::write(::datapack::Writer& packer) const {                                            \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    packer.object_end();                                                                           \
+  }
 
 } // namespace datapack

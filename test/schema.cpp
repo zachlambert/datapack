@@ -147,20 +147,14 @@ TEST(Schema, SchemaApply) {
 
 struct WithLimit {
   double number;
+  DATAPACK_CLASS_INLINE(number)
 };
-
-namespace datapack {
-DATAPACK_INLINE(WithLimit, value, packer) {
-  packer.constraint(ConstraintNumberRange(0, 1));
-  packer.value(value.number);
-}
-
-} // namespace datapack
 
 TEST(Schema, SchemaWithConstraints) {
   auto schema = datapack::Schema::make<WithLimit>();
   auto iter = schema.begin();
 
+  static_assert(datapack::supported<datapack::Schema>);
   std::cerr << datapack::debug(schema) << std::endl;
 
   auto number = iter.number();

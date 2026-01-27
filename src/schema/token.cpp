@@ -1,56 +1,8 @@
 #include "datapack/schema/token.hpp"
-#include "datapack/std/optional.hpp"
-#include "datapack/std/string.hpp"
-#include "datapack/std/variant.hpp"
-#include "datapack/std/vector.hpp"
 
 namespace datapack {
 
 DATAPACK_LABELLED_ENUM_DEF(NumberType) = {"i32", "i64", "u32", "u64", "u8", "f32", "f64"};
-
-DATAPACK_IMPL(token::Number, value, packer) {
-  packer.object_begin();
-  packer.value("type", value.type);
-  packer.value("value", value.constraint);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(token::Enumerate, value, packer) {
-  packer.object_begin();
-  packer.value("labels", value.labels);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(token::VariantBegin, value, packer) {
-  packer.object_begin();
-  packer.value("labels", value.labels);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(token::VariantNext, value, packer) {
-  packer.object_begin();
-  packer.value("index", value.index);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(token::Binary, value, packer) {
-  packer.object_begin();
-  packer.value("length", value.stride);
-  packer.value("stride", value.length);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(token::ObjectBegin, value, packer) {
-  packer.object_begin();
-  packer.value("constraint", value.constraint);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(token::ObjectNext, value, packer) {
-  packer.object_begin();
-  packer.value("key", value.key);
-  packer.object_end();
-}
 
 DATAPACK_LABELLED_VARIANT_DEF(Token) = {
     "number",
@@ -97,12 +49,5 @@ bool operator==(const Token& lhs, const Token& rhs) {
 DATAPACK_LABELLED_VARIANT_DEF(Constraint) = {"number", "object"};
 DATAPACK_LABELLED_VARIANT_DEF(ConstraintNumber) = {"range"};
 DATAPACK_LABELLED_VARIANT_DEF(ConstraintObject) = {"color"};
-
-DATAPACK_IMPL(ConstraintNumberRange, value, packer) {
-  packer.object_begin();
-  packer.value("lower", value.lower);
-  packer.value("upper", value.upper);
-  packer.object_end();
-}
 
 } // namespace datapack

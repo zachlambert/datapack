@@ -347,11 +347,11 @@ void read(Reader& reader, T& value) {
     _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
     packer.object_end();                                                                           \
   }
-//
+
 // ===================================================================================
 // Templated macros
 
-#define DATAPACK_TEMPLATED_INLINE(Typenames, Type, ...)                                            \
+#define DATAPACK_TEMPLATED_INLINE(Type, Typenames, ...)                                            \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
     packer.object_begin();                                                                         \
@@ -365,13 +365,13 @@ void read(Reader& reader, T& value) {
     packer.object_end();                                                                           \
   }
 
-#define DATAPACK_TEMPLATED_DECL(Typenames, Type)                                                   \
+#define DATAPACK_TEMPLATED_DECL(Type, Typenames)                                                   \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value);                                      \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value);
 
-#define DATAPACK_TEMPLATED_DEF(Typenames, Type, ...)                                               \
+#define DATAPACK_TEMPLATED_DEF(Type, Typenames, ...)                                               \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
     packer.object_begin();                                                                         \
@@ -385,12 +385,8 @@ void read(Reader& reader, T& value) {
     packer.object_end();                                                                           \
   }
 
-#define DATAPACK_TEMPLATED_INSTANTIATE(Type, Templates)                                            \
-  template void read<_DATAPACK_DEPAREN(Templates)>(                                                \
-      Reader & packer,                                                                             \
-      Type<_DATAPACK_DEPAREN(Templates)> & value);                                                 \
-  template void write<_DATAPACK_DEPAREN(Templates)>(                                               \
-      Writer & packer,                                                                             \
-      const Type<_DATAPACK_DEPAREN(Templates)>& value);
+#define DATAPACK_TEMPLATED_INSTANTIATE(Type, ...)                                                  \
+  template void read<__VA_ARGS__>(Reader & packer, Type<__VA_ARGS__> & value);                     \
+  template void write<__VA_ARGS__>(Writer & packer, const Type<__VA_ARGS__>& value);
 
 } // namespace datapack

@@ -2,7 +2,7 @@
 
 namespace datapack {
 
-DATAPACK_TEMPLATED_DEF((typename Foo, typename Bar), (FooBar<Foo, Bar>))
-DATAPACK_TEMPLATED_INSTANTIATE(FooBar, (int, std::string));
+DATAPACK_TEMPLATED_DEF((FooBar<Foo, Bar>), (typename Foo, typename Bar))
+DATAPACK_TEMPLATED_INSTANTIATE(FooBar, int, std::string);
 
 } // namespace datapack

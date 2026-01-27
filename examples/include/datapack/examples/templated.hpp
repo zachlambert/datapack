@@ -24,7 +24,7 @@ struct FooBar {
 };
 
 namespace datapack {
-DATAPACK_TEMPLATED_INLINE((typename T), (Point<T>), x, y)
-DATAPACK_TEMPLATED_INLINE((typename A, typename B), (Pair<A, B>), a, b)
-DATAPACK_TEMPLATED_DECL((typename Foo, typename Bar), (FooBar<Foo, Bar>))
+DATAPACK_TEMPLATED_INLINE(Point<T>, (typename T), x, y)
+DATAPACK_TEMPLATED_INLINE((Pair<A, B>), (typename A, typename B), a, b)
+DATAPACK_TEMPLATED_DECL((FooBar<Foo, Bar>), (typename Foo, typename Bar))
 }

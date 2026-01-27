@@ -8,7 +8,7 @@ namespace datapack {
 
 template <typename T, std::size_t N>
 requires writeable<T>
-void write(const std::array<T, N>& value, Writer& writer) {
+void write(Writer& writer, const std::array<T, N>& value) {
   writer.tuple_begin();
   for (const auto& element : value) {
     writer.tuple_next();
@@ -19,7 +19,7 @@ void write(const std::array<T, N>& value, Writer& writer) {
 
 template <typename T, std::size_t N>
 requires readable<T>
-void read(std::array<T, N>& value, Reader& reader) {
+void read(Reader& reader, std::array<T, N>& value) {
   reader.tuple_begin();
   for (auto& element : value) {
     reader.tuple_next();

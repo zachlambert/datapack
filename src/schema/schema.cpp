@@ -251,10 +251,6 @@ bool operator==(const Schema& lhs, const Schema& rhs) {
   return true;
 }
 
-DATAPACK_IMPL(Schema, value, packer) {
-  packer.object_begin();
-  packer.value("tokens", value.tokens);
-  packer.object_end();
-}
+DATAPACK_CLASS_DEF(Schema, tokens)
 
 } // namespace datapack

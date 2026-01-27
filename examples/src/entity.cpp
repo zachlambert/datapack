@@ -11,61 +11,23 @@
 
 namespace datapack {
 
-DATAPACK_IMPL(Circle, value, packer) {
-  packer.object_begin();
-  packer.value("radius", value.radius);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(Rect, value, packer) {
-  packer.object_begin();
-  packer.value("width", value.width);
-  packer.value("height", value.height);
-  packer.object_end();
-}
-
+DATAPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
 DATAPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
 
-DATAPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
-
-DATAPACK_IMPL(Pose, value, packer) {
-  packer.object_begin();
-  packer.value("x", value.x);
-  packer.value("y", value.y);
-  packer.value("angle", value.angle);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(Item, value, packer) {
-  packer.object_begin();
-  packer.value("count", value.count);
-  packer.value("name", value.name);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(Sprite, value, packer) {
-  packer.object_begin();
-  packer.value("width", value.width);
-  packer.value("height", value.height);
-  packer.value_trivial("data", value.data);
-  packer.object_end();
-}
-
-DATAPACK_IMPL(Entity, value, packer) {
-  packer.object_begin();
-  packer.value("index", value.index);
-  packer.value("name", value.name);
-  packer.value("enabled", value.enabled);
-  packer.value("pose", value.pose);
-  packer.value("physics", value.physics);
-  packer.value("hitbox", value.hitbox);
-  packer.value("sprite", value.sprite);
-  packer.value("items", value.items);
-  packer.value("assigned_items", value.assigned_items);
-  packer.object_end();
-}
-
 } // namespace datapack
+
+DATAPACK_CLASS_DEF(Sprite, width, height, data);
+DATAPACK_CLASS_DEF(
+    Entity,
+    index,
+    name,
+    enabled,
+    pose,
+    physics,
+    hitbox,
+    sprite,
+    items,
+    assigned_items)
 
 Entity Entity::example() {
   Entity result;

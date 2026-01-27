@@ -7,7 +7,7 @@ namespace datapack {
 
 template <typename T>
 requires writeable<T>
-void write(const std::vector<T>& value, Writer& writer) {
+void write(Writer& writer, const std::vector<T>& value) {
   writer.list_begin();
   for (const auto& element : value) {
     writer.list_next();
@@ -18,7 +18,7 @@ void write(const std::vector<T>& value, Writer& writer) {
 
 template <typename T>
 requires readable<T>
-void read(std::vector<T>& value, Reader& reader) {
+void read(Reader& reader, std::vector<T>& value) {
   value.clear();
   reader.list_begin();
   while (reader.list_next()) {

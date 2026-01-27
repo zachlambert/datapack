@@ -5,8 +5,9 @@
 
 namespace datapack {
 
-template <writeable T>
-void write(const std::optional<T>& value, Writer& writer) {
+template <typename T>
+requires writeable<T>
+void write(Writer& writer, const std::optional<T>& value) {
   writer.optional_begin(value.has_value());
   if (value.has_value()) {
     writer.value(value.value());
@@ -14,8 +15,9 @@ void write(const std::optional<T>& value, Writer& writer) {
   }
 }
 
-template <readable T>
-void read(std::optional<T>& value, Reader& reader) {
+template <typename T>
+requires readable<T>
+void read(Reader& reader, std::optional<T>& value) {
   if (reader.optional_begin()) {
     value.emplace();
     reader.value(value.value());

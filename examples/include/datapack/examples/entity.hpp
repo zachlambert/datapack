@@ -27,7 +27,6 @@ struct Pose {
   double x;
   double y;
   double angle;
-  DATAPACK_CLASS_INLINE(x, y, angle)
 };
 
 struct Item {
@@ -70,6 +69,7 @@ namespace datapack {
 
 DATAPACK_INLINE(Circle, radius)
 DATAPACK_INLINE(Rect, width, height)
+DATAPACK_INLINE(Pose, x, y, angle)
 
 DATAPACK_LABELLED_ENUM(Physics, 3);
 DATAPACK_LABELLED_VARIANT(Shape, 3);

@@ -27,6 +27,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/schema/tokenizer.cpp
         src/schema/schema.cpp
         src/debug.cpp
+        src/file.cpp
         src/json.cpp
         src/random.cpp
     )

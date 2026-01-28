@@ -52,15 +52,12 @@ int RandomReader::variant_begin(const std::span<const char*>& labels) {
 }
 
 std::span<const std::uint8_t> RandomReader::binary() {
-  std::size_t length = rand() % 100;
-  data_temp.resize(length);
-  for (std::size_t i = 0; i < length; i++) {
-    data_temp[i] = rand() % 256;
-  }
-  return {data_temp.data(), data_temp.size()};
+  return {(const std::uint8_t*)nullptr, 0};
 }
 
-void RandomReader::list_begin() { list_counters.push(rand() % 10); }
+void RandomReader::list_begin() {
+  list_counters.push(rand() % 10);
+}
 
 bool RandomReader::list_next() {
   if (list_counters.top() > 0) {
@@ -70,6 +67,8 @@ bool RandomReader::list_next() {
   return false;
 }
 
-void RandomReader::list_end() { list_counters.pop(); }
+void RandomReader::list_end() {
+  list_counters.pop();
+}
 
 } // namespace datapack

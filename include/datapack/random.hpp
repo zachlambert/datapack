@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <stack>
 #include <string>
-#include <vector>
 
 namespace datapack {
 
@@ -37,7 +36,6 @@ public:
   void list_end() override;
 
 private:
-  std::vector<std::uint8_t> data_temp;
   std::stack<int> list_counters;
   std::string string_temp;
 };

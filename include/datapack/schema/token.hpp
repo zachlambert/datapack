@@ -72,12 +72,7 @@ struct Enumerate {
   }
 };
 
-struct Binary {
-  std::size_t length;
-  std::size_t stride;
-  explicit Binary() : length(0), stride(0) {}
-  explicit Binary(std::size_t length, std::size_t stride) : length(length), stride(stride) {}
-};
+struct Binary {};
 struct Optional {};
 
 struct VariantBegin {
@@ -139,7 +134,7 @@ DATAPACK_INLINE(token::Number, type, constraint)
 DATAPACK_INLINE(token::Boolean)
 DATAPACK_INLINE(token::String)
 DATAPACK_INLINE(token::Enumerate, labels)
-DATAPACK_INLINE(token::Binary, length, stride)
+DATAPACK_INLINE(token::Binary)
 DATAPACK_INLINE(token::Optional)
 DATAPACK_INLINE(token::VariantBegin, labels)
 DATAPACK_INLINE(token::VariantNext, index)

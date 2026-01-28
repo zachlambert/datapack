@@ -40,7 +40,6 @@ struct Sprite {
     double r;
     double g;
     double b;
-    DATAPACK_CLASS_INLINE(r, g, b)
   };
   std::size_t width;
   std::size_t height;
@@ -72,6 +71,6 @@ DATAPACK_INLINE(Rect, width, height)
 DATAPACK_INLINE(Pose, x, y, angle)
 
 DATAPACK_LABELLED_ENUM(Physics, 3);
-DATAPACK_LABELLED_VARIANT(Shape, 3);
+DATAPACK_LABELLED_VARIANT(Shape, 2);
 
 }

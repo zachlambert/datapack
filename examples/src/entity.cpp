@@ -16,7 +16,26 @@ DATAPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
 
 } // namespace datapack
 
-DATAPACK_CLASS_DEF(Sprite, width, height, data);
+void Sprite::read(datapack::Reader& reader) {
+  reader.object_begin();
+  reader.value("width", width);
+  reader.value("height", height);
+  reader.object_next("data");
+  auto bytes = reader.binary();
+  data.resize(bytes.size() / sizeof(Pixel));
+  std::memcpy(data.data(), bytes.data(), bytes.size());
+  reader.object_end();
+}
+
+void Sprite::write(datapack::Writer& writer) const {
+  writer.object_begin();
+  writer.value("width", width);
+  writer.value("height", height);
+  writer.object_next("data");
+  writer.binary({(const std::uint8_t*)data.data(), data.size() * sizeof(Pixel)});
+  writer.object_end();
+}
+
 DATAPACK_CLASS_DEF(
     Entity,
     index,

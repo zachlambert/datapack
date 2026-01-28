@@ -1,20 +1,17 @@
 #include <gtest/gtest.h>
 
-#include <fstream>
 #include <datapack/examples/entity.hpp>
 #include <datapack/file.hpp>
 #include <datapack/std/vector.hpp>
+#include <filesystem>
 
-TEST(File, WriteRead){
-  std::ofstream os("entity.dtp");
-  datapack::FileWriter writer(os);
+TEST(File, WriteRead) {
+  datapack::FileWriter writer("entity.dtp");
   writer.write("list", std::vector<int>{1, 2, 3});
   writer.write<std::string>("string", "hello");
   writer.write("entity", Entity::example());
-  os.close();
 
-  std::ifstream is("entity.dtp");
-  datapack::FileReader reader(is);
+  datapack::FileReader reader("entity.dtp");
   int i = 0;
   while (auto label = reader.next()) {
     if (label == "list") {
@@ -37,5 +34,6 @@ TEST(File, WriteRead){
     }
     i++;
   }
-  is.close();
+
+  std::filesystem::remove("entity.dtp");
 }

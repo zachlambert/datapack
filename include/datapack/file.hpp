@@ -17,7 +17,8 @@ public:
     }
   };
 
-  FileWriter(std::ofstream& os);
+  FileWriter(const std::string& path);
+  void close();
 
   template <typename T>
   requires writeable<T>
@@ -37,7 +38,7 @@ private:
       std::uint64_t hash,
       const std::vector<std::uint8_t>& data);
 
-  std::ofstream& os;
+  std::ofstream os;
   std::unordered_map<std::string, std::uint64_t> label_hashes;
 };
 
@@ -56,7 +57,8 @@ public:
     }
   };
 
-  FileReader(std::ifstream& is);
+  FileReader(const std::string& path);
+  void close();
 
   std::optional<std::string> next();
 
@@ -81,7 +83,7 @@ public:
 private:
   std::tuple<std::uint64_t, std::vector<std::uint8_t>> read_chunk_remainder();
 
-  std::ifstream& is;
+  std::ifstream is;
   std::string current_label;
   std::unordered_map<std::string, std::uint64_t> label_hashes;
 };

@@ -5,8 +5,14 @@ namespace datapack {
 
 static const char* SPECIAL = "DATAPACK";
 
-FileWriter::FileWriter(std::ofstream& os) : os(os) {
+FileWriter::FileWriter(const std::string& path) : os(path, std::ios_base::binary) {
   os << SPECIAL;
+}
+
+void FileWriter::close() {
+  if (os) {
+    os.close();
+  }
 }
 
 void FileWriter::write_chunk(
@@ -27,7 +33,7 @@ void FileWriter::write_chunk(
   os.write((const char*)data.data(), data.size());
 }
 
-FileReader::FileReader(std::ifstream& is) : is(is) {
+FileReader::FileReader(const std::string& path) : is(path, std::ios_base::binary) {
   std::string special_buff = SPECIAL;
   is.read(special_buff.data(), 8);
   if (special_buff != SPECIAL) {
@@ -35,7 +41,14 @@ FileReader::FileReader(std::ifstream& is) : is(is) {
   }
 }
 
+void FileReader::close() {
+  if (is) {
+    is.close();
+  }
+}
+
 std::optional<std::string> FileReader::next() {
+  is.peek(); // Required to check for eof
   if (is.eof()) {
     return std::nullopt;
   }

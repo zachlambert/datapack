@@ -294,12 +294,12 @@ void read(Reader& reader, T& value) {
   void write(Writer& packer, const Type& value);
 
 #define DATAPACK_DEF(Type, ...)                                                                    \
-  inline void read(Reader& packer, Type& value) {                                                  \
+  void read(Reader& packer, Type& value) {                                                  \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }                                                                                                \
-  inline void write(Writer& packer, const Type& value) {                                           \
+  void write(Writer& packer, const Type& value) {                                           \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \

@@ -147,7 +147,13 @@ TEST(Schema, SchemaApply) {
 
 struct WithLimit {
   double number;
-  DATAPACK_CLASS_INLINE(number)
+  void read(datapack::Reader& reader) {
+    reader.constraint(datapack::ConstraintNumberRange(0.0, 1.0));
+    reader.value(number);
+  }
+  void write(datapack::Writer& writer) {
+    writer.value(number);
+  }
 };
 
 TEST(Schema, SchemaWithConstraints) {
@@ -155,7 +161,6 @@ TEST(Schema, SchemaWithConstraints) {
   auto iter = schema.begin();
 
   static_assert(datapack::supported<datapack::Schema>);
-  std::cerr << datapack::debug(schema) << std::endl;
 
   auto number = iter.number();
   ASSERT_TRUE(number);

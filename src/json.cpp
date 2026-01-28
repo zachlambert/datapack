@@ -75,7 +75,7 @@ Object load_json(const std::string& json) {
       continue;
     }
 
-    if ((state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
+    if (c != ']' && (state & IS_ARRAY) && (state & EXPECT_ELEMENT)) {
       state &= ~EXPECT_ELEMENT;
       state |= EXPECT_VALUE;
       ptr = ptr->emplace_back().ptr();
@@ -251,24 +251,26 @@ std::string dump_json(ConstObject object) {
 
     if (!start) {
       json += ",\n";
+    } else if (!json.empty()) {
+      json += "\n";
     }
     start = false;
-
     for (int i = 0; i < (stack.size() - 1); i++) {
       json += "    ";
     }
+
     if (!ptr.key().empty()) {
       json += "\"" + ptr.key() + "\": ";
     }
 
     if (ptr->is_map()) {
-      json += "{\n";
+      json += "{";
       stack.push(ptr.child());
       start = true;
       continue;
     }
     if (ptr->is_list()) {
-      json += "[\n";
+      json += "[";
       stack.push(ptr.child());
       start = true;
       continue;

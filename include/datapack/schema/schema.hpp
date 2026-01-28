@@ -123,11 +123,56 @@ public:
     return Iterator(this, tokens.size());
   }
 
+  std::uint64_t hash() const {
+    std::uint64_t hash = 0;
+    for (const auto& token : tokens) {
+      hash = hash ^ std::hash<size_t>{}(token.index());
+      if (auto number = std::get_if<token::Number>(&token)) {
+        hash = hash ^ std::hash<int>{}((int)number->type);
+        if (number->constraint) {
+          hash = hash ^ std::hash<size_t>{}(number->constraint->index());
+          if (auto constraint = std::get_if<ConstraintNumberRange>(&*number->constraint)) {
+            hash = hash ^ std::hash<double>{}(constraint->lower);
+            hash = hash ^ std::hash<double>{}(constraint->upper);
+          }
+        }
+      } else if (auto enumerate = std::get_if<token::Enumerate>(&token)) {
+        for (const auto& label: enumerate->labels) {
+          hash = hash ^ std::hash<std::string>{}(label);
+        }
+      } else if (auto variant_begin = std::get_if<token::VariantBegin>(&token)) {
+        for (const auto& label: variant_begin->labels) {
+          hash = hash ^ std::hash<std::string>{}(label);
+        }
+      } else if (auto variant_next = std::get_if<token::VariantNext>(&token)) {
+        hash = hash ^ std::hash<int>{}(variant_next->index);
+      } else if (auto object_begin = std::get_if<token::ObjectBegin>(&token)) {
+        if (object_begin->constraint) {
+          hash = hash ^ std::hash<size_t>{}(object_begin->constraint->index());
+        }
+      } else if (auto object_next = std::get_if<token::ObjectNext>(&token)) {
+        hash = hash ^ std::hash<std::string>{}(object_next->key);
+      }
+    }
+    return hash;
+  }
+
   DATAPACK_CLASS_DECL();
 private:
   std::vector<Token> tokens;
 
   friend bool operator==(const Schema& lhs, const Schema& rhs);
 };
+
+template <typename T>
+std::uint64_t get_hash() {
+  static std::uint64_t hash = 0;
+  static bool calculated = false;
+  if (!calculated) {
+    calculated = true;
+    hash = Schema::make<T>().hash();
+  }
+  return hash;
+}
 
 } // namespace datapack

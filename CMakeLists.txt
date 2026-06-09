@@ -30,6 +30,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/debug.cpp
         src/file.cpp
         src/json.cpp
+        src/polymorphic.cpp
         src/random.cpp
     )
     target_include_directories(datapack PUBLIC

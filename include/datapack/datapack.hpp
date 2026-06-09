@@ -44,7 +44,7 @@ inline void read(Reader& reader, T& value) {
 }
 
 template <typename T>
-concept supported = readable<T> && writeable<T>;
+concept serializable = readable<T> && writeable<T>;
 
 // Writer
 class Writer {

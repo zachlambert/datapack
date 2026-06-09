@@ -96,13 +96,11 @@ void Tokenizer::list_end() {
   // Nothing required
 }
 
-void Tokenizer::hint(const Hint& hint)
-{
+void Tokenizer::hint(const Hint& hint) {
   tokens.push_back(token::Hint(hint));
 }
 
-void Tokenizer::description(const std::string& description)
-{
+void Tokenizer::description(const std::string& description) {
   tokens.push_back(token::Description(description));
 }
 

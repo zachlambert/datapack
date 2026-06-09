@@ -36,17 +36,19 @@ void Sprite::write(dpack::Writer& writer) const {
   writer.object_end();
 }
 
-DPACK_CLASS_DEF(
-    Entity,
-    index,
-    name,
-    enabled,
-    pose,
-    physics,
-    hitbox,
-    sprite,
-    items,
-    assigned_items)
+// clang-format off
+DPACK_CLASS_DEF(Entity,
+  index,
+  name,
+  enabled,
+  pose,
+  physics,
+  hitbox,
+  sprite,
+  items,
+  assigned_items
+)
+// clang-format on
 
 Entity Entity::example() {
   Entity result;

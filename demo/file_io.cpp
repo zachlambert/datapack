@@ -1,7 +1,7 @@
+#include <datapack/debug.hpp>
 #include <datapack/examples/entity.hpp>
 #include <datapack/file.hpp>
 #include <datapack/std/vector.hpp>
-#include <datapack/debug.hpp>
 #include <filesystem>
 
 int main() {

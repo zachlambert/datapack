@@ -73,4 +73,4 @@ DPACK_INLINE(Pose, x, y, angle)
 DPACK_LABELLED_ENUM(Physics, 3);
 DPACK_LABELLED_VARIANT(Shape, 2);
 
-}
+} // namespace dpack

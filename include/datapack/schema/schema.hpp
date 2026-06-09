@@ -127,28 +127,38 @@ public:
     std::uint64_t hash = 0;
     for (const auto& token : tokens) {
       hash = hash ^ std::hash<size_t>{}(token.index());
+      if (auto string = std::get_if<token::String>(&token)) {
+        if (string->hint) {
+          hash = hash ^ std::hash<int>{}((int)string->hint->index());
+          if (auto hint = std::get_if<HintStringChoices>(&*string->hint)) {
+            for (const auto& choice : hint->choices) {
+              hash = hash ^ std::hash<std::string>{}(choice);
+            }
+          }
+        }
+      }
       if (auto number = std::get_if<token::Number>(&token)) {
         hash = hash ^ std::hash<int>{}((int)number->type);
-        if (number->constraint) {
-          hash = hash ^ std::hash<size_t>{}(number->constraint->index());
-          if (auto constraint = std::get_if<ConstraintNumberRange>(&*number->constraint)) {
-            hash = hash ^ std::hash<double>{}(constraint->lower);
-            hash = hash ^ std::hash<double>{}(constraint->upper);
+        if (number->hint) {
+          hash = hash ^ std::hash<size_t>{}(number->hint->index());
+          if (auto hint = std::get_if<HintNumberRange>(&*number->hint)) {
+            hash = hash ^ std::hash<double>{}(hint->lower);
+            hash = hash ^ std::hash<double>{}(hint->upper);
           }
         }
       } else if (auto enumerate = std::get_if<token::Enumerate>(&token)) {
-        for (const auto& label: enumerate->labels) {
+        for (const auto& label : enumerate->labels) {
           hash = hash ^ std::hash<std::string>{}(label);
         }
       } else if (auto variant_begin = std::get_if<token::VariantBegin>(&token)) {
-        for (const auto& label: variant_begin->labels) {
+        for (const auto& label : variant_begin->labels) {
           hash = hash ^ std::hash<std::string>{}(label);
         }
       } else if (auto variant_next = std::get_if<token::VariantNext>(&token)) {
         hash = hash ^ std::hash<int>{}(variant_next->index);
       } else if (auto object_begin = std::get_if<token::ObjectBegin>(&token)) {
-        if (object_begin->constraint) {
-          hash = hash ^ std::hash<size_t>{}(object_begin->constraint->index());
+        if (object_begin->hint) {
+          hash = hash ^ std::hash<size_t>{}(object_begin->hint->index());
         }
       } else if (auto object_next = std::get_if<token::ObjectNext>(&token)) {
         hash = hash ^ std::hash<std::string>{}(object_next->key);
@@ -158,6 +168,7 @@ public:
   }
 
   DATAPACK_CLASS_DECL();
+
 private:
   std::vector<Token> tokens;
 

@@ -1,11 +1,12 @@
 #pragma once
 
-#include "datapack/constraint.hpp"
+#include "datapack/hint.hpp"
 #include "datapack/labelled_enum.hpp"
 #include <concepts>
 #include <cstdint>
 #include <optional>
 #include <span>
+#include <string>
 
 namespace datapack {
 
@@ -98,24 +99,13 @@ public:
 
   // Other
 
-  void constraint(const Constraint& constraint) {
-    constraint_ = constraint;
+  void hint(const Hint&) {
+    // Do nothing
   }
 
-protected:
-  template <typename T>
-  std::optional<T> get_constraint() {
-    if (!constraint_.has_value()) {
-      return std::nullopt;
-    }
-    if (std::get_if<T>(&(*constraint_))) {
-      return std::move(std::get<T>(*constraint_));
-    }
-    return std::nullopt;
+  void description(const std::string&) {
+    // Do nothing
   }
-
-private:
-  std::optional<Constraint> constraint_;
 };
 
 // Reader
@@ -179,26 +169,38 @@ public:
     return is_tokenizer_;
   }
 
-  void constraint(const Constraint& constraint) {
-    constraint_ = constraint;
+  void hint(const Hint& hint) {
+    hint_ = hint;
+  }
+
+  void description(const std::string& description) {
+    description_ = description;
   }
 
 protected:
   template <typename T>
-  std::optional<T> get_constraint() {
-    if (!constraint_.has_value()) {
+  std::optional<T> get_hint() {
+    if (!hint_.has_value()) {
       return std::nullopt;
     }
-    if (std::get_if<T>(&(*constraint_))) {
-      return std::move(std::get<T>(*constraint_));
+    if (std::get_if<T>(&(*hint_))) {
+      return std::move(std::get<T>(*hint_));
     }
     return std::nullopt;
+  }
+
+  std::optional<std::string> get_description() {
+    if (!description_.has_value()) {
+      return std::nullopt;
+    }
+    return std::move(description_);
   }
 
 private:
   bool valid_;
   const bool is_tokenizer_;
-  std::optional<Constraint> constraint_;
+  std::optional<Hint> hint_;
+  std::optional<std::string> description_;
 };
 
 #define DATAPACK_NUMBER(Type, Enum)                                                                \

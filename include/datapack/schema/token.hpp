@@ -1,7 +1,7 @@
 #pragma once
 
-#include "datapack/constraint.hpp"
 #include "datapack/datapack.hpp"
+#include "datapack/hint.hpp"
 #include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
 #include "datapack/std/optional.hpp"
@@ -15,24 +15,26 @@ namespace datapack {
 
 DATAPACK_LABELLED_ENUM(NumberType, 7);
 
-// Cannot put these in the constraint header, since this is included by datapack.hpp
+// Cannot put these in the hint header, since this is included by datapack.hpp
 
-DATAPACK_LABELLED_VARIANT(Constraint, 2);
-DATAPACK_LABELLED_VARIANT(ConstraintObject, 1);
-DATAPACK_LABELLED_VARIANT(ConstraintNumber, 1);
+DATAPACK_LABELLED_VARIANT(Hint, 3);
+DATAPACK_LABELLED_VARIANT(HintObject, 1);
+DATAPACK_LABELLED_VARIANT(HintNumber, 1);
+DATAPACK_LABELLED_VARIANT(HintString, 1);
 
-DATAPACK_INLINE(ConstraintObjectColor);
-DATAPACK_INLINE(ConstraintNumberRange, lower, upper);
+DATAPACK_INLINE(HintObjectColor);
+DATAPACK_INLINE(HintNumberRange, lower, upper);
+DATAPACK_INLINE(HintStringChoices, choices);
 
 namespace token {
 
 struct Number {
   NumberType type;
-  std::optional<ConstraintNumber> constraint;
+  std::optional<HintNumber> hint;
+
   explicit Number() {}
   explicit Number(NumberType type) : type(type) {}
-  explicit Number(NumberType type, ConstraintNumber&& constraint) :
-      type(type), constraint(std::move(constraint)) {}
+  explicit Number(NumberType type, HintNumber&& hint) : type(type), hint(std::move(hint)) {}
 
   static Number I32() {
     return Number(NumberType::I32);
@@ -59,7 +61,12 @@ struct Number {
 
 struct Boolean {};
 
-struct String {};
+struct String {
+  std::optional<HintString> hint;
+
+  String() {}
+  String(const HintString& hint) : hint(hint) {}
+};
 
 struct Enumerate {
   std::vector<std::string> labels;
@@ -93,9 +100,9 @@ struct VariantNext {
 };
 
 struct ObjectBegin {
-  std::optional<ConstraintObject> constraint;
+  std::optional<HintObject> hint;
   ObjectBegin() {}
-  ObjectBegin(ConstraintObject&& constraint) : constraint(std::move(constraint)) {}
+  ObjectBegin(HintObject&& hint) : hint(std::move(hint)) {}
 };
 struct ObjectEnd {};
 struct ObjectNext {
@@ -130,16 +137,16 @@ using Token = std::variant<
     token::TupleEnd,
     token::List>;
 
-DATAPACK_INLINE(token::Number, type, constraint)
+DATAPACK_INLINE(token::Number, type, hint)
 DATAPACK_INLINE(token::Boolean)
-DATAPACK_INLINE(token::String)
+DATAPACK_INLINE(token::String, hint)
 DATAPACK_INLINE(token::Enumerate, labels)
 DATAPACK_INLINE(token::Binary)
 DATAPACK_INLINE(token::Optional)
 DATAPACK_INLINE(token::VariantBegin, labels)
 DATAPACK_INLINE(token::VariantNext, index)
 DATAPACK_INLINE(token::VariantEnd)
-DATAPACK_INLINE(token::ObjectBegin, constraint)
+DATAPACK_INLINE(token::ObjectBegin, hint)
 DATAPACK_INLINE(token::ObjectNext, key)
 DATAPACK_INLINE(token::ObjectEnd)
 DATAPACK_INLINE(token::TupleBegin)

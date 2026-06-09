@@ -8,8 +8,8 @@ Tokenizer::Tokenizer(std::vector<Token>& tokens) :
 }
 
 void Tokenizer::number(NumberType type, void* value) {
-  if (auto constraint = get_constraint<ConstraintNumber>()) {
-    tokens.push_back(token::Number(type, std::move(*constraint)));
+  if (auto hint = get_hint<HintNumber>()) {
+    tokens.push_back(token::Number(type, std::move(*hint)));
   } else {
     tokens.push_back(token::Number(type));
   }
@@ -21,7 +21,11 @@ bool Tokenizer::boolean() {
 }
 
 const char* Tokenizer::string() {
-  tokens.push_back(token::String());
+  if (auto hint = get_hint<HintString>()) {
+    tokens.push_back(token::String(std::move(*hint)));
+  } else {
+    tokens.push_back(token::String());
+  }
   return nullptr;
 }
 
@@ -58,8 +62,8 @@ void Tokenizer::variant_end() {
 }
 
 void Tokenizer::object_begin() {
-  if (auto constraint = get_constraint<ConstraintObject>()) {
-    tokens.push_back(token::ObjectBegin(std::move(*constraint)));
+  if (auto hint = get_hint<HintObject>()) {
+    tokens.push_back(token::ObjectBegin(std::move(*hint)));
   } else {
     tokens.push_back(token::ObjectBegin());
   }

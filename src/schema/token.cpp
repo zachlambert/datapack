@@ -46,8 +46,9 @@ bool operator==(const Token& lhs, const Token& rhs) {
   return true;
 }
 
-DATAPACK_LABELLED_VARIANT_DEF(Constraint) = {"number", "object"};
-DATAPACK_LABELLED_VARIANT_DEF(ConstraintNumber) = {"range"};
-DATAPACK_LABELLED_VARIANT_DEF(ConstraintObject) = {"color"};
+DATAPACK_LABELLED_VARIANT_DEF(Hint) = {"number", "object", "string"};
+DATAPACK_LABELLED_VARIANT_DEF(HintNumber) = {"range"};
+DATAPACK_LABELLED_VARIANT_DEF(HintObject) = {"color"};
+DATAPACK_LABELLED_VARIANT_DEF(HintString) = {"choices"};
 
 } // namespace datapack

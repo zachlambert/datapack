@@ -307,14 +307,10 @@ void read(Reader& reader, T& value) {
 
 #define DATAPACK_DEF_CUSTOM(Type, ...)                                                             \
   void read(Reader& packer, Type& value) {                                                         \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }                                                                                                \
   void write(Writer& packer, const Type& value) {                                                  \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }
 
 #define DATAPACK_INLINE(Type, ...)                                                                 \
@@ -331,14 +327,10 @@ void read(Reader& reader, T& value) {
 
 #define DATAPACK_INLINE_CUSTOM(Type, ...)                                                          \
   inline void read(Reader& packer, Type& value) {                                                  \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }                                                                                                \
   inline void write(Writer& packer, const Type& value) {                                           \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }
 
 // ===================================================================================
@@ -362,14 +354,10 @@ void read(Reader& reader, T& value) {
 
 #define DATAPACK_CLASS_DEF_CUSTOM(Class, ...)                                                      \
   void Class::read(::datapack::Reader& packer) {                                                   \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }                                                                                                \
   void Class::write(::datapack::Writer& packer) const {                                            \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }
 
 #define DATAPACK_CLASS_INLINE(...)                                                                 \
@@ -386,14 +374,10 @@ void read(Reader& reader, T& value) {
 
 #define DATAPACK_CLASS_INLINE_CUSTOM(...)                                                          \
   void read(::datapack::Reader& packer) {                                                          \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }                                                                                                \
   void write(::datapack::Writer& packer) const {                                                   \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }
 
 // ===================================================================================
@@ -416,15 +400,11 @@ void read(Reader& reader, T& value) {
 #define DATAPACK_TEMPLATED_INLINE_CUSTOM(Type, Typenames, ...)                                     \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }                                                                                                \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }
 
 #define DATAPACK_TEMPLATED_DECL(Type, Typenames)                                                   \
@@ -450,15 +430,11 @@ void read(Reader& reader, T& value) {
 #define DATAPACK_TEMPLATED_DEF_CUSTOM(Type, Typenames, ...)                                        \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }                                                                                                \
   template <_DATAPACK_DEPAREN(Typenames)>                                                          \
   void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
-    packer.object_begin();                                                                         \
     __VA_ARGS__;                                                                                   \
-    packer.object_end();                                                                           \
   }
 
 #define DATAPACK_TEMPLATED_INSTANTIATE(Type, ...)                                                  \

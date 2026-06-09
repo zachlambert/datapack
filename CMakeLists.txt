@@ -31,6 +31,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
         src/file.cpp
         src/json.cpp
         src/random.cpp
+        src/smart_ptr.cpp
     )
     target_include_directories(datapack PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>

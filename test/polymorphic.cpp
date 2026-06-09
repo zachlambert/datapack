@@ -1,7 +1,7 @@
 #include <datapack/debug.hpp>
 #include <datapack/json.hpp>
+#include <datapack/polymorphic.hpp>
 #include <datapack/schema/schema.hpp>
-#include <datapack/smart_ptr.hpp>
 #include <gtest/gtest.h>
 
 class Fruit {
@@ -48,12 +48,18 @@ public:
   DATAPACK_CLASS_INLINE();
 };
 
+template <>
+void datapack::register_polymorphic_defaults<Fruit>() {
+  register_polymorphic<Fruit, Apple>("apple");
+  register_polymorphic<Fruit, Banana>("banana");
+}
+
 TEST(Poly, WriteRead) {
   using namespace datapack;
 
-  register_smart_ptr<Fruit, Apple>("apple");
-  register_smart_ptr<Fruit, Banana>("banana");
-  register_smart_ptr<Fruit, Pear>("pear");
+  // Support "static" implementations (defined in register_polymorphic_defaults)
+  // as well as those defined at runtime
+  register_polymorphic<Fruit, Pear>("pear");
 
   std::unique_ptr<Fruit> apple = std::make_unique<Apple>("green");
   std::unique_ptr<Fruit> banana = std::make_unique<Banana>(15);

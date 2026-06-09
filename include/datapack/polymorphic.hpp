@@ -139,13 +139,13 @@ private:
         return interface.get();
       }
     }
-    throw PolyError("Missing smart ptr registration");
+    throw PolyError("Missing polymorphic registration");
     return nullptr;
   }
 
   const PolyTypeInterface<Base>* get(int index) {
     if (index >= interfaces_.size()) {
-      throw PolyError("Missing smart ptr registration");
+      throw PolyError("Missing polymorphic registration");
     }
     return interfaces_[index].get();
   }
@@ -175,6 +175,9 @@ private:
 
 extern std::unordered_map<std::type_index, std::unique_ptr<PolyInterfacesBase>> poly_interfaces_;
 
+template <typename T>
+void register_polymorphic_defaults() {}
+
 template <typename Base>
 inline PolyInterfaces<Base>* get_poly_interfaces() {
   auto iter = poly_interfaces_.find(std::type_index(typeid(Base)));
@@ -182,12 +185,13 @@ inline PolyInterfaces<Base>* get_poly_interfaces() {
     iter = poly_interfaces_
                .emplace(std::type_index(typeid(Base)), std::make_unique<PolyInterfaces<Base>>())
                .first;
+    register_polymorphic_defaults<Base>();
   }
   return dynamic_cast<PolyInterfaces<Base>*>(iter->second.get());
 }
 
 template <typename Base, supported Impl>
-void register_smart_ptr(const std::string& label) {
+void register_polymorphic(const std::string& label) {
   get_poly_interfaces<Base>()->template add<Impl>(label);
 }
 

@@ -1,4 +1,4 @@
-#include "datapack/smart_ptr.hpp"
+#include "datapack/polymorphic.hpp"
 
 namespace datapack {
 

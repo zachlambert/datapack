@@ -5,8 +5,8 @@
 TEST(Binary, WriteRead) {
   Entity in = Entity::example();
 
-  std::vector<std::uint8_t> data = datapack::to_binary(in);
-  Entity out = datapack::from_binary<Entity>(data);
+  std::vector<std::uint8_t> data = dpack::to_binary(in);
+  Entity out = dpack::from_binary<Entity>(data);
 
   ASSERT_EQ(in, out);
 }

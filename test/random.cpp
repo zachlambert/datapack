@@ -3,6 +3,6 @@
 #include <gtest/gtest.h>
 
 TEST(Random, RunsSuccessfully) {
-  EXPECT_NO_THROW(datapack::random<Entity>());
+  EXPECT_NO_THROW(dpack::random<Entity>());
   // Runs successfully
 }

@@ -3,7 +3,7 @@
 #include <concepts>
 #include <span>
 
-namespace datapack {
+namespace dpack {
 
 template <typename T>
 struct enum_details {};
@@ -37,9 +37,9 @@ const char* enum_to_label(const T& value) {
   return enum_labels<T>[(int)value];
 }
 
-} // namespace datapack
+} // namespace dpack
 
-#define DATAPACK_LABELLED_ENUM(T, Size)                                                            \
+#define DPACK_LABELLED_ENUM(T, Size)                                                               \
   template <>                                                                                      \
   struct enum_details<T> {                                                                         \
     static constexpr std::size_t size = Size;                                                      \
@@ -47,7 +47,7 @@ const char* enum_to_label(const T& value) {
     static const char* labels_array[Size];                                                         \
   }
 
-#define DATAPACK_LABELLED_ENUM_DEF(T)                                                              \
+#define DPACK_LABELLED_ENUM_DEF(T)                                                                 \
   const std::span<const char*> enum_details<T>::labels =                                           \
       std::span(enum_details<T>::labels_array, enum_details<T>::size);                             \
   const char* enum_details<T>::labels_array[enum_size<T>]

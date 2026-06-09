@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace datapack {
+namespace dpack {
 
 class BinarySizeWriter : public Writer {
 public:
@@ -154,4 +154,4 @@ T from_binary(const std::span<const std::uint8_t>& buffer) {
   return result;
 }
 
-} // namespace datapack
+} // namespace dpack

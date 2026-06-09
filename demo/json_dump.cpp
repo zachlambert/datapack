@@ -5,9 +5,9 @@
 
 int main() {
   Entity in = Entity::example();
-  const std::string json = datapack::to_json(in);
+  const std::string json = dpack::to_json(in);
   std::cout << json << std::endl;
-  Entity out = datapack::from_json<Entity>(json);
+  Entity out = dpack::from_json<Entity>(json);
   std::cout << "EQUAL ? " << (in == out ? "yes" : "no") << std::endl;
   return 0;
 }

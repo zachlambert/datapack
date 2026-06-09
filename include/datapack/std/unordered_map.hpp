@@ -3,7 +3,7 @@
 #include "datapack/datapack.hpp"
 #include <unordered_map>
 
-namespace datapack {
+namespace dpack {
 
 template <typename K, typename V>
 requires writeable<K> && writeable<V>
@@ -47,4 +47,4 @@ void read(Reader& reader, std::unordered_map<K, V>& map) {
   reader.list_end();
 }
 
-} // namespace datapack
+} // namespace dpack

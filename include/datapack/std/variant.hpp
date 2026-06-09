@@ -3,7 +3,7 @@
 #include "datapack/datapack.hpp"
 #include "datapack/labelled_variant.hpp"
 
-namespace datapack {
+namespace dpack {
 
 template <labelled_variant T>
 void write(Writer& writer, const T& value) {
@@ -43,4 +43,4 @@ void read(Reader& reader, std::variant<Args...>& value) {
   reader.variant_end();
 }
 
-} // namespace datapack
+} // namespace dpack

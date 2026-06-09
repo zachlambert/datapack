@@ -4,7 +4,7 @@
 #include <variant>
 #include <vector>
 
-namespace datapack {
+namespace dpack {
 
 struct HintChoices {
   std::vector<std::string> choices;
@@ -26,4 +26,4 @@ struct HintColor {};
 
 using Hint = std::variant<HintChoices, HintRange, HintPositive, HintColor>;
 
-} // namespace datapack
+} // namespace dpack

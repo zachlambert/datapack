@@ -2,29 +2,29 @@
 #include <iostream>
 
 void demo_build_primitive() {
-  datapack::Object a;
+  dpack::Object a;
   a = 1.0;
   std::cout << "a: " << a << std::endl;
 
-  datapack::Object b;
+  dpack::Object b;
   b = "Hello";
   std::cout << "b: " << b << std::endl;
 
-  datapack::Object c;
+  dpack::Object c;
   c = 12;
   std::cout << "c: " << c << std::endl;
 
-  datapack::Object d;
+  dpack::Object d;
   d = true;
   std::cout << "d: " << d << std::endl;
 
-  datapack::Object e;
+  dpack::Object e;
   e = std::vector<uint8_t>{0xAA, 0xBB, 0xCC, 0xDD};
   std::cout << "e: " << e << std::endl;
 }
 
-datapack::Object demo_build_map() {
-  datapack::Object object;
+dpack::Object demo_build_map() {
+  dpack::Object object;
 
   object["a"] = "hello";
   object["b"] = 100;
@@ -42,7 +42,7 @@ datapack::Object demo_build_map() {
 }
 
 void demo_clone_copy() {
-  datapack::Object a;
+  dpack::Object a;
   a["foo"] = "foo";
   a["bar"] = "bar";
 
@@ -57,7 +57,7 @@ void demo_clone_copy() {
 }
 
 void demo_iterators() {
-  datapack::ConstObject object = demo_build_map();
+  dpack::ConstObject object = demo_build_map();
 
   std::cout << "Iterate object.items()" << std::endl;
   for (auto [key, value] : object.items()) {
@@ -81,17 +81,16 @@ void demo_iterators() {
 }
 
 void demo_initializer_list() {
-  using namespace datapack;
-  Object a = Object::make_list({1, 2, 3});
+  dpack::Object a = dpack::Object::make_list({1, 2, 3});
   std::cout << "a: " << a << std::endl;
 
-  Object b = {{"a", 1}, {"b", 2}, {"c", 3}};
+  dpack::Object b = {{"a", 1}, {"b", 2}, {"c", 3}};
   std::cout << "b: " << b << std::endl;
 
-  // Object b2 = Object::make_list({{"a", 1}, {"b", 2}, {"c", 3}});
+  // dpack::Object b2 = dpack::Object::make_list({{"a", 1}, {"b", 2}, {"c", 3}});
   // std::cout << "b2: " << b2 << std::endl;
 
-  Object c;
+  dpack::Object c;
   c = {{"foo", {1, 2, 3}}, {"bar", {{"alpha", true}, {"beta", false}}}};
   std::cout << "c: " << c << std::endl;
 }

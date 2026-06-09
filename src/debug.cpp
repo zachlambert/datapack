@@ -4,7 +4,7 @@
 #include "datapack/encode/base64.hpp"
 #endif
 
-namespace datapack {
+namespace dpack {
 
 DebugWriter::DebugWriter(std::ostream& os) : os(os), depth(0) {}
 
@@ -40,7 +40,9 @@ void DebugWriter::boolean(bool value) {
   ;
 }
 
-void DebugWriter::string(const char* value) { os << value << ",\n"; }
+void DebugWriter::string(const char* value) {
+  os << value << ",\n";
+}
 
 void DebugWriter::enumerate(int value, const std::span<const char*>& labels) {
   os << "(enum, " << value << " = " << labels[value] << "),\n";
@@ -109,7 +111,9 @@ void DebugWriter::tuple_end() {
   os << "},\n";
 }
 
-void DebugWriter::tuple_next() { indent(); }
+void DebugWriter::tuple_next() {
+  indent();
+}
 
 void DebugWriter::list_begin(size_t) {
   os << "(list) {\n";
@@ -122,7 +126,9 @@ void DebugWriter::list_end() {
   os << "},\n";
 }
 
-void DebugWriter::list_next() { indent(); }
+void DebugWriter::list_next() {
+  indent();
+}
 
 void DebugWriter::indent() {
   for (int i = 0; i < depth; i++) {
@@ -130,4 +136,4 @@ void DebugWriter::indent() {
   }
 }
 
-} // namespace datapack
+} // namespace dpack

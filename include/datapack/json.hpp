@@ -2,7 +2,7 @@
 
 #include "datapack/object.hpp"
 
-namespace datapack {
+namespace dpack {
 
 class JsonLoadError : public std::runtime_error {
 public:
@@ -45,4 +45,4 @@ void to_json_file(const T& value, const std::string& file) {
   dump_json_file(object, file);
 }
 
-} // namespace datapack
+} // namespace dpack

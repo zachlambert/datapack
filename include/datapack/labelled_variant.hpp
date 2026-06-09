@@ -4,7 +4,7 @@
 #include <span>
 #include <variant>
 
-namespace datapack {
+namespace dpack {
 
 template <typename T>
 struct variant_details {};
@@ -47,9 +47,9 @@ const char* variant_to_label(const T& value) {
   return variant_labels<T>[value.index()];
 }
 
-} // namespace datapack
+} // namespace dpack
 
-#define DATAPACK_LABELLED_VARIANT(T, Size)                                                         \
+#define DPACK_LABELLED_VARIANT(T, Size)                                                            \
   template <>                                                                                      \
   struct variant_details<T> {                                                                      \
     static constexpr std::size_t size = Size;                                                      \
@@ -57,7 +57,7 @@ const char* variant_to_label(const T& value) {
     static const char* labels_array[Size];                                                         \
   }
 
-#define DATAPACK_LABELLED_VARIANT_DEF(T)                                                           \
+#define DPACK_LABELLED_VARIANT_DEF(T)                                                              \
   const std::span<const char*> variant_details<T>::labels =                                        \
       std::span(variant_details<T>::labels_array, variant_details<T>::size);                       \
   const char* variant_details<T>::labels_array[variant_size<T>]

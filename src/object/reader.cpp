@@ -1,7 +1,7 @@
 #include "datapack/encode/base64.hpp"
 #include "datapack/object.hpp"
 
-namespace datapack {
+namespace dpack {
 
 ObjectReader::ObjectReader(ConstObject object) : node(object.ptr()), container_begin(false) {}
 
@@ -210,4 +210,4 @@ void ObjectReader::list_end() {
   container_begin = false;
 }
 
-} // namespace datapack
+} // namespace dpack

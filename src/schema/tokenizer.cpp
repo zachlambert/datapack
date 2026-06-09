@@ -1,6 +1,6 @@
 #include "datapack/schema/tokenizer.hpp"
 
-namespace datapack {
+namespace dpack {
 
 Tokenizer::Tokenizer(std::vector<Token>& tokens) :
     Reader(true), tokens(tokens), first_element(false) {
@@ -96,14 +96,12 @@ void Tokenizer::list_end() {
   // Nothing required
 }
 
-void Tokenizer::hint(const Hint& hint)
-{
+void Tokenizer::hint(const Hint& hint) {
   tokens.push_back(token::Hint(hint));
 }
 
-void Tokenizer::description(const std::string& description)
-{
+void Tokenizer::description(const std::string& description) {
   tokens.push_back(token::Description(description));
 }
 
-} // namespace datapack
+} // namespace dpack

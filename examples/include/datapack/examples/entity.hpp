@@ -32,7 +32,7 @@ struct Pose {
 struct Item {
   std::size_t count;
   std::string name;
-  DATAPACK_CLASS_INLINE(count, name)
+  DPACK_CLASS_INLINE(count, name)
 };
 
 struct Sprite {
@@ -44,7 +44,7 @@ struct Sprite {
   std::size_t width;
   std::size_t height;
   std::vector<Pixel> data;
-  DATAPACK_CLASS_DECL()
+  DPACK_CLASS_DECL()
 };
 
 struct Entity {
@@ -59,18 +59,18 @@ struct Entity {
   std::array<int, 3> assigned_items; // Tuple
 
   static Entity example();
-  DATAPACK_CLASS_DECL()
+  DPACK_CLASS_DECL()
 };
 
 bool operator==(const Entity& a, const Entity& b);
 
-namespace datapack {
+namespace dpack {
 
-DATAPACK_INLINE(Circle, radius)
-DATAPACK_INLINE(Rect, width, height)
-DATAPACK_INLINE(Pose, x, y, angle)
+DPACK_INLINE(Circle, radius)
+DPACK_INLINE(Rect, width, height)
+DPACK_INLINE(Pose, x, y, angle)
 
-DATAPACK_LABELLED_ENUM(Physics, 3);
-DATAPACK_LABELLED_VARIANT(Shape, 2);
+DPACK_LABELLED_ENUM(Physics, 3);
+DPACK_LABELLED_VARIANT(Shape, 2);
 
-}
+} // namespace dpack

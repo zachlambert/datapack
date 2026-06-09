@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <stack>
 
-namespace datapack::object {
+namespace dpack::object {
 
 static bool binary_match(const binary_t& lhs, const binary_t& rhs) {
   if (lhs.size() != rhs.size()) {
@@ -185,9 +185,9 @@ std::ostream& operator<<(std::ostream& os, ConstObject object) {
   return os;
 }
 
-} // namespace datapack::object
+} // namespace dpack::object
 
-namespace datapack {
+namespace dpack {
 
 void object_prune(Object object) {
   if (!object.is_map()) {
@@ -314,4 +314,4 @@ Object object_diff(ConstObject base_root, ConstObject modified_root) {
   return diff_root;
 }
 
-} // namespace datapack
+} // namespace dpack

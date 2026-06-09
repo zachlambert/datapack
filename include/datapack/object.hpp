@@ -14,7 +14,7 @@
 #include <variant>
 #include <vector>
 
-namespace datapack::object {
+namespace dpack::object {
 
 using number_t = double;
 using binary_t = std::vector<std::uint8_t>;
@@ -243,28 +243,28 @@ private:
   friend class Object_;
 };
 
-} // namespace datapack::object
+} // namespace dpack::object
 
 namespace std {
 
 template <bool Const>
-struct tuple_size<::datapack::object::Item<Const>> {
+struct tuple_size<::dpack::object::Item<Const>> {
   static constexpr size_t value = 2;
 };
 
 template <bool Const>
-struct tuple_element<0, ::datapack::object::Item<Const>> {
-  using type = datapack::object::const_ref_t<Const, std::string>;
+struct tuple_element<0, ::dpack::object::Item<Const>> {
+  using type = dpack::object::const_ref_t<Const, std::string>;
 };
 
 template <bool Const>
-struct tuple_element<1, ::datapack::object::Item<Const>> {
-  using type = ::datapack::object::Object_<Const>;
+struct tuple_element<1, ::dpack::object::Item<Const>> {
+  using type = ::dpack::object::Object_<Const>;
 };
 
 } // namespace std
 
-namespace datapack::object {
+namespace dpack::object {
 
 // ===================================
 // ValuesWrapper
@@ -577,10 +577,10 @@ public:
   using ValuesIterator = ValuesIterator_<Const>;
   using ItemsIterator = ValuesIterator_<Const>;
 
-  using TypeError = ::datapack::object::TypeError;
-  using KeyError = ::datapack::object::KeyError;
-  using UsageError = ::datapack::object::UsageError;
-  using IteratorError = ::datapack::object::IteratorError;
+  using TypeError = ::dpack::object::TypeError;
+  using KeyError = ::dpack::object::KeyError;
+  using UsageError = ::dpack::object::UsageError;
+  using IteratorError = ::dpack::object::IteratorError;
 
 private:
   shared_ptr_t<Const, Tree> tree;
@@ -729,11 +729,11 @@ inline bool operator!=(const primitive_t& lhs, ConstObject rhs) {
 }
 #endif
 
-} // namespace datapack::object
+} // namespace dpack::object
 
-namespace datapack {
+namespace dpack {
 
-// Only Object is "public" within the datapack:: namespace
+// Only Object is "public" within the dpack:: namespace
 
 template <bool Const>
 using Object_ = object::Object_<Const>;
@@ -853,4 +853,4 @@ Object to_object(const T& value) {
   return object;
 }
 
-} // namespace datapack
+} // namespace dpack

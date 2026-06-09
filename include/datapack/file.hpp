@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace datapack {
+namespace dpack {
 
 class FileWriter {
 public:
@@ -120,4 +120,4 @@ T from_file(const std::string& path) {
   return reader.read<T>();
 }
 
-} // namespace datapack
+} // namespace dpack

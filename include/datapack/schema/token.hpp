@@ -11,16 +11,16 @@
 #include <string>
 #include <vector>
 
-namespace datapack {
+namespace dpack {
 
-DATAPACK_LABELLED_ENUM(NumberType, 7);
+DPACK_LABELLED_ENUM(NumberType, 7);
 
 // Cannot put these in the hint header, since this is included by datapack.hpp
-DATAPACK_INLINE(HintChoices, choices);
-DATAPACK_INLINE(HintRange, lower, upper);
-DATAPACK_INLINE(HintPositive, allow_zero);
-DATAPACK_INLINE(HintColor);
-DATAPACK_LABELLED_VARIANT(Hint, 4);
+DPACK_INLINE(HintChoices, choices);
+DPACK_INLINE(HintRange, lower, upper);
+DPACK_INLINE(HintPositive, allow_zero);
+DPACK_INLINE(HintColor);
+DPACK_LABELLED_VARIANT(Hint, 4);
 
 namespace token {
 
@@ -103,7 +103,7 @@ struct TupleNext {};
 struct List {};
 
 struct Hint {
-  ::datapack::Hint hint;
+  ::dpack::Hint hint;
 };
 
 struct Description {
@@ -112,24 +112,24 @@ struct Description {
 
 } // namespace token
 
-DATAPACK_INLINE(token::Number, type)
-DATAPACK_INLINE(token::Boolean)
-DATAPACK_INLINE(token::String)
-DATAPACK_INLINE(token::Enumerate, labels)
-DATAPACK_INLINE(token::Binary)
-DATAPACK_INLINE(token::Optional)
-DATAPACK_INLINE(token::VariantBegin, labels)
-DATAPACK_INLINE(token::VariantNext, index)
-DATAPACK_INLINE(token::VariantEnd)
-DATAPACK_INLINE(token::ObjectBegin)
-DATAPACK_INLINE(token::ObjectNext, key)
-DATAPACK_INLINE(token::ObjectEnd)
-DATAPACK_INLINE(token::TupleBegin)
-DATAPACK_INLINE(token::TupleNext)
-DATAPACK_INLINE(token::TupleEnd)
-DATAPACK_INLINE(token::List)
-DATAPACK_INLINE(token::Hint, hint)
-DATAPACK_INLINE(token::Description, description)
+DPACK_INLINE(token::Number, type)
+DPACK_INLINE(token::Boolean)
+DPACK_INLINE(token::String)
+DPACK_INLINE(token::Enumerate, labels)
+DPACK_INLINE(token::Binary)
+DPACK_INLINE(token::Optional)
+DPACK_INLINE(token::VariantBegin, labels)
+DPACK_INLINE(token::VariantNext, index)
+DPACK_INLINE(token::VariantEnd)
+DPACK_INLINE(token::ObjectBegin)
+DPACK_INLINE(token::ObjectNext, key)
+DPACK_INLINE(token::ObjectEnd)
+DPACK_INLINE(token::TupleBegin)
+DPACK_INLINE(token::TupleNext)
+DPACK_INLINE(token::TupleEnd)
+DPACK_INLINE(token::List)
+DPACK_INLINE(token::Hint, hint)
+DPACK_INLINE(token::Description, description)
 
 using Token = std::variant<
     token::Number,
@@ -150,8 +150,8 @@ using Token = std::variant<
     token::List,
     token::Hint,
     token::Description>;
-DATAPACK_LABELLED_VARIANT(Token, 18);
+DPACK_LABELLED_VARIANT(Token, 18);
 
 bool operator==(const Token& lhs, const Token& rhs);
 
-} // namespace datapack
+} // namespace dpack

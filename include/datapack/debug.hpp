@@ -3,7 +3,7 @@
 #include "datapack/datapack.hpp"
 #include <iostream>
 
-namespace datapack {
+namespace dpack {
 
 class DebugWriter : public Writer {
 public:
@@ -53,9 +53,9 @@ private:
   const T& value;
 };
 
-template <datapack::writeable T>
-std::ostream& operator<<(std::ostream& os, datapack::debug<T> manipulator) {
+template <dpack::writeable T>
+std::ostream& operator<<(std::ostream& os, dpack::debug<T> manipulator) {
   return manipulator(os);
 }
 
-} // namespace datapack
+} // namespace dpack

@@ -3,7 +3,7 @@
 #include "datapack/datapack.hpp"
 #include "datapack/schema/token.hpp"
 
-namespace datapack {
+namespace dpack {
 
 class Tokenizer : public Reader {
 public:
@@ -42,4 +42,4 @@ private:
   bool first_element;
 };
 
-} // namespace datapack
+} // namespace dpack

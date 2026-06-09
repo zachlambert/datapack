@@ -65,7 +65,7 @@ TEST(Debug, ProducesCorrectOutput) {
 )";
 
   std::stringstream ss;
-  datapack::DebugWriter(ss).value(Entity::example());
+  dpack::DebugWriter(ss).value(Entity::example());
   const std::string output = ss.str();
 
   auto expected_lines = get_lines(expected);

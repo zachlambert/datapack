@@ -3,7 +3,7 @@
 #include "datapack/datapack.hpp"
 #include <optional>
 
-namespace datapack {
+namespace dpack {
 
 template <typename T>
 requires writeable<T>
@@ -27,4 +27,4 @@ void read(Reader& reader, std::optional<T>& value) {
   }
 }
 
-} // namespace datapack
+} // namespace dpack

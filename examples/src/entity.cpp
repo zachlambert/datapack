@@ -9,14 +9,14 @@
 #include <datapack/std/variant.hpp>
 #include <datapack/std/vector.hpp>
 
-namespace datapack {
+namespace dpack {
 
-DATAPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
-DATAPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
+DPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
+DPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
 
-} // namespace datapack
+} // namespace dpack
 
-void Sprite::read(datapack::Reader& reader) {
+void Sprite::read(dpack::Reader& reader) {
   reader.object_begin();
   reader.value("width", width);
   reader.value("height", height);
@@ -27,7 +27,7 @@ void Sprite::read(datapack::Reader& reader) {
   reader.object_end();
 }
 
-void Sprite::write(datapack::Writer& writer) const {
+void Sprite::write(dpack::Writer& writer) const {
   writer.object_begin();
   writer.value("width", width);
   writer.value("height", height);
@@ -36,17 +36,19 @@ void Sprite::write(datapack::Writer& writer) const {
   writer.object_end();
 }
 
-DATAPACK_CLASS_DEF(
-    Entity,
-    index,
-    name,
-    enabled,
-    pose,
-    physics,
-    hitbox,
-    sprite,
-    items,
-    assigned_items)
+// clang-format off
+DPACK_CLASS_DEF(Entity,
+  index,
+  name,
+  enabled,
+  pose,
+  physics,
+  hitbox,
+  sprite,
+  items,
+  assigned_items
+)
+// clang-format on
 
 Entity Entity::example() {
   Entity result;

@@ -3,7 +3,7 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace datapack {
+namespace dpack {
 
 void BinaryWriter::number(NumberType type, const void* value) {
   switch (type) {
@@ -88,4 +88,4 @@ void BinaryWriter::value_bool(bool value) {
   pos_++;
 }
 
-} // namespace datapack
+} // namespace dpack

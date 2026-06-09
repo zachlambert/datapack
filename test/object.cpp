@@ -6,7 +6,7 @@
 #include <sstream>
 
 TEST(Object, ConstructFromPrimitive) {
-  using namespace datapack;
+  using namespace dpack;
 
   {
     Object object(1);
@@ -40,7 +40,7 @@ TEST(Object, ConstructFromPrimitive) {
 }
 
 TEST(Object, AssignToPrimitive) {
-  using namespace datapack;
+  using namespace dpack;
 
   {
     Object object;
@@ -79,7 +79,7 @@ TEST(Object, AssignToPrimitive) {
 }
 
 TEST(Object, BuildMapWithOperatorSquareBrackets) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object["a"] = "a";
@@ -90,7 +90,7 @@ TEST(Object, BuildMapWithOperatorSquareBrackets) {
 }
 
 TEST(Object, BuildMapWithInsert) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object.insert("a", "a");
@@ -102,7 +102,7 @@ TEST(Object, BuildMapWithInsert) {
 }
 
 TEST(Object, ConstructMapWithInitializerList) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject object = {{"a", "a"}, {"b", "b"}};
 
@@ -113,7 +113,7 @@ TEST(Object, ConstructMapWithInitializerList) {
 }
 
 TEST(Object, AssignToMapWithInitializerList) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object = {{"a", "a"}, {"b", "b"}};
@@ -125,7 +125,7 @@ TEST(Object, AssignToMapWithInitializerList) {
 }
 
 TEST(Object, BuildList) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object.push_back(10);
@@ -140,7 +140,7 @@ TEST(Object, BuildList) {
 }
 
 TEST(Object, ConstructListFromInitializerList) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject object = {10, 20, 30};
 
@@ -152,7 +152,7 @@ TEST(Object, ConstructListFromInitializerList) {
 }
 
 TEST(Object, AssignToListFromInitializerList) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object = {10, 20, 30};
@@ -165,7 +165,7 @@ TEST(Object, AssignToListFromInitializerList) {
 }
 
 TEST(Object, ConstructMapOfObjectsWithInitializerList) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject object = {{"foo", {{"a", "a"}, {"b", "b"}}}, {"bar", true}, {"baz", {1, 2, 3}}};
 
@@ -195,7 +195,7 @@ TEST(Object, ConstructMapOfObjectsWithInitializerList) {
 }
 
 TEST(Object, ConstructListOfObjectsWithInitializerList) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject object = Object::make_list({"string", {{"a", 10}, {"b", 20}}, {1, 2, 3}});
 
@@ -222,7 +222,7 @@ TEST(Object, ConstructListOfObjectsWithInitializerList) {
 }
 
 TEST(Object, OverwriteToPrimitive) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object = 12;
@@ -247,7 +247,7 @@ TEST(Object, OverwriteToPrimitive) {
 }
 
 TEST(Object, CloneWillNotModifyOriginal) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object = {{"a", 12}, {"b", 24}};
   Object copy = object.clone();
@@ -257,7 +257,7 @@ TEST(Object, CloneWillNotModifyOriginal) {
 }
 
 TEST(Object, CopyWillModifyOriginal) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object = {{"a", 12}, {"b", 24}};
   Object copy = object;
@@ -267,7 +267,7 @@ TEST(Object, CopyWillModifyOriginal) {
 }
 
 TEST(Object, AccessViaAtWillNotModify) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   EXPECT_THROW(object.at("a"), Object::TypeError);
@@ -276,7 +276,7 @@ TEST(Object, AccessViaAtWillNotModify) {
 }
 
 TEST(Object, AccessViaOperatorSquareBracketWillThrowForConstObject) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object["a"] = 12;
@@ -290,7 +290,7 @@ TEST(Object, AccessViaOperatorSquareBracketWillThrowForConstObject) {
 }
 
 TEST(Object, DuplicateInsertionWillThrow) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object.insert("a", "Hello");
@@ -298,7 +298,7 @@ TEST(Object, DuplicateInsertionWillThrow) {
 }
 
 TEST(Object, ObjectContains) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject map = {{"a", 1}, {"b", 2}};
   EXPECT_TRUE(map.contains("a"));
@@ -310,7 +310,7 @@ TEST(Object, ObjectContains) {
 }
 
 TEST(Object, ObjectFindReturnsPtr) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject map = {{"a", 1}, {"b", 2}};
   EXPECT_TRUE(map.find("a") && map.find("a")->number() == 1);
@@ -322,7 +322,7 @@ TEST(Object, ObjectFindReturnsPtr) {
 }
 
 TEST(Object, ObjectEraseRemovesAndDecreasesSize) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object = {{"a", 1}, {"b", 2}, {"c", 2}};
   ASSERT_TRUE(object.contains("b") && object.at("b") == 2);
@@ -334,7 +334,7 @@ TEST(Object, ObjectEraseRemovesAndDecreasesSize) {
 }
 
 TEST(Object, ObjectCanIterateOverListValues) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object = {1, 2, 3};
   {
@@ -367,7 +367,7 @@ TEST(Object, ObjectCanIterateOverListValues) {
 }
 
 TEST(Object, ObjectCanIterateOverMapValuesAndItems) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object = {{"a", 1}, {"b", 2}, {"c", 3}};
   {
@@ -420,7 +420,7 @@ TEST(Object, ObjectCanIterateOverMapValuesAndItems) {
 }
 
 TEST(Object, CanCompareObjectAndPrimitive) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject a(1);
 
@@ -436,7 +436,7 @@ TEST(Object, CanCompareObjectAndPrimitive) {
 }
 
 TEST(Object, CanCompareObjects) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject one = {
       {"a", {1, 2, 3}},
@@ -510,7 +510,7 @@ TEST(Object, CanCompareObjects) {
 }
 
 TEST(Object, CanTraverseWithPtr) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject object = {
       {"a", {1, 2, 3}},
@@ -600,7 +600,7 @@ TEST(Object, CanTraverseWithPtr) {
 }
 
 TEST(Object, Stdout) {
-  using namespace datapack;
+  using namespace dpack;
 
   ConstObject object = {
       {"a", {1, 2, 3}},
@@ -632,7 +632,7 @@ TEST(Object, Stdout) {
 }
 
 TEST(Object, ObjectPrune) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object object;
   object["a"]["a"]["a"].to_map();
@@ -652,7 +652,7 @@ TEST(Object, ObjectPrune) {
 }
 
 TEST(Object, ObjectMerge) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object base;
   base["a"] = 12;
@@ -674,7 +674,7 @@ TEST(Object, ObjectMerge) {
 }
 
 TEST(Object, ObjectDiff) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object base;
   base["a"] = 12;
@@ -696,7 +696,7 @@ TEST(Object, ObjectDiff) {
 }
 
 TEST(Object, ObjectDiffUsageError) {
-  using namespace datapack;
+  using namespace dpack;
 
   Object base;
   base["a"] = 12;
@@ -710,18 +710,18 @@ TEST(Object, ObjectDiffUsageError) {
 }
 
 TEST(Object, Reader) {
-  using namespace datapack;
+  using namespace dpack;
 
   Entity in = Entity::example();
 
-  datapack::Object object = datapack::to_object(in);
-  Entity out = datapack::from_object<Entity>(object);
+  dpack::Object object = dpack::to_object(in);
+  Entity out = dpack::from_object<Entity>(object);
 
   EXPECT_EQ(in, out);
 }
 
 TEST(Object, Writer) {
-  using namespace datapack;
+  using namespace dpack;
 
   Entity entity = Entity::example();
   entity.sprite.data.clear(); // Ignore data

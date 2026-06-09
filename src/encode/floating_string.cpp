@@ -2,9 +2,11 @@
 #include <array>
 #include <charconv>
 
-namespace datapack {
+namespace dpack {
 
-std::string floating_to_string(float value) { return floating_to_string(double(value)); }
+std::string floating_to_string(float value) {
+  return floating_to_string(double(value));
+}
 
 std::string floating_to_string(double value) {
   // Maximum number of values need to represent a double
@@ -13,4 +15,4 @@ std::string floating_to_string(double value) {
   return std::string(string.data(), res.ptr - string.data());
 }
 
-} // namespace datapack
+} // namespace dpack

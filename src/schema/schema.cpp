@@ -6,7 +6,7 @@
 
 #include <stack>
 
-namespace datapack {
+namespace dpack {
 
 Schema::Iterator Schema::Iterator::next() const {
   return Iterator(schema, index + 1);
@@ -302,6 +302,6 @@ bool operator==(const Schema& lhs, const Schema& rhs) {
   return true;
 }
 
-DATAPACK_CLASS_DEF(Schema, tokens)
+DPACK_CLASS_DEF(Schema, tokens)
 
-} // namespace datapack
+} // namespace dpack

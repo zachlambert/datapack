@@ -14,8 +14,8 @@ public:
 
 class Schema {
 public:
-  void apply(Reader& reader, Writer& writer);
-  void apply(Reader&& reader, Writer&& writer) {
+  void apply(Reader& reader, Writer& writer) const;
+  void apply(Reader&& reader, Writer&& writer) const {
     apply(reader, writer);
   }
 
@@ -123,12 +123,14 @@ public:
     T dummy;
     Schema result;
     Tokenizer(result.tokens).value(dummy);
+    result.set_hash();
     return result;
   }
 
   static Schema from_tokens(const std::vector<Token>& tokens) {
     Schema result;
     result.tokens = tokens;
+    result.set_hash();
     return result;
   }
 
@@ -140,53 +142,16 @@ public:
   }
 
   std::uint64_t hash() const {
-    std::uint64_t hash = 0;
-    for (const auto& token : tokens) {
-      hash ^= std::hash<size_t>{}(token.index());
-      if (auto number = std::get_if<token::Number>(&token)) {
-        hash ^= std::hash<int>{}((int)number->type);
-
-      } else if (auto enumerate = std::get_if<token::Enumerate>(&token)) {
-        for (const auto& label : enumerate->labels) {
-          hash ^= std::hash<std::string>{}(label);
-        }
-
-      } else if (auto variant_begin = std::get_if<token::VariantBegin>(&token)) {
-        for (const auto& label : variant_begin->labels) {
-          hash ^= std::hash<std::string>{}(label);
-        }
-
-      } else if (auto variant_next = std::get_if<token::VariantNext>(&token)) {
-        hash ^= std::hash<int>{}(variant_next->index);
-
-      } else if (auto object_next = std::get_if<token::ObjectNext>(&token)) {
-        hash ^= std::hash<std::string>{}(object_next->key);
-
-      } else if (auto hint = std::get_if<token::Hint>(&token)) {
-        hash ^= hint->hint.index();
-        if (auto choices = std::get_if<HintChoices>(&hint->hint)) {
-          for (const auto& choice : choices->choices) {
-            hash ^= std::hash<std::string>{}(choice);
-          }
-        } else if (auto range = std::get_if<HintRange>(&hint->hint)) {
-          // Must match exactly
-          hash ^= std::hash<double>{}(range->lower);
-          hash ^= std::hash<double>{}(range->upper);
-        } else if (auto positive = std::get_if<HintPositive>(&hint->hint)) {
-          hash ^= std::hash<bool>{}(positive->allow_zero);
-        }
-
-      } else if (auto description = std::get_if<token::Description>(&token)) {
-        hash ^= std::hash<std::string>{}(description->description);
-      }
-    }
-    return hash;
+    return hash_;
   }
 
   DATAPACK_CLASS_DECL();
 
 private:
+  void set_hash();
+
   std::vector<Token> tokens;
+  std::uint64_t hash_ = 0;
 
   friend bool operator==(const Schema& lhs, const Schema& rhs);
 };

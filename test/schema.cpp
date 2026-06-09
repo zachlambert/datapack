@@ -138,10 +138,10 @@ TEST(Schema, SchemaMake) {
 TEST(Schema, SchemaApply) {
   Entity example = Entity::example();
 
-  auto json_direct = datapack::write_json(example);
+  auto json_direct = datapack::to_json(example);
 
   auto schema = datapack::Schema::make<Entity>();
-  auto bytes = datapack::write_binary(example);
+  auto bytes = datapack::to_binary(example);
   datapack::Object object;
 
   schema.apply(datapack::BinaryReader(bytes), datapack::ObjectWriter(object));

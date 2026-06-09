@@ -2,6 +2,8 @@
 #include "datapack/encode/base64.hpp"
 #include "datapack/encode/floating_string.hpp"
 #include <assert.h>
+#include <fstream>
+#include <sstream>
 
 namespace datapack {
 
@@ -293,6 +295,18 @@ std::string dump_json(ConstObject object) {
   }
 
   return json;
+}
+
+Object load_json_file(const std::string& file) {
+  std::ifstream is(file);
+  std::stringstream ss;
+  ss << is.rdbuf();
+  return load_json(ss.str());
+}
+
+void dump_json_file(ConstObject object, const std::string& file) {
+  std::ofstream os(file);
+  os << dump_json(object);
 }
 
 } // namespace datapack

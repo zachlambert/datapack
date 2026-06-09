@@ -15,6 +15,15 @@ void FileWriter::close() {
   }
 }
 
+void FileWriter::check_hash(const std::string& label, std::uint64_t hash) {
+  auto iter = label_hashes.find(label);
+  if (iter == label_hashes.end()) {
+    label_hashes.emplace(label, hash);
+  } else if (iter->second != hash) {
+    throw TypeError();
+  }
+}
+
 void FileWriter::write_chunk(
     const std::string& label,
     std::uint64_t hash,
@@ -61,6 +70,22 @@ std::optional<std::string> FileReader::next() {
     throw FileError();
   }
   return current_label;
+}
+
+void FileReader::check_hash(
+    std::uint64_t stored_hash,
+    const std::string& label,
+    std::uint64_t expected_hash) {
+  if (stored_hash != expected_hash) {
+    throw TypeError();
+  }
+  auto iter = label_hashes.find(current_label);
+  if (iter == label_hashes.end()) {
+    label_hashes.emplace(current_label, stored_hash);
+  } else if (iter->second != stored_hash) {
+    // Inconsistent hash for this label
+    throw FileError();
+  }
 }
 
 std::tuple<std::uint64_t, std::vector<std::uint8_t>> FileReader::read_chunk_remainder() {

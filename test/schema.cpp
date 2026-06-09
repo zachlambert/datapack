@@ -16,12 +16,14 @@ TEST(Schema, Iterator) {
     EXPECT_EQ(schema.begin(), schema.end());
   }
   {
+    // clang-format off
     Schema schema = Schema::from_tokens({
-        token::ObjectBegin(),
+      token::ObjectBegin(),
         token::ObjectNext(),
-        token::Number::F64(),
-        token::ObjectEnd() //
+          token::Number::F64(),
+        token::ObjectEnd()
     });
+    // clang-format on
     EXPECT_EQ(schema.begin().skip(), schema.end());
 
     auto child = schema.begin().next().next();
@@ -29,24 +31,26 @@ TEST(Schema, Iterator) {
     EXPECT_EQ(child.skip(), last.next());
   }
   {
+    // clang-format off
     Schema schema = Schema::from_tokens({
-        token::ObjectBegin(),
+      token::ObjectBegin(),
         token::ObjectNext(),
-        token::TupleBegin(),
-        token::TupleNext(),
-        token::String(),
-        token::TupleNext(),
-        token::String(),
-        token::TupleEnd(),
+          token::TupleBegin(),
+            token::TupleNext(),
+              token::String(),
+            token::TupleNext(),
+              token::String(),
+          token::TupleEnd(),
         token::ObjectNext(),
-        token::Optional(),
+          token::Optional(),
         token::ObjectNext(),
-        token::ObjectBegin(),
-        token::ObjectEnd(),
+          token::ObjectBegin(),
+          token::ObjectEnd(),
         token::ObjectNext(),
-        token::Number::F32(),
-        token::ObjectEnd() //
+          token::Number::F32(),
+      token::ObjectEnd() //
     });
+    // clang-format on
     EXPECT_EQ(schema.begin().skip(), schema.end());
 
     auto first_child = schema.begin().next().next();
@@ -63,69 +67,71 @@ TEST(Schema, SchemaMake) {
 
   Schema schema = Schema::make<Entity>();
 
-  std::vector<Token> tokens = {
-      token::ObjectBegin(),
+  // clang-format off
+  auto expected = Schema::from_tokens({
+    token::ObjectBegin(),
       token::ObjectNext("index"),
-      token::Number::I32(),
+        token::Number::I32(),
       token::ObjectNext("name"),
-      token::String(),
+        token::String(),
       token::ObjectNext("enabled"),
-      token::Boolean(),
+        token::Boolean(),
       token::ObjectNext("pose"),
-      token::ObjectBegin(),
-      token::ObjectNext("x"),
-      token::Number::F64(),
-      token::ObjectNext("y"),
-      token::Number::F64(),
-      token::ObjectNext("angle"),
-      token::Number::F64(),
-      token::ObjectEnd(),
+        token::ObjectBegin(),
+          token::ObjectNext("x"),
+            token::Number::F64(),
+          token::ObjectNext("y"),
+            token::Number::F64(),
+          token::ObjectNext("angle"),
+            token::Number::F64(),
+          token::ObjectEnd(),
       token::ObjectNext("physics"),
-      token::Enumerate({"dynamic", "kinematic", "static"}),
+        token::Enumerate({"dynamic", "kinematic", "static"}),
       token::ObjectNext("hitbox"),
-      token::Optional(),
-      token::VariantBegin({"circle", "rect"}),
-      token::VariantNext(0),
-      token::ObjectBegin(),
-      token::ObjectNext("radius"),
-      token::Number::F64(),
-      token::ObjectEnd(),
-      token::VariantNext(1),
-      token::ObjectBegin(),
-      token::ObjectNext("width"),
-      token::Number::F64(),
-      token::ObjectNext("height"),
-      token::Number::F64(),
-      token::ObjectEnd(),
-      token::VariantEnd(),
+        token::Optional(),
+          token::VariantBegin({"circle", "rect"}),
+            token::VariantNext(0),
+              token::ObjectBegin(),
+                token::ObjectNext("radius"),
+                  token::Number::F64(),
+              token::ObjectEnd(),
+            token::VariantNext(1),
+              token::ObjectBegin(),
+                token::ObjectNext("width"),
+                  token::Number::F64(),
+                token::ObjectNext("height"),
+                  token::Number::F64(),
+              token::ObjectEnd(),
+            token::VariantEnd(),
       token::ObjectNext("sprite"),
-      token::ObjectBegin(),
-      token::ObjectNext("width"),
-      token::Number::U64(),
-      token::ObjectNext("height"),
-      token::Number::U64(),
-      token::ObjectNext("data"),
-      token::Binary(),
-      token::ObjectEnd(),
+        token::ObjectBegin(),
+          token::ObjectNext("width"),
+            token::Number::U64(),
+          token::ObjectNext("height"),
+            token::Number::U64(),
+          token::ObjectNext("data"),
+            token::Binary(),
+          token::ObjectEnd(),
       token::ObjectNext("items"),
-      token::List(),
-      token::ObjectBegin(),
-      token::ObjectNext("count"),
-      token::Number::U64(),
-      token::ObjectNext("name"),
-      token::String(),
-      token::ObjectEnd(),
+        token::List(),
+          token::ObjectBegin(),
+            token::ObjectNext("count"),
+              token::Number::U64(),
+            token::ObjectNext("name"),
+              token::String(),
+            token::ObjectEnd(),
       token::ObjectNext("assigned_items"),
-      token::TupleBegin(),
-      token::TupleNext(),
-      token::Number::I32(),
-      token::TupleNext(),
-      token::Number::I32(),
-      token::TupleNext(),
-      token::Number::I32(),
-      token::TupleEnd(),
-      token::ObjectEnd()};
-  auto expected = Schema::from_tokens(tokens);
+        token::TupleBegin(),
+          token::TupleNext(),
+            token::Number::I32(),
+          token::TupleNext(),
+            token::Number::I32(),
+          token::TupleNext(),
+            token::Number::I32(),
+          token::TupleEnd(),
+      token::ObjectEnd()
+  });
+  // clang-format on
 
   EXPECT_EQ(schema, expected);
 }
@@ -147,13 +153,10 @@ TEST(Schema, SchemaApply) {
 
 struct WithLimit {
   double number;
-  void read(datapack::Reader& reader) {
-    reader.constraint(datapack::ConstraintNumberRange(0.0, 1.0));
-    reader.value(number);
-  }
-  void write(datapack::Writer& writer) {
-    writer.value(number);
-  }
+  DATAPACK_CLASS_INLINE_CUSTOM({
+    packer.constraint(datapack::ConstraintNumberRange(0.0, 1.0));
+    packer.value(number);
+  })
 };
 
 TEST(Schema, SchemaWithConstraints) {

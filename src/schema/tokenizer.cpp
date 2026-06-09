@@ -8,11 +8,7 @@ Tokenizer::Tokenizer(std::vector<Token>& tokens) :
 }
 
 void Tokenizer::number(NumberType type, void* value) {
-  if (auto hint = get_hint<HintNumber>()) {
-    tokens.push_back(token::Number(type, std::move(*hint)));
-  } else {
-    tokens.push_back(token::Number(type));
-  }
+  tokens.push_back(token::Number(type));
 }
 
 bool Tokenizer::boolean() {
@@ -21,11 +17,7 @@ bool Tokenizer::boolean() {
 }
 
 const char* Tokenizer::string() {
-  if (auto hint = get_hint<HintString>()) {
-    tokens.push_back(token::String(std::move(*hint)));
-  } else {
-    tokens.push_back(token::String());
-  }
+  tokens.push_back(token::String());
   return nullptr;
 }
 
@@ -62,11 +54,7 @@ void Tokenizer::variant_end() {
 }
 
 void Tokenizer::object_begin() {
-  if (auto hint = get_hint<HintObject>()) {
-    tokens.push_back(token::ObjectBegin(std::move(*hint)));
-  } else {
-    tokens.push_back(token::ObjectBegin());
-  }
+  tokens.push_back(token::ObjectBegin());
 }
 
 void Tokenizer::object_next(const char* key) {
@@ -106,6 +94,16 @@ void Tokenizer::list_next() {
 
 void Tokenizer::list_end() {
   // Nothing required
+}
+
+void Tokenizer::hint(const Hint& hint)
+{
+  tokens.push_back(token::Hint(hint));
+}
+
+void Tokenizer::description(const std::string& description)
+{
+  tokens.push_back(token::Description(description));
 }
 
 } // namespace datapack

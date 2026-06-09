@@ -153,7 +153,7 @@ TEST(Schema, SchemaApply) {
 struct WithLimit {
   double number;
   DATAPACK_CLASS_INLINE_CUSTOM({
-    packer.hint(datapack::HintNumberRange(0.0, 1.0));
+    packer.hint(datapack::HintRange(0.0, 1.0));
     packer.description("Number in the range [0, 1]");
     packer.value(number);
   })
@@ -165,12 +165,22 @@ TEST(Schema, SchemaWithHints) {
 
   static_assert(datapack::supported<datapack::Schema>);
 
-  auto number = iter.number();
-  ASSERT_TRUE(number);
-  ASSERT_TRUE(number->hint.has_value());
+  auto hint = iter.hint();
+  iter = iter.next();
+  ASSERT_TRUE(hint);
+  auto hint_range = std::get_if<datapack::HintRange>(hint);
+  ASSERT_TRUE(hint_range);
+  EXPECT_EQ(hint_range->lower, 0.0);
+  EXPECT_EQ(hint_range->upper, 1.0);
 
-  auto range = std::get_if<datapack::HintNumberRange>(&(*number->hint));
-  ASSERT_TRUE(range);
-  EXPECT_EQ(range->lower, 0.0);
-  EXPECT_EQ(range->upper, 1.0);
+  auto description = iter.description();
+  iter = iter.next();
+  ASSERT_TRUE(description);
+  EXPECT_EQ(*description, "Number in the range [0, 1]");
+
+  auto number = iter.number();
+  iter = iter.next();
+  ASSERT_TRUE(number);
+
+  EXPECT_EQ(iter, schema.end());
 }

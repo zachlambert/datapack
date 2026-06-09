@@ -6,20 +6,17 @@
 
 namespace datapack {
 
-struct HintNumberRange {
+struct HintChoices {
+  std::vector<std::string> choices;
+};
+
+struct HintRange {
   double lower;
   double upper;
 };
 
-struct HintObjectColor {};
+struct HintColor {};
 
-struct HintStringChoices {
-  std::vector<std::string> choices;
-};
-
-using HintNumber = std::variant<HintNumberRange>;
-using HintObject = std::variant<HintObjectColor>;
-using HintString = std::variant<HintStringChoices>;
-using Hint = std::variant<HintNumber, HintObject, HintString>;
+using Hint = std::variant<HintChoices, HintRange, HintColor>;
 
 } // namespace datapack

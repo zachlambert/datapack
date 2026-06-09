@@ -97,7 +97,8 @@ public:
   virtual void list_next() = 0;
   virtual void list_end() = 0;
 
-  // Other
+  // Dummy methods to support the same method calls as Reader()
+  // in macro generated read/write functions
 
   void hint(const Hint&) {
     // Do nothing
@@ -169,38 +170,12 @@ public:
     return is_tokenizer_;
   }
 
-  void hint(const Hint& hint) {
-    hint_ = hint;
-  }
-
-  void description(const std::string& description) {
-    description_ = description;
-  }
-
-protected:
-  template <typename T>
-  std::optional<T> get_hint() {
-    if (!hint_.has_value()) {
-      return std::nullopt;
-    }
-    if (std::get_if<T>(&(*hint_))) {
-      return std::move(std::get<T>(*hint_));
-    }
-    return std::nullopt;
-  }
-
-  std::optional<std::string> get_description() {
-    if (!description_.has_value()) {
-      return std::nullopt;
-    }
-    return std::move(description_);
-  }
+  virtual void hint(const Hint& hint) {}
+  virtual void description(const std::string& description) {}
 
 private:
   bool valid_;
   const bool is_tokenizer_;
-  std::optional<Hint> hint_;
-  std::optional<std::string> description_;
 };
 
 #define DATAPACK_NUMBER(Type, Enum)                                                                \

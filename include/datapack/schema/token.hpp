@@ -16,25 +16,18 @@ namespace datapack {
 DATAPACK_LABELLED_ENUM(NumberType, 7);
 
 // Cannot put these in the hint header, since this is included by datapack.hpp
-
+DATAPACK_INLINE(HintChoices, choices);
+DATAPACK_INLINE(HintRange, lower, upper);
+DATAPACK_INLINE(HintColor);
 DATAPACK_LABELLED_VARIANT(Hint, 3);
-DATAPACK_LABELLED_VARIANT(HintObject, 1);
-DATAPACK_LABELLED_VARIANT(HintNumber, 1);
-DATAPACK_LABELLED_VARIANT(HintString, 1);
-
-DATAPACK_INLINE(HintObjectColor);
-DATAPACK_INLINE(HintNumberRange, lower, upper);
-DATAPACK_INLINE(HintStringChoices, choices);
 
 namespace token {
 
 struct Number {
   NumberType type;
-  std::optional<HintNumber> hint;
 
   explicit Number() {}
   explicit Number(NumberType type) : type(type) {}
-  explicit Number(NumberType type, HintNumber&& hint) : type(type), hint(std::move(hint)) {}
 
   static Number I32() {
     return Number(NumberType::I32);
@@ -61,12 +54,7 @@ struct Number {
 
 struct Boolean {};
 
-struct String {
-  std::optional<HintString> hint;
-
-  String() {}
-  String(const HintString& hint) : hint(hint) {}
-};
+struct String {};
 
 struct Enumerate {
   std::vector<std::string> labels;
@@ -99,11 +87,7 @@ struct VariantNext {
   explicit VariantNext(int index) : index(index) {}
 };
 
-struct ObjectBegin {
-  std::optional<HintObject> hint;
-  ObjectBegin() {}
-  ObjectBegin(HintObject&& hint) : hint(std::move(hint)) {}
-};
+struct ObjectBegin {};
 struct ObjectEnd {};
 struct ObjectNext {
   std::string key;
@@ -117,7 +101,34 @@ struct TupleNext {};
 
 struct List {};
 
+struct Hint {
+  ::datapack::Hint hint;
+};
+
+struct Description {
+  std::string description;
+};
+
 } // namespace token
+
+DATAPACK_INLINE(token::Number, type)
+DATAPACK_INLINE(token::Boolean)
+DATAPACK_INLINE(token::String)
+DATAPACK_INLINE(token::Enumerate, labels)
+DATAPACK_INLINE(token::Binary)
+DATAPACK_INLINE(token::Optional)
+DATAPACK_INLINE(token::VariantBegin, labels)
+DATAPACK_INLINE(token::VariantNext, index)
+DATAPACK_INLINE(token::VariantEnd)
+DATAPACK_INLINE(token::ObjectBegin)
+DATAPACK_INLINE(token::ObjectNext, key)
+DATAPACK_INLINE(token::ObjectEnd)
+DATAPACK_INLINE(token::TupleBegin)
+DATAPACK_INLINE(token::TupleNext)
+DATAPACK_INLINE(token::TupleEnd)
+DATAPACK_INLINE(token::List)
+DATAPACK_INLINE(token::Hint, hint)
+DATAPACK_INLINE(token::Description, description)
 
 using Token = std::variant<
     token::Number,
@@ -135,26 +146,10 @@ using Token = std::variant<
     token::TupleBegin,
     token::TupleNext,
     token::TupleEnd,
-    token::List>;
-
-DATAPACK_INLINE(token::Number, type, hint)
-DATAPACK_INLINE(token::Boolean)
-DATAPACK_INLINE(token::String, hint)
-DATAPACK_INLINE(token::Enumerate, labels)
-DATAPACK_INLINE(token::Binary)
-DATAPACK_INLINE(token::Optional)
-DATAPACK_INLINE(token::VariantBegin, labels)
-DATAPACK_INLINE(token::VariantNext, index)
-DATAPACK_INLINE(token::VariantEnd)
-DATAPACK_INLINE(token::ObjectBegin, hint)
-DATAPACK_INLINE(token::ObjectNext, key)
-DATAPACK_INLINE(token::ObjectEnd)
-DATAPACK_INLINE(token::TupleBegin)
-DATAPACK_INLINE(token::TupleNext)
-DATAPACK_INLINE(token::TupleEnd)
-DATAPACK_INLINE(token::List)
-
-DATAPACK_LABELLED_VARIANT(Token, 16);
+    token::List,
+    token::Hint,
+    token::Description>;
+DATAPACK_LABELLED_VARIANT(Token, 18);
 
 bool operator==(const Token& lhs, const Token& rhs);
 

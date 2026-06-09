@@ -34,6 +34,9 @@ public:
   void list_next() override;
   void list_end() override;
 
+  void hint(const Hint& hint) override;
+  void description(const std::string& description) override;
+
 private:
   std::vector<Token>& tokens;
   bool first_element;

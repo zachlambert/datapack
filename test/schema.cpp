@@ -153,23 +153,34 @@ TEST(Schema, SchemaApply) {
 struct WithLimit {
   double number;
   DATAPACK_CLASS_INLINE_CUSTOM({
-    packer.constraint(datapack::ConstraintNumberRange(0.0, 1.0));
+    packer.hint(datapack::HintRange(0.0, 1.0));
+    packer.description("Number in the range [0, 1]");
     packer.value(number);
   })
 };
 
-TEST(Schema, SchemaWithConstraints) {
+TEST(Schema, SchemaWithHints) {
   auto schema = datapack::Schema::make<WithLimit>();
   auto iter = schema.begin();
 
   static_assert(datapack::supported<datapack::Schema>);
 
-  auto number = iter.number();
-  ASSERT_TRUE(number);
-  ASSERT_TRUE(number->constraint.has_value());
+  auto hint = iter.hint();
+  iter = iter.next();
+  ASSERT_TRUE(hint);
+  auto hint_range = std::get_if<datapack::HintRange>(hint);
+  ASSERT_TRUE(hint_range);
+  EXPECT_EQ(hint_range->lower, 0.0);
+  EXPECT_EQ(hint_range->upper, 1.0);
 
-  auto range = std::get_if<datapack::ConstraintNumberRange>(&(*number->constraint));
-  ASSERT_TRUE(range);
-  EXPECT_EQ(range->lower, 0.0);
-  EXPECT_EQ(range->upper, 1.0);
+  auto description = iter.description();
+  iter = iter.next();
+  ASSERT_TRUE(description);
+  EXPECT_EQ(*description, "Number in the range [0, 1]");
+
+  auto number = iter.number();
+  iter = iter.next();
+  ASSERT_TRUE(number);
+
+  EXPECT_EQ(iter, schema.end());
 }

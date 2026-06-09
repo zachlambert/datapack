@@ -8,11 +8,7 @@ Tokenizer::Tokenizer(std::vector<Token>& tokens) :
 }
 
 void Tokenizer::number(NumberType type, void* value) {
-  if (auto constraint = get_constraint<ConstraintNumber>()) {
-    tokens.push_back(token::Number(type, std::move(*constraint)));
-  } else {
-    tokens.push_back(token::Number(type));
-  }
+  tokens.push_back(token::Number(type));
 }
 
 bool Tokenizer::boolean() {
@@ -58,11 +54,7 @@ void Tokenizer::variant_end() {
 }
 
 void Tokenizer::object_begin() {
-  if (auto constraint = get_constraint<ConstraintObject>()) {
-    tokens.push_back(token::ObjectBegin(std::move(*constraint)));
-  } else {
-    tokens.push_back(token::ObjectBegin());
-  }
+  tokens.push_back(token::ObjectBegin());
 }
 
 void Tokenizer::object_next(const char* key) {
@@ -102,6 +94,16 @@ void Tokenizer::list_next() {
 
 void Tokenizer::list_end() {
   // Nothing required
+}
+
+void Tokenizer::hint(const Hint& hint)
+{
+  tokens.push_back(token::Hint(hint));
+}
+
+void Tokenizer::description(const std::string& description)
+{
+  tokens.push_back(token::Description(description));
 }
 
 } // namespace datapack

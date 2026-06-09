@@ -1,7 +1,7 @@
 #pragma once
 
-#include "datapack/constraint.hpp"
 #include "datapack/datapack.hpp"
+#include "datapack/hint.hpp"
 #include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
 #include "datapack/std/optional.hpp"
@@ -15,24 +15,20 @@ namespace datapack {
 
 DATAPACK_LABELLED_ENUM(NumberType, 7);
 
-// Cannot put these in the constraint header, since this is included by datapack.hpp
-
-DATAPACK_LABELLED_VARIANT(Constraint, 2);
-DATAPACK_LABELLED_VARIANT(ConstraintObject, 1);
-DATAPACK_LABELLED_VARIANT(ConstraintNumber, 1);
-
-DATAPACK_INLINE(ConstraintObjectColor);
-DATAPACK_INLINE(ConstraintNumberRange, lower, upper);
+// Cannot put these in the hint header, since this is included by datapack.hpp
+DATAPACK_INLINE(HintChoices, choices);
+DATAPACK_INLINE(HintRange, lower, upper);
+DATAPACK_INLINE(HintPositive, allow_zero);
+DATAPACK_INLINE(HintColor);
+DATAPACK_LABELLED_VARIANT(Hint, 4);
 
 namespace token {
 
 struct Number {
   NumberType type;
-  std::optional<ConstraintNumber> constraint;
+
   explicit Number() {}
   explicit Number(NumberType type) : type(type) {}
-  explicit Number(NumberType type, ConstraintNumber&& constraint) :
-      type(type), constraint(std::move(constraint)) {}
 
   static Number I32() {
     return Number(NumberType::I32);
@@ -92,11 +88,7 @@ struct VariantNext {
   explicit VariantNext(int index) : index(index) {}
 };
 
-struct ObjectBegin {
-  std::optional<ConstraintObject> constraint;
-  ObjectBegin() {}
-  ObjectBegin(ConstraintObject&& constraint) : constraint(std::move(constraint)) {}
-};
+struct ObjectBegin {};
 struct ObjectEnd {};
 struct ObjectNext {
   std::string key;
@@ -110,7 +102,34 @@ struct TupleNext {};
 
 struct List {};
 
+struct Hint {
+  ::datapack::Hint hint;
+};
+
+struct Description {
+  std::string description;
+};
+
 } // namespace token
+
+DATAPACK_INLINE(token::Number, type)
+DATAPACK_INLINE(token::Boolean)
+DATAPACK_INLINE(token::String)
+DATAPACK_INLINE(token::Enumerate, labels)
+DATAPACK_INLINE(token::Binary)
+DATAPACK_INLINE(token::Optional)
+DATAPACK_INLINE(token::VariantBegin, labels)
+DATAPACK_INLINE(token::VariantNext, index)
+DATAPACK_INLINE(token::VariantEnd)
+DATAPACK_INLINE(token::ObjectBegin)
+DATAPACK_INLINE(token::ObjectNext, key)
+DATAPACK_INLINE(token::ObjectEnd)
+DATAPACK_INLINE(token::TupleBegin)
+DATAPACK_INLINE(token::TupleNext)
+DATAPACK_INLINE(token::TupleEnd)
+DATAPACK_INLINE(token::List)
+DATAPACK_INLINE(token::Hint, hint)
+DATAPACK_INLINE(token::Description, description)
 
 using Token = std::variant<
     token::Number,
@@ -128,26 +147,10 @@ using Token = std::variant<
     token::TupleBegin,
     token::TupleNext,
     token::TupleEnd,
-    token::List>;
-
-DATAPACK_INLINE(token::Number, type, constraint)
-DATAPACK_INLINE(token::Boolean)
-DATAPACK_INLINE(token::String)
-DATAPACK_INLINE(token::Enumerate, labels)
-DATAPACK_INLINE(token::Binary)
-DATAPACK_INLINE(token::Optional)
-DATAPACK_INLINE(token::VariantBegin, labels)
-DATAPACK_INLINE(token::VariantNext, index)
-DATAPACK_INLINE(token::VariantEnd)
-DATAPACK_INLINE(token::ObjectBegin, constraint)
-DATAPACK_INLINE(token::ObjectNext, key)
-DATAPACK_INLINE(token::ObjectEnd)
-DATAPACK_INLINE(token::TupleBegin)
-DATAPACK_INLINE(token::TupleNext)
-DATAPACK_INLINE(token::TupleEnd)
-DATAPACK_INLINE(token::List)
-
-DATAPACK_LABELLED_VARIANT(Token, 16);
+    token::List,
+    token::Hint,
+    token::Description>;
+DATAPACK_LABELLED_VARIANT(Token, 18);
 
 bool operator==(const Token& lhs, const Token& rhs);
 

@@ -190,7 +190,7 @@ inline PolyInterfaces<Base>* get_poly_interfaces() {
   return dynamic_cast<PolyInterfaces<Base>*>(iter->second.get());
 }
 
-template <typename Base, supported Impl>
+template <typename Base, serializable Impl>
 void register_polymorphic(const std::string& label) {
   get_poly_interfaces<Base>()->template add<Impl>(label);
 }

@@ -1,6 +1,7 @@
 #include "datapack/binary.hpp"
 #include <assert.h>
 #include <cstring>
+#include <stdexcept>
 
 namespace datapack {
 
@@ -30,20 +31,26 @@ void BinaryWriter::number(NumberType type, const void* value) {
   }
 }
 
-void BinaryWriter::boolean(bool value) { value_bool(value); }
+void BinaryWriter::boolean(bool value) {
+  value_bool(value);
+}
 
 void BinaryWriter::string(const char* value) {
   std::size_t size = std::strlen(value) + 1;
-  buffer.resize(pos + size);
-  strncpy((char*)&buffer[pos], value, size);
-  pos += size;
+  if (pos_ + size > buffer.size()) {
+    throw std::runtime_error("Writer buffer is too small");
+  }
+  strncpy((char*)&buffer[pos_], value, size);
+  pos_ += size;
 }
 
 void BinaryWriter::enumerate(int value, const std::span<const char*>& labels) {
   value_number(value);
 }
 
-void BinaryWriter::optional_begin(bool has_value) { value_bool(has_value); }
+void BinaryWriter::optional_begin(bool has_value) {
+  value_bool(has_value);
+}
 
 void BinaryWriter::variant_begin(int value, const std::span<const char*>& labels) {
   value_number(value);
@@ -51,40 +58,34 @@ void BinaryWriter::variant_begin(int value, const std::span<const char*>& labels
 
 void BinaryWriter::binary(const std::span<const std::uint8_t>& data) {
   value_number(std::uint64_t(data.size()));
-  buffer.resize(pos + data.size());
-  std::memcpy(&buffer[pos], data.data(), data.size());
-  pos += data.size();
+  if (pos_ + data.size() > buffer.size()) {
+    throw std::runtime_error("Writer buffer is too small");
+  }
+  std::memcpy(&buffer[pos_], data.data(), data.size());
+  pos_ += data.size();
 }
 
-void BinaryWriter::list_begin() {
-  list_length_offsets.push(pos);
-  value_number(std::uint64_t(0));
-}
-
-void BinaryWriter::list_next() {
-  assert(!list_length_offsets.empty());
-  std::uint64_t& length = *((std::uint64_t*)(buffer.data() + list_length_offsets.top()));
-  length++;
-}
-
-void BinaryWriter::list_end() {
-  //
-  list_length_offsets.pop();
+void BinaryWriter::list_begin(size_t size) {
+  value_number(size);
 }
 
 // Note: Fine to put implementation in source file here, since all usage of the
 // method occurs in the same source file
 template <typename T>
 void BinaryWriter::value_number(T value) {
-  buffer.resize(pos + sizeof(T));
-  *((T*)&buffer[pos]) = value;
-  pos += sizeof(T);
+  if (pos_ + sizeof(T) > buffer.size()) {
+    throw std::runtime_error("Writer buffer is too small");
+  }
+  *((T*)&buffer[pos_]) = value;
+  pos_ += sizeof(T);
 }
 
 void BinaryWriter::value_bool(bool value) {
-  buffer.resize(pos + 1);
-  buffer[pos] = (value ? 0x01 : 0x00);
-  pos++;
+  if (pos_ + 1 > buffer.size()) {
+    throw std::runtime_error("Writer buffer is too small");
+  }
+  buffer[pos_] = (value ? 0x01 : 0x00);
+  pos_++;
 }
 
 } // namespace datapack

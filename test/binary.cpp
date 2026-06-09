@@ -2,7 +2,7 @@
 #include <datapack/examples/entity.hpp>
 #include <gtest/gtest.h>
 
-TEST(Format, Binary) {
+TEST(Binary, WriteRead) {
   Entity in = Entity::example();
 
   std::vector<std::uint8_t> data = datapack::write_binary(in);

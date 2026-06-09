@@ -8,7 +8,7 @@ namespace datapack {
 template <typename K, typename V>
 requires writeable<K> && writeable<V>
 void write(Writer& writer, const std::unordered_map<K, V>& map) {
-  writer.list_begin();
+  writer.list_begin(map.size());
   for (const auto& [key, value] : map) {
     writer.list_next();
     writer.tuple_begin();
@@ -27,8 +27,9 @@ template <typename K, typename V>
 requires readable<K> && readable<V>
 void read(Reader& reader, std::unordered_map<K, V>& map) {
   map.clear();
-  reader.list_begin();
-  while (reader.list_next()) {
+  const size_t size = reader.list_begin();
+  for (size_t i = 0; i < size; i++) {
+    reader.list_next();
     reader.tuple_begin();
 
     K key;

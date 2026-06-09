@@ -70,25 +70,10 @@ std::span<const std::uint8_t> BinaryReader::binary() {
   return result;
 }
 
-void BinaryReader::list_begin() {
+size_t BinaryReader::list_begin() {
   std::uint64_t length;
   value_number(length);
-  list_remaining.push(length);
-}
-
-bool BinaryReader::list_next() {
-  assert(!list_remaining.empty());
-  if (list_remaining.top() > 0) {
-    list_remaining.top()--;
-    return true;
-  }
-  return false;
-}
-
-void BinaryReader::list_end() {
-  assert(!list_remaining.empty());
-  assert(list_remaining.top() == 0);
-  list_remaining.pop();
+  return length;
 }
 
 template <typename T>

@@ -793,7 +793,7 @@ public:
   void tuple_next() override;
   void tuple_end() override;
 
-  void list_begin() override;
+  void list_begin(size_t size) override;
   void list_next() override;
   void list_end() override;
 
@@ -826,8 +826,8 @@ public:
   void tuple_end() override;
   void tuple_next() override;
 
-  void list_begin() override;
-  bool list_next() override;
+  size_t list_begin() override;
+  void list_next() override;
   void list_end() override;
 
 private:

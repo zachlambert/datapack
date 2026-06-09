@@ -92,7 +92,7 @@ public:
 
   // Variable-size containers
 
-  virtual void list_begin() = 0;
+  virtual void list_begin(size_t size) = 0;
   virtual void list_next() = 0;
   virtual void list_end() = 0;
 
@@ -163,8 +163,8 @@ public:
 
   // Variable-size containers
 
-  virtual void list_begin() = 0;
-  virtual bool list_next() = 0;
+  virtual size_t list_begin() = 0;
+  virtual void list_next() = 0;
   virtual void list_end() = 0;
 
   // Other

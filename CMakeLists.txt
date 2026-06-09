@@ -16,6 +16,7 @@ endif()
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
     add_library(datapack SHARED
         src/binary/reader.cpp
+        src/binary/size_writer.cpp
         src/binary/writer.cpp
         src/encode/base64.cpp
         src/encode/floating_string.cpp

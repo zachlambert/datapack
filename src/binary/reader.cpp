@@ -1,7 +1,6 @@
 #include "datapack/binary.hpp"
 #include <assert.h>
 #include <cstring>
-#include <stdexcept>
 
 namespace datapack {
 

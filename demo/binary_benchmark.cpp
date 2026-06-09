@@ -236,12 +236,11 @@ int main() {
     entity.sprite.height = 20;
     entity.sprite.data.resize(20 * 20);
   }
-  std::size_t reserve_size = datapack::write_binary(input).size() * 2;
   std::size_t sprite_size = input[0].sprite.data.size();
 
   {
     std::vector<std::uint8_t> data;
-    data.reserve(reserve_size);
+    data.resize(datapack::binary_size(input));
     std::vector<Entity> output(input.size());
     for (auto& entity : output) {
       entity.sprite.data.reserve(sprite_size);
@@ -264,7 +263,7 @@ int main() {
 
   {
     std::vector<std::uint8_t> data;
-    data.reserve(reserve_size);
+    data.resize(datapack::binary_size(input));
     std::vector<Entity> output(input.size());
     for (auto& entity : output) {
       entity.sprite.data.reserve(sprite_size);
@@ -272,7 +271,6 @@ int main() {
     measure("binary write with datapack", N, [&]() {
       datapack::BinaryWriter writer(data);
       auto before = Clock::now();
-      // printf("Input size: %zu\n", input.size());
       writer.value(input);
       auto after = Clock::now();
       return after - before;

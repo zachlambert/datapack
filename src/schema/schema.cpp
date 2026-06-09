@@ -54,7 +54,7 @@ Schema::Iterator Schema::Iterator::skip() const {
   return Iterator(schema, skip_index);
 }
 
-void Schema::apply(Reader& reader, Writer& writer) {
+void Schema::apply(Reader& reader, Writer& writer) const {
   std::stack<Iterator> stack;
   std::stack<size_t> list_remaining;
 
@@ -244,6 +244,49 @@ void Schema::apply(Reader& reader, Writer& writer) {
     }
 
     throw SchemaError("Unexpected token");
+  }
+}
+
+void Schema::set_hash() {
+  hash_ = 0;
+  for (const auto& token : tokens) {
+    hash_ ^= std::hash<size_t>{}(token.index());
+    if (auto number = std::get_if<token::Number>(&token)) {
+      hash_ ^= std::hash<int>{}((int)number->type);
+
+    } else if (auto enumerate = std::get_if<token::Enumerate>(&token)) {
+      for (const auto& label : enumerate->labels) {
+        hash_ ^= std::hash<std::string>{}(label);
+      }
+
+    } else if (auto variant_begin = std::get_if<token::VariantBegin>(&token)) {
+      for (const auto& label : variant_begin->labels) {
+        hash_ ^= std::hash<std::string>{}(label);
+      }
+
+    } else if (auto variant_next = std::get_if<token::VariantNext>(&token)) {
+      hash_ ^= std::hash<int>{}(variant_next->index);
+
+    } else if (auto object_next = std::get_if<token::ObjectNext>(&token)) {
+      hash_ ^= std::hash<std::string>{}(object_next->key);
+
+    } else if (auto hint = std::get_if<token::Hint>(&token)) {
+      hash_ ^= hint->hint.index();
+      if (auto choices = std::get_if<HintChoices>(&hint->hint)) {
+        for (const auto& choice : choices->choices) {
+          hash_ ^= std::hash<std::string>{}(choice);
+        }
+      } else if (auto range = std::get_if<HintRange>(&hint->hint)) {
+        // Must match exactly
+        hash_ ^= std::hash<double>{}(range->lower);
+        hash_ ^= std::hash<double>{}(range->upper);
+      } else if (auto positive = std::get_if<HintPositive>(&hint->hint)) {
+        hash_ ^= std::hash<bool>{}(positive->allow_zero);
+      }
+
+    } else if (auto description = std::get_if<token::Description>(&token)) {
+      hash_ ^= std::hash<std::string>{}(description->description);
+    }
   }
 }
 

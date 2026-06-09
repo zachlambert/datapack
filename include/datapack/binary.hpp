@@ -128,7 +128,7 @@ size_t binary_size(const T& value) {
 }
 
 template <writeable T>
-std::vector<std::uint8_t> write_binary(const T& value) {
+std::vector<std::uint8_t> to_binary(const T& value) {
   std::vector<std::uint8_t> buffer(binary_size(value));
   BinaryWriter writer(buffer);
   writer.value(value);
@@ -139,7 +139,7 @@ std::vector<std::uint8_t> write_binary(const T& value) {
 }
 
 template <writeable T>
-void write_binary(const T& value, const std::span<std::uint8_t>& buffer) {
+void to_binary(const T& value, const std::span<std::uint8_t>& buffer) {
   BinaryWriter writer(buffer);
   writer.value(value);
   if (writer.pos() != buffer.size()) {
@@ -148,7 +148,7 @@ void write_binary(const T& value, const std::span<std::uint8_t>& buffer) {
 }
 
 template <readable T>
-T read_binary(const std::span<const std::uint8_t>& buffer) {
+T from_binary(const std::span<const std::uint8_t>& buffer) {
   T result;
   BinaryReader(buffer).value(result);
   return result;

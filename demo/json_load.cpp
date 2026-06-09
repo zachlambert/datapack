@@ -12,14 +12,14 @@ int main() {
             "foo": "bar"
         }
     })";
-    auto object = datapack::load_json(json);
+    auto object = dpack::load_json(json);
     std::cout << object << std::endl;
   }
 
   std::cout << "JSON2\n";
   {
     const std::string json = R"("hello")";
-    auto object = datapack::load_json(json);
+    auto object = dpack::load_json(json);
     std::cout << object << std::endl;
   }
 

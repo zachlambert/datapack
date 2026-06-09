@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace datapack {
+namespace dpack {
 
 DATAPACK_LABELLED_ENUM(NumberType, 7);
 
@@ -103,7 +103,7 @@ struct TupleNext {};
 struct List {};
 
 struct Hint {
-  ::datapack::Hint hint;
+  ::dpack::Hint hint;
 };
 
 struct Description {
@@ -154,4 +154,4 @@ DATAPACK_LABELLED_VARIANT(Token, 18);
 
 bool operator==(const Token& lhs, const Token& rhs);
 
-} // namespace datapack
+} // namespace dpack

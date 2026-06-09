@@ -8,7 +8,7 @@
 #include <span>
 #include <string>
 
-namespace datapack {
+namespace dpack {
 
 enum class NumberType { I32, I64, U32, U64, U8, F32, F64 };
 
@@ -314,46 +314,46 @@ void read(Reader& reader, T& value) {
 // Class macros
 
 #define DATAPACK_CLASS_DECL()                                                                      \
-  void read(::datapack::Reader& packer);                                                           \
-  void write(::datapack::Writer& packer) const;
+  void read(::dpack::Reader& packer);                                                           \
+  void write(::dpack::Writer& packer) const;
 
 #define DATAPACK_CLASS_DEF(Class, ...)                                                             \
-  void Class::read(::datapack::Reader& packer) {                                                   \
+  void Class::read(::dpack::Reader& packer) {                                                   \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
     packer.object_end();                                                                           \
   }                                                                                                \
-  void Class::write(::datapack::Writer& packer) const {                                            \
+  void Class::write(::dpack::Writer& packer) const {                                            \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
     packer.object_end();                                                                           \
   }
 
 #define DATAPACK_CLASS_DEF_CUSTOM(Class, ...)                                                      \
-  void Class::read(::datapack::Reader& packer) {                                                   \
+  void Class::read(::dpack::Reader& packer) {                                                   \
     __VA_ARGS__;                                                                                   \
   }                                                                                                \
-  void Class::write(::datapack::Writer& packer) const {                                            \
+  void Class::write(::dpack::Writer& packer) const {                                            \
     __VA_ARGS__;                                                                                   \
   }
 
 #define DATAPACK_CLASS_INLINE(...)                                                                 \
-  void read(::datapack::Reader& packer) {                                                          \
+  void read(::dpack::Reader& packer) {                                                          \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
     packer.object_end();                                                                           \
   }                                                                                                \
-  void write(::datapack::Writer& packer) const {                                                   \
+  void write(::dpack::Writer& packer) const {                                                   \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
     packer.object_end();                                                                           \
   }
 
 #define DATAPACK_CLASS_INLINE_CUSTOM(...)                                                          \
-  void read(::datapack::Reader& packer) {                                                          \
+  void read(::dpack::Reader& packer) {                                                          \
     __VA_ARGS__;                                                                                   \
   }                                                                                                \
-  void write(::datapack::Writer& packer) const {                                                   \
+  void write(::dpack::Writer& packer) const {                                                   \
     __VA_ARGS__;                                                                                   \
   }
 
@@ -418,4 +418,4 @@ void read(Reader& reader, T& value) {
   template void read<__VA_ARGS__>(Reader & packer, Type<__VA_ARGS__> & value);                     \
   template void write<__VA_ARGS__>(Writer & packer, const Type<__VA_ARGS__>& value);
 
-} // namespace datapack
+} // namespace dpack

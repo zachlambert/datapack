@@ -6,12 +6,12 @@
 #include <filesystem>
 
 TEST(File, WriteRead) {
-  datapack::FileWriter writer("entity.dtp");
+  dpack::FileWriter writer("entity.dpack");
   writer.write("list", std::vector<int>{1, 2, 3});
   writer.write<std::string>("string", "hello");
   writer.write("entity", Entity::example());
 
-  datapack::FileReader reader("entity.dtp");
+  dpack::FileReader reader("entity.dpack");
   int i = 0;
   while (auto label = reader.next()) {
     if (label == "list") {
@@ -35,5 +35,5 @@ TEST(File, WriteRead) {
     i++;
   }
 
-  std::filesystem::remove("entity.dtp");
+  std::filesystem::remove("entity.dpack");
 }

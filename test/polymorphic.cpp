@@ -49,13 +49,13 @@ public:
 };
 
 template <>
-void datapack::register_polymorphic_defaults<Fruit>() {
+void dpack::register_polymorphic_defaults<Fruit>() {
   register_polymorphic<Fruit, Apple>("apple");
   register_polymorphic<Fruit, Banana>("banana");
 }
 
 TEST(Poly, WriteRead) {
-  using namespace datapack;
+  using namespace dpack;
 
   // Support "static" implementations (defined in register_polymorphic_defaults)
   // as well as those defined at runtime

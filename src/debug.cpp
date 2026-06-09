@@ -4,7 +4,7 @@
 #include "datapack/encode/base64.hpp"
 #endif
 
-namespace datapack {
+namespace dpack {
 
 DebugWriter::DebugWriter(std::ostream& os) : os(os), depth(0) {}
 
@@ -130,4 +130,4 @@ void DebugWriter::indent() {
   }
 }
 
-} // namespace datapack
+} // namespace dpack

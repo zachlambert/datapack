@@ -64,7 +64,7 @@ struct Entity {
 
 bool operator==(const Entity& a, const Entity& b);
 
-namespace datapack {
+namespace dpack {
 
 DATAPACK_INLINE(Circle, radius)
 DATAPACK_INLINE(Rect, width, height)

@@ -27,8 +27,8 @@ TEST(Encode, Base64) {
     const auto& bytes = examples_bytes[i];
     const auto& text = examples_text[i];
 
-    ASSERT_EQ(datapack::base64_encode(bytes), text);
-    ASSERT_EQ(datapack::base64_decode(text), bytes);
+    ASSERT_EQ(dpack::base64_encode(bytes), text);
+    ASSERT_EQ(dpack::base64_decode(text), bytes);
   }
 }
 
@@ -37,7 +37,7 @@ TEST(Encode, String) {
   // Most precise value = 1 + 1 / 2^(23 - 1)
   {
     float in = 1.f + 1.f / float(long(2) << (23 - 1));
-    std::string string = datapack::floating_to_string(in);
+    std::string string = dpack::floating_to_string(in);
     float out = std::stof(string);
     EXPECT_NE(in, 1.f);
     EXPECT_EQ(in, out);
@@ -50,7 +50,7 @@ TEST(Encode, String) {
   // Most precise value = 1 + 1 / 2^(52 - 1)
   {
     double in = 1.0 + 1.0 / double(long(2) << (52 - 1));
-    std::string string = datapack::floating_to_string(in);
+    std::string string = dpack::floating_to_string(in);
     double out = std::stod(string);
     EXPECT_NE(in, 1.0);
     EXPECT_EQ(in, out);

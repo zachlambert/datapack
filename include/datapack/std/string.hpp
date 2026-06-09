@@ -3,7 +3,7 @@
 #include "datapack/datapack.hpp"
 #include <string>
 
-namespace datapack {
+namespace dpack {
 
 inline void write(Writer& writer, const std::string& value) {
   writer.string(value.c_str());
@@ -17,4 +17,4 @@ inline void read(Reader& reader, std::string& value) {
   }
 }
 
-} // namespace datapack
+} // namespace dpack

@@ -1,7 +1,7 @@
 #include "datapack/file.hpp"
 #include <cstring>
 
-namespace datapack {
+namespace dpack {
 
 static const char* SPECIAL = "DATAPACK";
 
@@ -117,4 +117,4 @@ void FileReader::skip() {
   }
 }
 
-} // namespace datapack
+} // namespace dpack

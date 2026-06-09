@@ -1,6 +1,6 @@
 #include "datapack/schema/token.hpp"
 
-namespace datapack {
+namespace dpack {
 
 DATAPACK_LABELLED_ENUM_DEF(NumberType) = {"i32", "i64", "u32", "u64", "u8", "f32", "f64"};
 
@@ -95,4 +95,4 @@ bool operator==(const Token& lhs, const Token& rhs) {
   return true;
 }
 
-} // namespace datapack
+} // namespace dpack

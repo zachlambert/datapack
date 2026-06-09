@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <cstring>
 
-namespace datapack {
+namespace dpack {
 
 void BinaryReader::number(NumberType type, void* value) {
   switch (type) {
@@ -101,4 +101,4 @@ bool BinaryReader::value_bool() {
   return value_int;
 }
 
-} // namespace datapack
+} // namespace dpack

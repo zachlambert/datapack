@@ -1,7 +1,7 @@
 #include "datapack/encode/base64.hpp"
 #include <stdexcept>
 
-namespace datapack {
+namespace dpack {
 
 // https://en.wikipedia.org/wiki/Base64
 // Using the base-64 alphabet defined in RFC 4648
@@ -143,4 +143,4 @@ std::size_t base64_decoded_length(const std::string& text) {
   return length + 3;
 }
 
-} // namespace datapack
+} // namespace dpack

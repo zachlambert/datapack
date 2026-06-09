@@ -4,7 +4,7 @@
 #include <span>
 #include <variant>
 
-namespace datapack {
+namespace dpack {
 
 template <typename T>
 struct variant_details {};
@@ -47,7 +47,7 @@ const char* variant_to_label(const T& value) {
   return variant_labels<T>[value.index()];
 }
 
-} // namespace datapack
+} // namespace dpack
 
 #define DATAPACK_LABELLED_VARIANT(T, Size)                                                         \
   template <>                                                                                      \

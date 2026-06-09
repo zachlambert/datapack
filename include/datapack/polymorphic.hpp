@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace datapack {
+namespace dpack {
 
 class PolyError : public std::runtime_error {
 public:
@@ -215,4 +215,4 @@ void read(Reader& reader, std::shared_ptr<Base>& value) {
   get_poly_interfaces<Base>()->read(reader, value);
 }
 
-} // namespace datapack
+} // namespace dpack

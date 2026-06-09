@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <cstring>
 
-namespace datapack {
+namespace dpack {
 
 void BinarySizeWriter::number(NumberType type, const void*) {
   switch (type) {
@@ -59,4 +59,4 @@ void BinarySizeWriter::list_begin(size_t size) {
   size_ += sizeof(size);
 }
 
-} // namespace datapack
+} // namespace dpack

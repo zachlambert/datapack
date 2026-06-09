@@ -5,7 +5,7 @@
 #include "datapack/schema/tokenizer.hpp"
 #include <stdexcept>
 
-namespace datapack {
+namespace dpack {
 
 class SchemaError : public std::runtime_error {
 public:
@@ -167,4 +167,4 @@ std::uint64_t get_hash() {
   return hash;
 }
 
-} // namespace datapack
+} // namespace dpack

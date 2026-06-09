@@ -1,6 +1,6 @@
 #include "datapack/object.hpp"
 
-namespace datapack::object {
+namespace dpack::object {
 
 void Tree::set_node(int index, const value_t& value) {
   clear_node(index);
@@ -232,4 +232,4 @@ void Tree::pop_node(int index) {
   free.push_back(index);
 }
 
-} // namespace datapack::object
+} // namespace dpack::object

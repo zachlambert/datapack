@@ -63,7 +63,7 @@ static const std::string entity_json = R"({
 TEST(Format, JsonDump) {
   Entity example = Entity::example();
   example.sprite.data.clear(); // Avoid having to verify base-64 encoded data
-  const std::string output = datapack::to_json(example);
+  const std::string output = dpack::to_json(example);
 
   auto expected_lines = get_lines(entity_json);
   auto output_lines = get_lines(output);
@@ -74,7 +74,7 @@ TEST(Format, JsonDump) {
 }
 
 TEST(Format, JsonLoad) {
-  Entity value = datapack::from_json<Entity>(entity_json);
+  Entity value = dpack::from_json<Entity>(entity_json);
   auto expected = Entity::example();
   expected.sprite.data.clear(); // Ignore data
   ASSERT_EQ(value, expected);

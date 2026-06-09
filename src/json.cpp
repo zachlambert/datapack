@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-namespace datapack {
+namespace dpack {
 
 Object load_json(const std::string& json) {
   static constexpr int EXPECT_ELEMENT = 1 << 0;
@@ -309,4 +309,4 @@ void dump_json_file(ConstObject object, const std::string& file) {
   os << dump_json(object);
 }
 
-} // namespace datapack
+} // namespace dpack

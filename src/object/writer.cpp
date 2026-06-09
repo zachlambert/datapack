@@ -1,7 +1,7 @@
 #include "datapack/object.hpp"
 #include <cstring>
 
-namespace datapack {
+namespace dpack {
 
 ObjectWriter::ObjectWriter(Object object) : node(object.ptr()), container_begin(false) {}
 
@@ -139,4 +139,4 @@ void ObjectWriter::list_next() {
   assert(node);
 }
 
-} // namespace datapack
+} // namespace dpack

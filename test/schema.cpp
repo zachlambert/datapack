@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 
 TEST(Schema, Iterator) {
-  using namespace datapack;
+  using namespace dpack;
   {
     Schema schema = Schema::from_tokens({});
     EXPECT_EQ(schema.begin(), schema.end());
@@ -62,7 +62,7 @@ TEST(Schema, Iterator) {
 }
 
 TEST(Schema, SchemaMake) {
-  using namespace datapack;
+  using namespace dpack;
 
   Schema schema = Schema::make<Entity>();
 
@@ -138,14 +138,14 @@ TEST(Schema, SchemaMake) {
 TEST(Schema, SchemaApply) {
   Entity example = Entity::example();
 
-  auto json_direct = datapack::to_json(example);
+  auto json_direct = dpack::to_json(example);
 
-  auto schema = datapack::Schema::make<Entity>();
-  auto bytes = datapack::to_binary(example);
-  datapack::Object object;
+  auto schema = dpack::Schema::make<Entity>();
+  auto bytes = dpack::to_binary(example);
+  dpack::Object object;
 
-  schema.apply(datapack::BinaryReader(bytes), datapack::ObjectWriter(object));
-  auto json_via_schema = datapack::dump_json(object);
+  schema.apply(dpack::BinaryReader(bytes), dpack::ObjectWriter(object));
+  auto json_via_schema = dpack::dump_json(object);
 
   EXPECT_EQ(json_direct, json_via_schema);
 }
@@ -153,22 +153,22 @@ TEST(Schema, SchemaApply) {
 struct WithLimit {
   double number;
   DATAPACK_CLASS_INLINE_CUSTOM({
-    packer.hint(datapack::HintRange(0.0, 1.0));
+    packer.hint(dpack::HintRange(0.0, 1.0));
     packer.description("Number in the range [0, 1]");
     packer.value(number);
   })
 };
 
 TEST(Schema, SchemaWithHints) {
-  auto schema = datapack::Schema::make<WithLimit>();
+  auto schema = dpack::Schema::make<WithLimit>();
   auto iter = schema.begin();
 
-  static_assert(datapack::supported<datapack::Schema>);
+  static_assert(dpack::supported<dpack::Schema>);
 
   auto hint = iter.hint();
   iter = iter.next();
   ASSERT_TRUE(hint);
-  auto hint_range = std::get_if<datapack::HintRange>(hint);
+  auto hint_range = std::get_if<dpack::HintRange>(hint);
   ASSERT_TRUE(hint_range);
   EXPECT_EQ(hint_range->lower, 0.0);
   EXPECT_EQ(hint_range->upper, 1.0);

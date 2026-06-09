@@ -1,7 +1,7 @@
 #include "datapack/random.hpp"
 #include <cstring>
 
-namespace datapack {
+namespace dpack {
 
 RandomReader::RandomReader() {}
 
@@ -65,4 +65,4 @@ size_t RandomReader::list_begin() {
   return rand() % 10;
 }
 
-} // namespace datapack
+} // namespace dpack

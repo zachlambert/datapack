@@ -5,7 +5,7 @@
 #include <stack>
 #include <string>
 
-namespace datapack {
+namespace dpack {
 
 class RandomReader : public Reader {
 public:
@@ -46,4 +46,4 @@ T random() {
   return result;
 }
 
-} // namespace datapack
+} // namespace dpack

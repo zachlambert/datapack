@@ -4,7 +4,7 @@
 #include <array>
 #include <cstring>
 
-namespace datapack {
+namespace dpack {
 
 template <typename T, std::size_t N>
 requires writeable<T>
@@ -29,4 +29,4 @@ void read(Reader& reader, std::array<T, N>& value) {
   return;
 }
 
-} // namespace datapack
+} // namespace dpack

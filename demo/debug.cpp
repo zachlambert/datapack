@@ -2,6 +2,6 @@
 #include <datapack/examples/entity.hpp>
 
 int main() {
-  std::cout << datapack::debug(Entity::example()) << std::endl;
+  std::cout << dpack::debug(Entity::example()) << std::endl;
   return 0;
 }

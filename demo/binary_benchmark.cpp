@@ -229,7 +229,7 @@ int main() {
   std::size_t N = 100;
   std::vector<Entity> input;
   for (std::size_t n = 0; n < 20; n++) {
-    input.push_back(datapack::random<Entity>());
+    input.push_back(dpack::random<Entity>());
   }
   for (auto& entity : input) {
     entity.sprite.width = 20;
@@ -240,7 +240,7 @@ int main() {
 
   {
     std::vector<std::uint8_t> data;
-    data.resize(datapack::binary_size(input));
+    data.resize(dpack::binary_size(input));
     std::vector<Entity> output(input.size());
     for (auto& entity : output) {
       entity.sprite.data.reserve(sprite_size);
@@ -263,20 +263,20 @@ int main() {
 
   {
     std::vector<std::uint8_t> data;
-    data.resize(datapack::binary_size(input));
+    data.resize(dpack::binary_size(input));
     std::vector<Entity> output(input.size());
     for (auto& entity : output) {
       entity.sprite.data.reserve(sprite_size);
     }
     measure("binary write with datapack", N, [&]() {
-      datapack::BinaryWriter writer(data);
+      dpack::BinaryWriter writer(data);
       auto before = Clock::now();
       writer.value(input);
       auto after = Clock::now();
       return after - before;
     });
     measure("binary read with datapack", N, [&]() {
-      datapack::BinaryReader reader(data);
+      dpack::BinaryReader reader(data);
       auto before = Clock::now();
       reader.value(output);
       // printf("Output size: %zu\n", output.size());

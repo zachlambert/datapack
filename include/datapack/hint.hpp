@@ -15,8 +15,15 @@ struct HintRange {
   double upper;
 };
 
+struct HintPositive {
+  bool allow_zero;
+
+  HintPositive() : allow_zero(false) {}
+  HintPositive(bool allow_zero) : allow_zero(allow_zero) {}
+};
+
 struct HintColor {};
 
-using Hint = std::variant<HintChoices, HintRange, HintColor>;
+using Hint = std::variant<HintChoices, HintRange, HintPositive, HintColor>;
 
 } // namespace datapack

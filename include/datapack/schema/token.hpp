@@ -18,8 +18,9 @@ DATAPACK_LABELLED_ENUM(NumberType, 7);
 // Cannot put these in the hint header, since this is included by datapack.hpp
 DATAPACK_INLINE(HintChoices, choices);
 DATAPACK_INLINE(HintRange, lower, upper);
+DATAPACK_INLINE(HintPositive, allow_zero);
 DATAPACK_INLINE(HintColor);
-DATAPACK_LABELLED_VARIANT(Hint, 3);
+DATAPACK_LABELLED_VARIANT(Hint, 4);
 
 namespace token {
 

@@ -50,6 +50,11 @@ bool operator==(const Hint& lhs, const Hint& rhs) {
     if (lrange->upper != rrange.upper) {
       return false;
     }
+  } else if (auto lpositive = std::get_if<HintPositive>(&lhs)) {
+    auto& rpositive = std::get<HintPositive>(rhs);
+    if (lpositive->allow_zero != rpositive.allow_zero) {
+      return false;
+    }
   }
   return true;
 }

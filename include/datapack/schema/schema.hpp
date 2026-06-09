@@ -172,6 +172,8 @@ public:
           // Must match exactly
           hash ^= std::hash<double>{}(range->lower);
           hash ^= std::hash<double>{}(range->upper);
+        } else if (auto positive = std::get_if<HintPositive>(&hint->hint)) {
+          hash ^= std::hash<bool>{}(positive->allow_zero);
         }
 
       } else if (auto description = std::get_if<token::Description>(&token)) {

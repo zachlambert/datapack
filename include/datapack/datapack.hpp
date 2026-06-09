@@ -4,7 +4,6 @@
 #include "datapack/labelled_enum.hpp"
 #include <concepts>
 #include <cstdint>
-#include <optional>
 #include <span>
 #include <string>
 
@@ -178,7 +177,7 @@ private:
   const bool is_tokenizer_;
 };
 
-#define DATAPACK_NUMBER(Type, Enum)                                                                \
+#define DPACK_NUMBER(Type, Enum)                                                                   \
   inline void write(Writer& writer, const Type& value) {                                           \
     writer.number(NumberType::Enum, &value);                                                       \
   }                                                                                                \
@@ -186,15 +185,15 @@ private:
     reader.number(NumberType::Enum, &value);                                                       \
   }
 
-DATAPACK_NUMBER(std::int32_t, I32);
-DATAPACK_NUMBER(std::int64_t, I64);
-DATAPACK_NUMBER(std::uint32_t, U32);
-DATAPACK_NUMBER(std::uint64_t, U64);
-DATAPACK_NUMBER(std::uint8_t, U8);
-DATAPACK_NUMBER(float, F32);
-DATAPACK_NUMBER(double, F64);
+DPACK_NUMBER(std::int32_t, I32);
+DPACK_NUMBER(std::int64_t, I64);
+DPACK_NUMBER(std::uint32_t, U32);
+DPACK_NUMBER(std::uint64_t, U64);
+DPACK_NUMBER(std::uint8_t, U8);
+DPACK_NUMBER(float, F32);
+DPACK_NUMBER(double, F64);
 
-#undef DATAPACK_NUMBER
+#undef DPACK_NUMBER
 
 inline void write(Writer& writer, const bool& value) {
   writer.boolean(value);
@@ -217,72 +216,72 @@ void read(Reader& reader, T& value) {
 // Hopefully this can be replaced by C++ reflection at some point
 // https://stackoverflow.com/a/11994395
 
-#define _DATAPACK_FE_0(WHAT)
-#define _DATAPACK_FE_1(WHAT, X) WHAT(X)
-#define _DATAPACK_FE_2(WHAT, X, ...) WHAT(X) _DATAPACK_FE_1(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_3(WHAT, X, ...) WHAT(X) _DATAPACK_FE_2(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_4(WHAT, X, ...) WHAT(X) _DATAPACK_FE_3(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_5(WHAT, X, ...) WHAT(X) _DATAPACK_FE_4(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_6(WHAT, X, ...) WHAT(X) _DATAPACK_FE_5(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_7(WHAT, X, ...) WHAT(X) _DATAPACK_FE_6(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_8(WHAT, X, ...) WHAT(X) _DATAPACK_FE_7(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_9(WHAT, X, ...) WHAT(X) _DATAPACK_FE_8(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_10(WHAT, X, ...) WHAT(X) _DATAPACK_FE_9(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_11(WHAT, X, ...) WHAT(X) _DATAPACK_FE_10(WHAT, __VA_ARGS__)
-#define _DATAPACK_FE_12(WHAT, X, ...) WHAT(X) _DATAPACK_FE_11(WHAT, __VA_ARGS__)
+#define _DPACK_FE_0(WHAT)
+#define _DPACK_FE_1(WHAT, X) WHAT(X)
+#define _DPACK_FE_2(WHAT, X, ...) WHAT(X) _DPACK_FE_1(WHAT, __VA_ARGS__)
+#define _DPACK_FE_3(WHAT, X, ...) WHAT(X) _DPACK_FE_2(WHAT, __VA_ARGS__)
+#define _DPACK_FE_4(WHAT, X, ...) WHAT(X) _DPACK_FE_3(WHAT, __VA_ARGS__)
+#define _DPACK_FE_5(WHAT, X, ...) WHAT(X) _DPACK_FE_4(WHAT, __VA_ARGS__)
+#define _DPACK_FE_6(WHAT, X, ...) WHAT(X) _DPACK_FE_5(WHAT, __VA_ARGS__)
+#define _DPACK_FE_7(WHAT, X, ...) WHAT(X) _DPACK_FE_6(WHAT, __VA_ARGS__)
+#define _DPACK_FE_8(WHAT, X, ...) WHAT(X) _DPACK_FE_7(WHAT, __VA_ARGS__)
+#define _DPACK_FE_9(WHAT, X, ...) WHAT(X) _DPACK_FE_8(WHAT, __VA_ARGS__)
+#define _DPACK_FE_10(WHAT, X, ...) WHAT(X) _DPACK_FE_9(WHAT, __VA_ARGS__)
+#define _DPACK_FE_11(WHAT, X, ...) WHAT(X) _DPACK_FE_10(WHAT, __VA_ARGS__)
+#define _DPACK_FE_12(WHAT, X, ...) WHAT(X) _DPACK_FE_11(WHAT, __VA_ARGS__)
 
-#define _DATAPACK_GET_MACRO(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, NAME, ...) NAME
-#define _DATAPACK_FOR_EACH(action, ...)                                                            \
-  _DATAPACK_GET_MACRO(                                                                             \
+#define _DPACK_GET_MACRO(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, NAME, ...) NAME
+#define _DPACK_FOR_EACH(action, ...)                                                               \
+  _DPACK_GET_MACRO(                                                                                \
       _0 __VA_OPT__(, ) __VA_ARGS__,                                                               \
-      _DATAPACK_FE_12,                                                                             \
-      _DATAPACK_FE_11,                                                                             \
-      _DATAPACK_FE_10,                                                                             \
-      _DATAPACK_FE_9,                                                                              \
-      _DATAPACK_FE_8,                                                                              \
-      _DATAPACK_FE_7,                                                                              \
-      _DATAPACK_FE_6,                                                                              \
-      _DATAPACK_FE_5,                                                                              \
-      _DATAPACK_FE_4,                                                                              \
-      _DATAPACK_FE_3,                                                                              \
-      _DATAPACK_FE_2,                                                                              \
-      _DATAPACK_FE_1,                                                                              \
-      _DATAPACK_FE_0)                                                                              \
+      _DPACK_FE_12,                                                                                \
+      _DPACK_FE_11,                                                                                \
+      _DPACK_FE_10,                                                                                \
+      _DPACK_FE_9,                                                                                 \
+      _DPACK_FE_8,                                                                                 \
+      _DPACK_FE_7,                                                                                 \
+      _DPACK_FE_6,                                                                                 \
+      _DPACK_FE_5,                                                                                 \
+      _DPACK_FE_4,                                                                                 \
+      _DPACK_FE_3,                                                                                 \
+      _DPACK_FE_2,                                                                                 \
+      _DPACK_FE_1,                                                                                 \
+      _DPACK_FE_0)                                                                                 \
   (action __VA_OPT__(, ) __VA_ARGS__)
 
-#define _DATAPACK_VALUE(X) packer.value(#X, value.X);
-#define _DATAPACK_CLASS_VALUE(X) packer.value(#X, X);
+#define _DPACK_VALUE(X) packer.value(#X, value.X);
+#define _DPACK_CLASS_VALUE(X) packer.value(#X, X);
 
 // https://stackoverflow.com/a/62984543
 // Needs to support both:
-//   _DATAPACK_DEPAREN((x, y)) -> x, y   Does have parentheses
-//   _DATAPACK_DEPAREN(x)      -> x      Doesn't have parentheses
-#define _DATAPACK_DEPAREN(X) _DATAPACK_REMOVE_DP_PAREN(_DP_PAREN X)
+//   _DPACK_DEPAREN((x, y)) -> x, y   Does have parentheses
+//   _DPACK_DEPAREN(x)      -> x      Doesn't have parentheses
+#define _DPACK_DEPAREN(X) _DPACK_REMOVE_DP_PAREN(_DP_PAREN X)
 #define _DP_PAREN(...) _DP_PAREN __VA_ARGS__
-#define _DATAPACK_REMOVE_DP_PAREN(...) _DATAPACK_REMOVE_DP_PAREN2(__VA_ARGS__)
-#define _DATAPACK_REMOVE_DP_PAREN2(...) _IGNORE##__VA_ARGS__
+#define _DPACK_REMOVE_DP_PAREN(...) _DPACK_REMOVE_DP_PAREN2(__VA_ARGS__)
+#define _DPACK_REMOVE_DP_PAREN2(...) _IGNORE##__VA_ARGS__
 #define _IGNORE_DP_PAREN
 
 // ===================================================================================
 // Free function macros
 
-#define DATAPACK_DECL(Type)                                                                        \
+#define DPACK_DECL(Type)                                                                           \
   void read(Reader& packer, Type& value);                                                          \
   void write(Writer& packer, const Type& value);
 
-#define DATAPACK_DEF(Type, ...)                                                                    \
+#define DPACK_DEF(Type, ...)                                                                       \
   void read(Reader& packer, Type& value) {                                                         \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }                                                                                                \
   void write(Writer& packer, const Type& value) {                                                  \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }
 
-#define DATAPACK_DEF_CUSTOM(Type, ...)                                                             \
+#define DPACK_DEF_CUSTOM(Type, ...)                                                                \
   void read(Reader& packer, Type& value) {                                                         \
     __VA_ARGS__;                                                                                   \
   }                                                                                                \
@@ -290,19 +289,19 @@ void read(Reader& reader, T& value) {
     __VA_ARGS__;                                                                                   \
   }
 
-#define DATAPACK_INLINE(Type, ...)                                                                 \
+#define DPACK_INLINE(Type, ...)                                                                    \
   inline void read(Reader& packer, Type& value) {                                                  \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }                                                                                                \
   inline void write(Writer& packer, const Type& value) {                                           \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }
 
-#define DATAPACK_INLINE_CUSTOM(Type, ...)                                                          \
+#define DPACK_INLINE_CUSTOM(Type, ...)                                                             \
   inline void read(Reader& packer, Type& value) {                                                  \
     __VA_ARGS__;                                                                                   \
   }                                                                                                \
@@ -313,108 +312,108 @@ void read(Reader& reader, T& value) {
 // ===================================================================================
 // Class macros
 
-#define DATAPACK_CLASS_DECL()                                                                      \
-  void read(::dpack::Reader& packer);                                                           \
+#define DPACK_CLASS_DECL()                                                                         \
+  void read(::dpack::Reader& packer);                                                              \
   void write(::dpack::Writer& packer) const;
 
-#define DATAPACK_CLASS_DEF(Class, ...)                                                             \
-  void Class::read(::dpack::Reader& packer) {                                                   \
+#define DPACK_CLASS_DEF(Class, ...)                                                                \
+  void Class::read(::dpack::Reader& packer) {                                                      \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }                                                                                                \
-  void Class::write(::dpack::Writer& packer) const {                                            \
+  void Class::write(::dpack::Writer& packer) const {                                               \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
-    packer.object_end();                                                                           \
-  }
-
-#define DATAPACK_CLASS_DEF_CUSTOM(Class, ...)                                                      \
-  void Class::read(::dpack::Reader& packer) {                                                   \
-    __VA_ARGS__;                                                                                   \
-  }                                                                                                \
-  void Class::write(::dpack::Writer& packer) const {                                            \
-    __VA_ARGS__;                                                                                   \
-  }
-
-#define DATAPACK_CLASS_INLINE(...)                                                                 \
-  void read(::dpack::Reader& packer) {                                                          \
-    packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
-    packer.object_end();                                                                           \
-  }                                                                                                \
-  void write(::dpack::Writer& packer) const {                                                   \
-    packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }
 
-#define DATAPACK_CLASS_INLINE_CUSTOM(...)                                                          \
-  void read(::dpack::Reader& packer) {                                                          \
+#define DPACK_CLASS_DEF_CUSTOM(Class, ...)                                                         \
+  void Class::read(::dpack::Reader& packer) {                                                      \
     __VA_ARGS__;                                                                                   \
   }                                                                                                \
-  void write(::dpack::Writer& packer) const {                                                   \
+  void Class::write(::dpack::Writer& packer) const {                                               \
+    __VA_ARGS__;                                                                                   \
+  }
+
+#define DPACK_CLASS_INLINE(...)                                                                    \
+  void read(::dpack::Reader& packer) {                                                             \
+    packer.object_begin();                                                                         \
+    _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  void write(::dpack::Writer& packer) const {                                                      \
+    packer.object_begin();                                                                         \
+    _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }
+
+#define DPACK_CLASS_INLINE_CUSTOM(...)                                                             \
+  void read(::dpack::Reader& packer) {                                                             \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  void write(::dpack::Writer& packer) const {                                                      \
     __VA_ARGS__;                                                                                   \
   }
 
 // ===================================================================================
 // Templated macros
 
-#define DATAPACK_TEMPLATED_INLINE(Type, Typenames, ...)                                            \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
+#define DPACK_TEMPLATED_INLINE(Type, Typenames, ...)                                               \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void read(Reader& packer, _DPACK_DEPAREN(Type) & value) {                                        \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }                                                                                                \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void write(Writer& packer, const _DPACK_DEPAREN(Type) & value) {                                 \
     packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
-    packer.object_end();                                                                           \
-  }
-
-#define DATAPACK_TEMPLATED_INLINE_CUSTOM(Type, Typenames, ...)                                     \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
-    __VA_ARGS__;                                                                                   \
-  }                                                                                                \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
-    __VA_ARGS__;                                                                                   \
-  }
-
-#define DATAPACK_TEMPLATED_DECL(Type, Typenames)                                                   \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value);                                      \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value);
-
-#define DATAPACK_TEMPLATED_DEF(Type, Typenames, ...)                                               \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
-    packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
-    packer.object_end();                                                                           \
-  }                                                                                                \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
-    packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }
 
-#define DATAPACK_TEMPLATED_DEF_CUSTOM(Type, Typenames, ...)                                        \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
+#define DPACK_TEMPLATED_INLINE_CUSTOM(Type, Typenames, ...)                                        \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void read(Reader& packer, _DPACK_DEPAREN(Type) & value) {                                        \
     __VA_ARGS__;                                                                                   \
   }                                                                                                \
-  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
-  void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void write(Writer& packer, const _DPACK_DEPAREN(Type) & value) {                                 \
     __VA_ARGS__;                                                                                   \
   }
 
-#define DATAPACK_TEMPLATED_INSTANTIATE(Type, ...)                                                  \
+#define DPACK_TEMPLATED_DECL(Type, Typenames)                                                      \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void read(Reader& packer, _DPACK_DEPAREN(Type) & value);                                         \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void write(Writer& packer, const _DPACK_DEPAREN(Type) & value);
+
+#define DPACK_TEMPLATED_DEF(Type, Typenames, ...)                                                  \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void read(Reader& packer, _DPACK_DEPAREN(Type) & value) {                                        \
+    packer.object_begin();                                                                         \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void write(Writer& packer, const _DPACK_DEPAREN(Type) & value) {                                 \
+    packer.object_begin();                                                                         \
+    _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
+    packer.object_end();                                                                           \
+  }
+
+#define DPACK_TEMPLATED_DEF_CUSTOM(Type, Typenames, ...)                                           \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void read(Reader& packer, _DPACK_DEPAREN(Type) & value) {                                        \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  template <_DPACK_DEPAREN(Typenames)>                                                             \
+  void write(Writer& packer, const _DPACK_DEPAREN(Type) & value) {                                 \
+    __VA_ARGS__;                                                                                   \
+  }
+
+#define DPACK_TEMPLATED_INSTANTIATE(Type, ...)                                                     \
   template void read<__VA_ARGS__>(Reader & packer, Type<__VA_ARGS__> & value);                     \
   template void write<__VA_ARGS__>(Writer & packer, const Type<__VA_ARGS__>& value);
 

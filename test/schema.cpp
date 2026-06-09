@@ -152,7 +152,7 @@ TEST(Schema, SchemaApply) {
 
 struct WithLimit {
   double number;
-  DATAPACK_CLASS_INLINE_CUSTOM({
+  DPACK_CLASS_INLINE_CUSTOM({
     packer.hint(dpack::HintRange(0.0, 1.0));
     packer.description("Number in the range [0, 1]");
     packer.value(number);

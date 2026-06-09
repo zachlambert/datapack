@@ -11,8 +11,8 @@
 
 namespace dpack {
 
-DATAPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
-DATAPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
+DPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
+DPACK_LABELLED_ENUM_DEF(Physics) = {"dynamic", "kinematic", "static"};
 
 } // namespace dpack
 
@@ -36,7 +36,7 @@ void Sprite::write(dpack::Writer& writer) const {
   writer.object_end();
 }
 
-DATAPACK_CLASS_DEF(
+DPACK_CLASS_DEF(
     Entity,
     index,
     name,

@@ -18,7 +18,7 @@ public:
     return "apple has the color " + color;
   }
 
-  DATAPACK_CLASS_INLINE(color);
+  DPACK_CLASS_INLINE(color);
 
 private:
   std::string color;
@@ -33,7 +33,7 @@ public:
     return "banana has length " + std::to_string(length);
   }
 
-  DATAPACK_CLASS_INLINE(length);
+  DPACK_CLASS_INLINE(length);
 
 private:
   int length;
@@ -45,7 +45,7 @@ public:
     return "pear";
   }
 
-  DATAPACK_CLASS_INLINE();
+  DPACK_CLASS_INLINE();
 };
 
 template <>

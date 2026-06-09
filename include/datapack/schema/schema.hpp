@@ -145,7 +145,7 @@ public:
     return hash_;
   }
 
-  DATAPACK_CLASS_DECL();
+  DPACK_CLASS_DECL();
 
 private:
   void set_hash();

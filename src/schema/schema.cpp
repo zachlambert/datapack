@@ -302,6 +302,6 @@ bool operator==(const Schema& lhs, const Schema& rhs) {
   return true;
 }
 
-DATAPACK_CLASS_DEF(Schema, tokens)
+DPACK_CLASS_DEF(Schema, tokens)
 
 } // namespace dpack

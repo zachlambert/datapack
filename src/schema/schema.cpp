@@ -56,6 +56,7 @@ Schema::Iterator Schema::Iterator::skip() const {
 
 void Schema::apply(Reader& reader, Writer& writer) {
   std::stack<Iterator> stack;
+  std::stack<size_t> list_remaining;
 
   for (auto iter = begin(); iter != end(); iter = iter.next()) {
     while (!stack.empty()) {
@@ -104,12 +105,18 @@ void Schema::apply(Reader& reader, Writer& writer) {
       }
 
       if (parent.list()) {
-        if (!reader.list_next()) {
+        if (list_remaining.empty()) {
+          throw std::runtime_error("Shouldn't happen");
+        }
+        if (list_remaining.top() == 0) {
           reader.list_end();
           writer.list_end();
+          list_remaining.pop();
           stack.pop();
           continue;
         }
+        list_remaining.top()--;
+        reader.list_next();
         writer.list_next();
         iter = parent.next();
         break;
@@ -164,8 +171,9 @@ void Schema::apply(Reader& reader, Writer& writer) {
       continue;
     }
     if (iter.list()) {
-      reader.list_begin();
-      writer.list_begin();
+      const size_t size = reader.list_begin();
+      list_remaining.push(size);
+      writer.list_begin(size);
       stack.push(iter);
       continue;
     }

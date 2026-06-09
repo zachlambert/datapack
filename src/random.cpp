@@ -31,7 +31,9 @@ void RandomReader::number(NumberType type, void* value) {
   }
 }
 
-bool RandomReader::boolean() { return (rand() % 2) == 1; }
+bool RandomReader::boolean() {
+  return (rand() % 2) == 1;
+}
 
 const char* RandomReader::string() {
   // Length: [4, 20]
@@ -43,9 +45,13 @@ const char* RandomReader::string() {
   return string_temp.c_str();
 }
 
-int RandomReader::enumerate(const std::span<const char*>& labels) { return rand() % labels.size(); }
+int RandomReader::enumerate(const std::span<const char*>& labels) {
+  return rand() % labels.size();
+}
 
-bool RandomReader::optional_begin() { return rand() % 2 == 1; }
+bool RandomReader::optional_begin() {
+  return rand() % 2 == 1;
+}
 
 int RandomReader::variant_begin(const std::span<const char*>& labels) {
   return rand() % labels.size();
@@ -55,20 +61,8 @@ std::span<const std::uint8_t> RandomReader::binary() {
   return {(const std::uint8_t*)nullptr, 0};
 }
 
-void RandomReader::list_begin() {
-  list_counters.push(rand() % 10);
-}
-
-bool RandomReader::list_next() {
-  if (list_counters.top() > 0) {
-    list_counters.top()--;
-    return true;
-  }
-  return false;
-}
-
-void RandomReader::list_end() {
-  list_counters.pop();
+size_t RandomReader::list_begin() {
+  return rand() % 10;
 }
 
 } // namespace datapack

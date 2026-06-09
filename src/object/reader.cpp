@@ -176,31 +176,31 @@ void ObjectReader::tuple_end() {
   container_begin = false;
 }
 
-void ObjectReader::list_begin() {
+size_t ObjectReader::list_begin() {
   if (!node->is_list()) {
     invalidate();
-    return;
+    return 0;
   }
   container_begin = true;
+  return node->size();
 }
 
-bool ObjectReader::list_next() {
+void ObjectReader::list_next() {
   if (container_begin) {
     auto child = node.child();
     if (!child) {
-      return false;
+      throw std::runtime_error("At the end of the list, no more items");
     }
     node = child;
     container_begin = false;
-    return true;
+    return;
   }
 
   auto next = node.next();
   if (!next) {
-    return false;
+    throw std::runtime_error("At the end of the list, no more items");
   }
   node = next;
-  return true;
 }
 
 void ObjectReader::list_end() {

@@ -30,7 +30,9 @@ void BinaryWriter::number(NumberType type, const void* value) {
   }
 }
 
-void BinaryWriter::boolean(bool value) { value_bool(value); }
+void BinaryWriter::boolean(bool value) {
+  value_bool(value);
+}
 
 void BinaryWriter::string(const char* value) {
   std::size_t size = std::strlen(value) + 1;
@@ -43,7 +45,9 @@ void BinaryWriter::enumerate(int value, const std::span<const char*>& labels) {
   value_number(value);
 }
 
-void BinaryWriter::optional_begin(bool has_value) { value_bool(has_value); }
+void BinaryWriter::optional_begin(bool has_value) {
+  value_bool(has_value);
+}
 
 void BinaryWriter::variant_begin(int value, const std::span<const char*>& labels) {
   value_number(value);
@@ -56,20 +60,8 @@ void BinaryWriter::binary(const std::span<const std::uint8_t>& data) {
   pos += data.size();
 }
 
-void BinaryWriter::list_begin() {
-  list_length_offsets.push(pos);
-  value_number(std::uint64_t(0));
-}
-
-void BinaryWriter::list_next() {
-  assert(!list_length_offsets.empty());
-  std::uint64_t& length = *((std::uint64_t*)(buffer.data() + list_length_offsets.top()));
-  length++;
-}
-
-void BinaryWriter::list_end() {
-  //
-  list_length_offsets.pop();
+void BinaryWriter::list_begin(size_t size) {
+  value_number(size);
 }
 
 // Note: Fine to put implementation in source file here, since all usage of the

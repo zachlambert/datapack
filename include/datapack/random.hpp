@@ -31,12 +31,11 @@ public:
   void tuple_end() override {}
   void tuple_next() override {}
 
-  void list_begin() override;
-  bool list_next() override;
-  void list_end() override;
+  size_t list_begin() override;
+  void list_next() override {}
+  void list_end() override {}
 
 private:
-  std::stack<int> list_counters;
   std::string string_temp;
 };
 

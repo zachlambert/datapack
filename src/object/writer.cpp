@@ -1,4 +1,3 @@
-#include "datapack/encode/base64.hpp"
 #include "datapack/object.hpp"
 #include <cstring>
 
@@ -118,7 +117,7 @@ void ObjectWriter::tuple_next() {
   assert(node);
 }
 
-void ObjectWriter::list_begin() {
+void ObjectWriter::list_begin(size_t) {
   node->to_list();
   container_begin = true;
 }

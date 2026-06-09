@@ -85,20 +85,19 @@ void Tokenizer::tuple_end() {
   tokens.push_back(token::TupleEnd());
 }
 
-void Tokenizer::list_begin() {
+size_t Tokenizer::list_begin() {
   tokens.push_back(token::List());
   first_element = true;
+  return 0; // Not used
 }
 
-bool Tokenizer::list_next() {
+void Tokenizer::list_next() {
   // No need to maintain stack, list_next() will be the first thing
   // called after list_begin() so only need to check if this is the first
   // call after list_begin()
   if (first_element) {
     first_element = false;
-    return true;
   }
-  return false;
 }
 
 void Tokenizer::list_end() {

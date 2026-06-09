@@ -111,7 +111,7 @@ void DebugWriter::tuple_end() {
 
 void DebugWriter::tuple_next() { indent(); }
 
-void DebugWriter::list_begin() {
+void DebugWriter::list_begin(size_t) {
   os << "(list) {\n";
   depth++;
 }

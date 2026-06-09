@@ -26,9 +26,9 @@ public:
   void object_next(const char* key) override {};
   void object_end() override {}
 
-  void list_begin() override;
-  void list_next() override;
-  void list_end() override;
+  void list_begin(size_t size) override;
+  void list_next() override {}
+  void list_end() override {}
 
   void tuple_begin() override {}
   void tuple_next() override {}
@@ -43,7 +43,6 @@ private:
 
   std::vector<std::uint8_t>& buffer;
   std::size_t pos;
-  std::stack<std::uint64_t> list_length_offsets;
 };
 
 class BinaryReader : public Reader {
@@ -70,9 +69,9 @@ public:
   void tuple_next() override {}
   void tuple_end() override {}
 
-  void list_begin() override;
-  bool list_next() override;
-  void list_end() override;
+  size_t list_begin() override;
+  void list_next() override {}
+  void list_end() override {}
 
 private:
   template <typename T>
@@ -81,7 +80,6 @@ private:
 
   std::span<const std::uint8_t> buffer;
   std::size_t pos;
-  std::stack<int> list_remaining;
 };
 
 template <writeable T>

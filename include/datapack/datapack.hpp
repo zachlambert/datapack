@@ -294,15 +294,23 @@ void read(Reader& reader, T& value) {
   void write(Writer& packer, const Type& value);
 
 #define DATAPACK_DEF(Type, ...)                                                                    \
-  void read(Reader& packer, Type& value) {                                                  \
+  void read(Reader& packer, Type& value) {                                                         \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }                                                                                                \
-  void write(Writer& packer, const Type& value) {                                           \
+  void write(Writer& packer, const Type& value) {                                                  \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_DEF_CUSTOM(Type, ...)                                                             \
+  void read(Reader& packer, Type& value) {                                                         \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  void write(Writer& packer, const Type& value) {                                                  \
+    __VA_ARGS__;                                                                                   \
   }
 
 #define DATAPACK_INLINE(Type, ...)                                                                 \
@@ -317,24 +325,20 @@ void read(Reader& reader, T& value) {
     packer.object_end();                                                                           \
   }
 
+#define DATAPACK_INLINE_CUSTOM(Type, ...)                                                          \
+  void read(Reader& packer, Type& value) {                                                         \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  void write(Writer& packer, const Type& value) {                                                  \
+    __VA_ARGS__;                                                                                   \
+  }
+
 // ===================================================================================
 // Class macros
 
 #define DATAPACK_CLASS_DECL()                                                                      \
   void read(::datapack::Reader& packer);                                                           \
   void write(::datapack::Writer& packer) const;
-
-#define DATAPACK_CLASS_INLINE(...)                                                                 \
-  inline void read(::datapack::Reader& packer) {                                                   \
-    packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
-    packer.object_end();                                                                           \
-  }                                                                                                \
-  inline void write(::datapack::Writer& packer) const {                                            \
-    packer.object_begin();                                                                         \
-    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
-    packer.object_end();                                                                           \
-  }
 
 #define DATAPACK_CLASS_DEF(Class, ...)                                                             \
   void Class::read(::datapack::Reader& packer) {                                                   \
@@ -346,6 +350,34 @@ void read(Reader& reader, T& value) {
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
     packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_CLASS_DEF_CUSTOM(Class, ...)                                                      \
+  void Class::read(::datapack::Reader& packer) {                                                   \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  void Class::write(::datapack::Writer& packer) {                                                  \
+    __VA_ARGS__;                                                                                   \
+  }
+
+#define DATAPACK_CLASS_INLINE(...)                                                                 \
+  void read(::datapack::Reader& packer) {                                                          \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    packer.object_end();                                                                           \
+  }                                                                                                \
+  void write(::datapack::Writer& packer) const {                                                   \
+    packer.object_begin();                                                                         \
+    _DATAPACK_FOR_EACH(_DATAPACK_CLASS_VALUE, __VA_ARGS__)                                         \
+    packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_CLASS_INLINE_CUSTOM(...)                                                          \
+  void read(::datapack::Reader& packer) {                                                          \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  void write(::datapack::Writer& packer) {                                                         \
+    __VA_ARGS__;                                                                                   \
   }
 
 // ===================================================================================
@@ -362,6 +394,18 @@ void read(Reader& reader, T& value) {
   void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
+    packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_TEMPLATED_INLINE_CUSTOM(Type, Typenames, ...)                                     \
+  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
+  void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
+  void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
+    packer.object_begin();                                                                         \
+    __VA_ARGS__;                                                                                   \
     packer.object_end();                                                                           \
   }
 
@@ -383,6 +427,16 @@ void read(Reader& reader, T& value) {
     packer.object_begin();                                                                         \
     _DATAPACK_FOR_EACH(_DATAPACK_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
+  }
+
+#define DATAPACK_TEMPLATED_DEF_CUSTOM(Type, Typenames, ...)                                        \
+  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
+  void read(Reader& packer, _DATAPACK_DEPAREN(Type) & value) {                                     \
+    __VA_ARGS__;                                                                                   \
+  }                                                                                                \
+  template <_DATAPACK_DEPAREN(Typenames)>                                                          \
+  void write(Writer& packer, const _DATAPACK_DEPAREN(Type) & value) {                              \
+    __VA_ARGS__;                                                                                   \
   }
 
 #define DATAPACK_TEMPLATED_INSTANTIATE(Type, ...)                                                  \

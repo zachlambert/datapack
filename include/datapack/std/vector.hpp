@@ -21,6 +21,7 @@ requires readable<T>
 void read(Reader& reader, std::vector<T>& value) {
   value.resize(reader.list_begin());
   for (size_t i = 0; i < value.size(); i++) {
+    reader.list_next();
     reader.value(value[i]);
   }
   reader.list_end();

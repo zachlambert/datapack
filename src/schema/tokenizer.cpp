@@ -88,7 +88,7 @@ void Tokenizer::tuple_end() {
 size_t Tokenizer::list_begin() {
   tokens.push_back(token::List());
   first_element = true;
-  return 0; // Not used
+  return 1; // Request 1 item to serialize the tokens
 }
 
 void Tokenizer::list_next() {

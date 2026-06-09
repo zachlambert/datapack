@@ -1,5 +1,4 @@
 #include <datapack/binary.hpp>
-#include <datapack/debug.hpp>
 #include <datapack/examples/entity.hpp>
 #include <datapack/json.hpp>
 #include <datapack/random.hpp>

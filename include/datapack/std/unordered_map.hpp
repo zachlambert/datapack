@@ -29,6 +29,7 @@ void read(Reader& reader, std::unordered_map<K, V>& map) {
   map.clear();
   const size_t size = reader.list_begin();
   for (size_t i = 0; i < size; i++) {
+    reader.list_next();
     reader.tuple_begin();
 
     K key;

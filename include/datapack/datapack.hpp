@@ -96,16 +96,10 @@ public:
   virtual void list_next() = 0;
   virtual void list_end() = 0;
 
-  // Dummy methods to support the same method calls as Reader()
-  // in macro generated read/write functions
+  // Other
 
-  void hint(const Hint&) {
-    // Do nothing
-  }
-
-  void description(const std::string&) {
-    // Do nothing
-  }
+  virtual void hint(const Hint& hint) {}
+  virtual void description(const std::string& description) {}
 };
 
 // Reader

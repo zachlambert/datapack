@@ -23,11 +23,11 @@ void Tree::clear_node(int index) {
   while (!to_remove.empty()) {
     int node = to_remove.top();
     to_remove.pop();
-    if (nodes[child].next != -1) {
-      to_remove.push(nodes[child].next);
+    if (nodes[node].next != -1) {
+      to_remove.push(nodes[node].next);
     }
-    if (nodes[child].child != -1) {
-      to_remove.push(nodes[child].child);
+    if (nodes[node].child != -1) {
+      to_remove.push(nodes[node].child);
     }
     pop_node(node);
   }

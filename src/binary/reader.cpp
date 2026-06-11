@@ -65,6 +65,10 @@ int BinaryReader::variant_begin(const std::span<const char*>& labels) {
 std::span<const std::uint8_t> BinaryReader::binary() {
   std::uint64_t length;
   value_number(length);
+  if (pos + length > buffer.size()) {
+    invalidate();
+    return std::span(buffer.data() + pos, 0);
+  }
   auto result = std::span(buffer.data() + pos, length);
   pos += length;
   return result;

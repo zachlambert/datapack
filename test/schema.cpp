@@ -163,7 +163,7 @@ TEST(Schema, SchemaWithHints) {
   auto schema = dpack::Schema::make<WithLimit>();
   auto iter = schema.begin();
 
-  static_assert(dpack::supported<dpack::Schema>);
+  static_assert(dpack::serializable<dpack::Schema>);
 
   auto hint = iter.hint();
   iter = iter.next();

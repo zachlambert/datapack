@@ -2,7 +2,6 @@
 
 #include "datapack/hint.hpp"
 #include "datapack/labelled_enum.hpp"
-#include <concepts>
 #include <cstdint>
 #include <span>
 #include <string>

@@ -11,6 +11,8 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(BUILD_ADDITIONAL_TARGETS ON)
 endif()
 
+find_package(fmt REQUIRED)
+
 # Library
 
 if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Generic")
@@ -48,6 +50,8 @@ else()
         $<INSTALL_INTERFACE:include>
     )
 endif()
+
+target_link_libraries(datapack PUBLIC fmt::fmt)
 
 # Additional targets
 

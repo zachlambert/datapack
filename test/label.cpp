@@ -1,9 +1,9 @@
-#include "datapack/label.hpp"
+#include "datapack/detail/label.hpp"
 
 #include <gtest/gtest.h>
 #include <string>
 
-using namespace dpack;
+using namespace dpack::detail;
 
 namespace ns {
 
@@ -49,4 +49,7 @@ TEST(Label, Label) {
   // If the template argument/s matter, have to define custom labels
   EXPECT_EQ(type_label<ns::Point<float>>(), "pointf");
   EXPECT_EQ(type_label<ns::Point<double>>(), "pointd");
+
+  EXPECT_EQ(enum_value_name<(ns::Enum)3>(), "(ns::Enum)3");
+  EXPECT_EQ(enum_value_label<(ns::Enum)3>(), "enum)3");
 }

@@ -3,6 +3,7 @@
 #include "datapack/names/name_utils.hpp"
 #include <array>
 #include <optional>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 
@@ -12,6 +13,11 @@
  */
 
 namespace dpack {
+
+class EnumError : public std::runtime_error {
+public:
+  EnumError(const std::string& message) : std::runtime_error(message) {}
+};
 
 namespace detail {
 
@@ -128,6 +134,9 @@ struct EnumLabels {
   static constexpr std::array<std::string_view, enum_size<E>> value =
       get_enum_labels<E>(detail::enum_search_sequence<E>());
   static_assert(labels_are_unique(value), "Enum has duplicate labels");
+  // An empty label list means every value lies outside enum_search_range, which would otherwise
+  // only show up much later as an empty span reaching a reader or writer
+  static_assert(!value.empty(), "Enum has no values within enum_search_range");
 };
 
 } // namespace detail
@@ -158,8 +167,7 @@ inline size_t enum_index(const E& value) {
       return i;
     }
   }
-  throw "Enum search range is not large enough, missing a value";
-  return 0;
+  throw EnumError("Enum value lies outside enum_search_range, so has no label");
 }
 
 template <detail::enum_c E>

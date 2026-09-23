@@ -8,6 +8,9 @@
 #if defined(__GNUC__) || defined(__clang__)
 #define DPACK_PRETTY_FUNC __PRETTY_FUNCTION__
 #elif defined(_MSC_VER)
+static_assert(false, "TODO: Not implemented");
+// MSVC __FUNCSIG__ includes "class/struct/enum" in the signature, so can't use the same
+// probing mechanism below, fix later if required
 #define DPACK_PRETTY_FUNC __FUNCSIG__
 #else
 static_assert(false, "Compiler doesn't support type names");

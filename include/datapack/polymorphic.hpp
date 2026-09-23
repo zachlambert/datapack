@@ -202,10 +202,13 @@ template <typename Base>
 inline PolyInterfaces<Base>* get_poly_interfaces() {
   auto iter = poly_interfaces_.find(std::type_index(typeid(Base)));
   if (iter == poly_interfaces_.end()) {
-    iter = poly_interfaces_
-               .emplace(std::type_index(typeid(Base)), std::make_unique<PolyInterfaces<Base>>())
-               .first;
+    poly_interfaces_.emplace(
+        std::type_index(typeid(Base)),
+        std::make_unique<PolyInterfaces<Base>>());
     register_polymorphic_defaults<Base>();
+    // Registering the defaults may insert other bases and rehash the map, which would invalidate
+    // an iterator held across the call, so look the entry up again
+    iter = poly_interfaces_.find(std::type_index(typeid(Base)));
   }
   return dynamic_cast<PolyInterfaces<Base>*>(iter->second.get());
 }
@@ -219,6 +222,8 @@ void register_polymorphic() {
 
 // Defines the register_polymorphic_defaults specialisation for Base, registering each of the
 // listed implementations. Must be used at global scope
+// NOTE: _DPACK_FOR_EACH only expands up to 12 implementations. Listing more selects the wrong
+// macro and fails with an unhelpful expansion error, so register the remainder by hand
 #define _DPACK_POLY_REGISTER(X) ::dpack::register_polymorphic<_DpackPolyBase, X>();
 
 #define DPACK_POLY_DEFAULTS(Base, ...)                                                             \

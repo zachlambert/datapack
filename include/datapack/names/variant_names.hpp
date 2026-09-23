@@ -3,6 +3,7 @@
 #include "datapack/names/type_names.hpp"
 #include <array>
 #include <optional>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -18,6 +19,11 @@
  */
 
 namespace dpack {
+
+class VariantError : public std::runtime_error {
+public:
+  VariantError(const std::string& message) : std::runtime_error(message) {}
+};
 
 namespace detail {
 
@@ -84,7 +90,7 @@ inline constexpr std::array<std::string_view, variant_size<V>> variant_labels =
 template <detail::variant_c V>
 inline size_t variant_index(const V& value) {
   if (value.valueless_by_exception()) {
-    throw "Variant is valueless by exception, so has no label";
+    throw VariantError("Variant is valueless by exception, so has no label");
   }
   return value.index();
 }

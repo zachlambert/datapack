@@ -192,6 +192,9 @@ void Schema::apply(Reader& reader, Writer& writer) const {
         labels.push_back(label);
       }
       int choice = reader.variant_begin(labels);
+      if (choice < 0 || (size_t)choice >= labels.size()) {
+        throw SchemaError("Variant index is out of range");
+      }
       writer.variant_begin(choice, labels);
 
       // Don't push VariantBegin
@@ -236,7 +239,11 @@ void Schema::apply(Reader& reader, Writer& writer) const {
       for (const auto& label : enumerate->labels) {
         labels.push_back(label);
       }
-      writer.enumerate(reader.enumerate(labels), labels);
+      const int value = reader.enumerate(labels);
+      if (value < 0 || (size_t)value >= labels.size()) {
+        throw SchemaError("Enum index is out of range");
+      }
+      writer.enumerate(value, labels);
       continue;
     }
     if (iter.binary()) {

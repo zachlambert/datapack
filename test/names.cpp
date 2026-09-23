@@ -1,5 +1,6 @@
 #include "datapack/names/enum_names.hpp"
 #include "datapack/names/type_names.hpp"
+#include "datapack/std/variant.hpp"
 #include <gtest/gtest.h>
 
 using namespace dpack;
@@ -16,8 +17,11 @@ struct Bar {
 enum class Enum { First, Second };
 enum class Enum2 { Invalid_Name, Another };
 
+using Variant = std::variant<Foo, Bar<int>, Bar<double>>;
+
 } // namespace ns
 
+DPACK_TYPE_NAMES(ns::Variant, "Variant", "variant");
 DPACK_TYPE_NAMES(ns::Bar<int>, "Bari", "bari");
 DPACK_TYPE_NAMES(ns::Bar<double>, "Bard", "bard");
 DPACK_ENUM_VALUE_NAMES(ns::Enum2, Invalid_Name, "InvalidName", "invalid_name");
@@ -114,4 +118,23 @@ TEST(Names, EnumQueries) {
   EXPECT_EQ(enum_index(ns::Enum2::Another), 1);
   EXPECT_EQ(enum_to_label(ns::Enum2::Invalid_Name), "invalid_name");
   EXPECT_EQ(enum_to_label(ns::Enum2::Another), "another");
+}
+
+TEST(Names, VariantValueNames) {
+  EXPECT_EQ(type_name<ns::Variant>(), "Variant");
+  EXPECT_EQ(type_label<ns::Variant>(), "variant");
+  EXPECT_EQ(enum_value_name<ns::Enum::First>(), "First");
+  EXPECT_EQ(enum_value_label<ns::Enum::First>(), "first");
+  EXPECT_EQ(enum_value_name<ns::Enum::Second>(), "Second");
+  EXPECT_EQ(enum_value_label<ns::Enum::Second>(), "second");
+
+  EXPECT_EQ(type_name<ns::Enum2>(), "Enum2");
+  EXPECT_EQ(type_label<ns::Enum2>(), "enum2");
+  EXPECT_EQ(enum_value_name<ns::Enum2::Invalid_Name>(), "InvalidName");
+  EXPECT_EQ(enum_value_label<ns::Enum2::Invalid_Name>(), "invalid_name");
+  EXPECT_EQ(enum_value_name<ns::Enum2::Another>(), "Another");
+  EXPECT_EQ(enum_value_label<ns::Enum2::Another>(), "another");
+}
+
+TEST(Names, VariantQueries) {
 }

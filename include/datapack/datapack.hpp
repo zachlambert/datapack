@@ -196,12 +196,12 @@ inline void read(Reader& reader, bool& value) {
   value = reader.boolean();
 }
 
-template <enum_c E>
+template <detail::enum_c E>
 void write(Writer& writer, const E& value) {
   writer.enumerate((int)enum_index(value), enum_labels<E>);
 }
 
-template <enum_c E>
+template <detail::enum_c E>
 void read(Reader& reader, E& value) {
   const int index = reader.enumerate(enum_labels<E>);
   if (index < 0 || (size_t)index >= enum_size<E>) {

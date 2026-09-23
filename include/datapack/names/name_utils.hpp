@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <span>
 #include <string_view>
 
 // Portable macro to return the pretty function for all supported compilers
@@ -109,7 +110,7 @@ constexpr std::string_view value_name_full() {
 }
 
 /* ===================================================================
- * Consteval string conversions
+ * String processing and name->label conversion
  */
 
 // Removes "<prefix>::<type>"
@@ -164,6 +165,17 @@ consteval std::array<char, N> name_to_label(std::string_view name) {
     result[pos++] = to_lower(name[i]);
   }
   return result;
+}
+
+constexpr bool labels_are_unique(std::span<const std::string_view> labels) {
+  for (std::size_t i = 0; i < labels.size(); i++) {
+    for (std::size_t j = i + 1; j < labels.size(); j++) {
+      if (labels[i] == labels[j]) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 } // namespace dpack::detail

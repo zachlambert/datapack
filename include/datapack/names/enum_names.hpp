@@ -46,15 +46,15 @@ constexpr std::string_view enum_value_label() {
   return detail::EnumValueNames<V>::label;
 }
 
-template <typename E>
-concept enum_c = std::is_enum_v<E>;
-
 namespace detail {
 
 // ==================================================================
 // Query enum validity and size
 // ie: Can integer x be converted to enum?
 // How many enums exist over a given search range
+
+template <typename E>
+concept enum_c = std::is_enum_v<E>;
 
 // Default range to search, user may overload this to increase the range if required, but
 // shouldn't be needed in 99.9% of use cases
@@ -121,12 +121,21 @@ constexpr std::array<std::string_view, enum_size<E>> get_enum_labels(
   return labels;
 }
 
+// NOTE: Put the enum labels result in a struct in order to static_assert unique labels
+// Since the user may define custom enum label values, this isn't guaranteed
+template <enum_c E>
+struct EnumLabels {
+  static constexpr std::array<std::string_view, enum_size<E>> value =
+      get_enum_labels<E>(detail::enum_search_sequence<E>());
+  static_assert(labels_are_unique(value), "Enum has duplicate labels");
+};
+
 } // namespace detail
 
 // ==================================================================
 // "Public" functions
 
-template <enum_c E>
+template <detail::enum_c E>
 inline constexpr size_t enum_size = detail::enum_size<E>;
 
 // NOTE: Need to use "inline constexpr" if the address of enum_labels needs to taken (which it does)
@@ -134,15 +143,15 @@ inline constexpr size_t enum_size = detail::enum_size<E>;
 // since the symbol has external linkage and may be stored in multiple translation units
 // Likewise for enum_values, etc
 
-template <enum_c E>
+template <detail::enum_c E>
 inline constexpr std::array<std::string_view, enum_size<E>> enum_labels =
-    detail::get_enum_labels<E>(detail::enum_search_sequence<E>());
+    detail::EnumLabels<E>::value;
 
-template <enum_c E>
+template <detail::enum_c E>
 inline constexpr std::array<E, enum_size<E>> enum_values =
     detail::get_enum_values<E>(detail::enum_search_sequence<E>());
 
-template <enum_c E>
+template <detail::enum_c E>
 inline size_t enum_index(const E& value) {
   for (size_t i = 0; i < enum_size<E>; i++) {
     if (enum_values<E>[i] == value) {
@@ -153,7 +162,7 @@ inline size_t enum_index(const E& value) {
   return 0;
 }
 
-template <enum_c E>
+template <detail::enum_c E>
 inline std::optional<E> enum_from_label(std::string_view label) {
   for (size_t i = 0; i < enum_size<E>; i++) {
     if (enum_labels<E>[i] == label) {
@@ -163,7 +172,7 @@ inline std::optional<E> enum_from_label(std::string_view label) {
   return std::nullopt;
 }
 
-template <enum_c E>
+template <detail::enum_c E>
 inline std::string_view enum_to_label(const E& value) {
   return enum_labels<E>[enum_index(value)];
 }

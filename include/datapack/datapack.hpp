@@ -1,7 +1,7 @@
 #pragma once
 
-#include "datapack/detail/enum_details.hpp"
 #include "datapack/hint.hpp"
+#include "datapack/names/enum_names.hpp"
 #include <cstdint>
 #include <span>
 #include <string>

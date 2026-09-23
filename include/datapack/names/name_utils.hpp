@@ -12,7 +12,7 @@
 static_assert(false, "Compiler doesn't support type names");
 #endif
 
-namespace dpack::name_utils {
+namespace dpack::detail {
 
 /* ====================================================================
  * Extracting type names
@@ -45,10 +45,10 @@ constexpr std::string_view type_name_sig() {
 }
 
 struct ProbeType {}; // Arbitrary "probe" type name
-inline constexpr std::string_view probe_type_name = "dpack::name_utils::ProbeType";
+inline constexpr std::string_view probe_type_name = "dpack::detail::ProbeType";
 
 inline constexpr std::string_view probe_type_name_sig = type_name_sig<ProbeType>();
-// Returns std::string_view type_name_raw() [with T = dpack::name_utils::Probe]"
+// Returns std::string_view type_name_raw() [with T = dpack::detail::Probe]"
 // type_name_previx ->                                ^
 // length - type_name_suffix ->                                           ^
 
@@ -92,7 +92,7 @@ constexpr std::string_view value_name_sig() {
 }
 
 enum class ProbeValue { Value };
-inline constexpr std::string_view probe_value_name = "dpack::name_utils::ProbeValue::Value";
+inline constexpr std::string_view probe_value_name = "dpack::detail::ProbeValue::Value";
 
 inline constexpr std::string_view probe_value_name_sig = value_name_sig<ProbeValue::Value>();
 
@@ -166,4 +166,4 @@ consteval std::array<char, N> name_to_label(std::string_view name) {
   return result;
 }
 
-} // namespace dpack::name_utils
+} // namespace dpack::detail

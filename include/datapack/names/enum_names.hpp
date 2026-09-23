@@ -1,6 +1,6 @@
 #pragma once
 
-#include "datapack/detail/name_utils.hpp"
+#include "datapack/names/name_utils.hpp"
 #include <array>
 #include <optional>
 #include <type_traits>
@@ -13,20 +13,23 @@
 
 namespace dpack {
 
+namespace detail {
+
 template <auto V>
 requires std::is_enum_v<decltype(V)>
 struct EnumValueNames {
-  static constexpr std::string_view name =
-      name_utils::remove_scope(name_utils::value_name_full<V>());
-  static_assert(name_utils::is_simple_name(name));
+  static constexpr std::string_view name = remove_scope(value_name_full<V>());
+  static_assert(is_simple_name(name));
 
-  static constexpr auto label_value = name_utils::name_to_label<name_utils::label_size(name)>(name);
+  static constexpr auto label_value = name_to_label<label_size(name)>(name);
   static constexpr std::string_view label = {label_value.data(), label_value.size()};
 };
 
+} // namespace detail
+
 #define DPACK_ENUM_VALUE_NAMES(E, V, name_str, label_str)                                          \
   template <>                                                                                      \
-  struct EnumValueNames<E::V> {                                                                    \
+  struct dpack::detail::EnumValueNames<E::V> {                                                     \
     static constexpr std::string_view name = name_str;                                             \
     static constexpr std::string_view label = label_str;                                           \
   }
@@ -34,19 +37,19 @@ struct EnumValueNames {
 template <auto V>
 requires std::is_enum_v<decltype(V)>
 constexpr std::string_view enum_value_name() {
-  return EnumValueNames<V>::name;
+  return detail::EnumValueNames<V>::name;
 }
 
 template <auto V>
 requires std::is_enum_v<decltype(V)>
 constexpr std::string_view enum_value_label() {
-  return EnumValueNames<V>::label;
+  return detail::EnumValueNames<V>::label;
 }
 
 template <typename E>
 concept enum_c = std::is_enum_v<E>;
 
-namespace enum_utils {
+namespace detail {
 
 // ==================================================================
 // Query enum validity and size
@@ -70,7 +73,7 @@ using enum_search_sequence = std::make_integer_sequence<int, enum_search_range<E
 // Can simply check if "(" or ")" is present in the unprocessed value name
 template <enum_c E, int Value>
 constexpr bool enum_value_valid() {
-  return name_utils::value_name_full<static_cast<E>(Value)>().find('(') == std::string_view::npos;
+  return value_name_full<static_cast<E>(Value)>().find('(') == std::string_view::npos;
 }
 
 // Iterate over the integer sequence and count the number of valid values using a fold operation
@@ -118,13 +121,13 @@ constexpr std::array<std::string_view, enum_size<E>> get_enum_labels(
   return labels;
 }
 
-} // namespace enum_utils
+} // namespace detail
 
 // ==================================================================
 // "Public" functions
 
 template <enum_c E>
-inline constexpr size_t enum_size = enum_utils::enum_size<E>;
+inline constexpr size_t enum_size = detail::enum_size<E>;
 
 // NOTE: Need to use "inline constexpr" if the address of enum_labels needs to taken (which it does)
 // This forces the data to be stored in memory somewhere, which without inline would violate ODR
@@ -133,11 +136,11 @@ inline constexpr size_t enum_size = enum_utils::enum_size<E>;
 
 template <enum_c E>
 inline constexpr std::array<std::string_view, enum_size<E>> enum_labels =
-    enum_utils::get_enum_labels<E>(enum_utils::enum_search_sequence<E>());
+    detail::get_enum_labels<E>(detail::enum_search_sequence<E>());
 
 template <enum_c E>
 inline constexpr std::array<E, enum_size<E>> enum_values =
-    enum_utils::get_enum_values<E>(enum_utils::enum_search_sequence<E>());
+    detail::get_enum_values<E>(detail::enum_search_sequence<E>());
 
 template <enum_c E>
 inline size_t enum_index(const E& value) {

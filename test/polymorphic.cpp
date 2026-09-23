@@ -100,7 +100,7 @@ TEST(Poly, WriteRead) {
       token::VariantNext(1),
         token::ObjectBegin(),
           token::ObjectNext("length"),
-            token::Number(NumberType::F64),
+            token::Number(NumberType::I32),
           token::ObjectEnd(),
       token::VariantNext(2),
         token::ObjectBegin(),

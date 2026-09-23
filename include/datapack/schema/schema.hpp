@@ -151,6 +151,8 @@ private:
   void set_hash();
 
   std::vector<Token> tokens;
+  // Only the state before set_hash(): every construction path (make, from_tokens,
+  // read) calls set_hash(), which never produces 0
   std::uint64_t hash_ = 0;
 
   friend bool operator==(const Schema& lhs, const Schema& rhs);
@@ -158,12 +160,9 @@ private:
 
 template <typename T>
 std::uint64_t get_hash() {
-  static std::uint64_t hash = 0;
-  static bool calculated = false;
-  if (!calculated) {
-    calculated = true;
-    hash = Schema::make<T>().hash();
-  }
+  // A single const function-local static gets the C++11 thread-safe guard, and if the
+  // initialiser throws it is retried on the next call, rather than latching a zero hash
+  static const std::uint64_t hash = Schema::make<T>().hash();
   return hash;
 }
 

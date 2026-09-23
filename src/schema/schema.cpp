@@ -1,9 +1,7 @@
 #include "datapack/schema/schema.hpp"
-#include "datapack/std/string.hpp"
-#include "datapack/std/variant.hpp"
-#include "datapack/std/vector.hpp"
 #include <assert.h>
 
+#include <cstdint>
 #include <stack>
 #include <string_view>
 
@@ -41,9 +39,6 @@ Schema::Iterator Schema::Iterator::skip() const {
 
     if (depth == 0 && is_wrapper) {
       continue;
-    }
-    bool composite = false;
-    if (at_start) {
     }
     if (depth == 0 && !(at_start && is_wrapper)) {
       break;
@@ -255,45 +250,70 @@ void Schema::apply(Reader& reader, Writer& writer) const {
   }
 }
 
+namespace {
+
+// FNV-1a 64. Chosen over std::hash because the hash is persisted in .dpack files:
+// it must be fully specified by us, stable across toolchains, order sensitive and
+// unable to cancel out repeated contributions.
+constexpr std::uint64_t FNV_OFFSET_BASIS = 14695981039346656037ull;
+constexpr std::uint64_t FNV_PRIME = 1099511628211ull;
+
+void hash_byte(std::uint64_t& hash, std::uint8_t byte) {
+  hash ^= byte;
+  hash *= FNV_PRIME;
+}
+
+void hash_integer(std::uint64_t& hash, std::uint64_t value) {
+  // Little-endian, so the hash doesn't depend on the host's byte order
+  for (int i = 0; i < 8; i++) {
+    hash_byte(hash, (std::uint8_t)(value >> (i * 8)));
+  }
+}
+
+void hash_string(std::uint64_t& hash, const std::string& value) {
+  // Length-prefixed, so {"ab", "c"} and {"a", "bc"} hash differently
+  hash_integer(hash, value.size());
+  for (char c : value) {
+    hash_byte(hash, (std::uint8_t)c);
+  }
+}
+
+} // namespace
+
 void Schema::set_hash() {
-  hash_ = 0;
+  // The hash identifies the structure of the data: token kinds, number types, enum and
+  // variant labels, object keys and variant indexes. ObjectBegin::debug_name,
+  // token::Hint and token::Description are metadata, so they are excluded here (and
+  // from operator==), meaning an edit to a hint or a description doesn't invalidate
+  // already stored files.
+  //
+  // Starting from FNV_OFFSET_BASIS rather than 0 means an empty schema still has a
+  // non-zero hash, so it isn't confused with the pre-set_hash state of hash_.
+  hash_ = FNV_OFFSET_BASIS;
   for (const auto& token : tokens) {
-    hash_ ^= std::hash<size_t>{}(token.index());
+    hash_integer(hash_, token.index());
+
     if (auto number = std::get_if<token::Number>(&token)) {
-      hash_ ^= std::hash<int>{}((int)number->type);
+      hash_integer(hash_, (std::uint64_t)number->type);
 
     } else if (auto enumerate = std::get_if<token::Enumerate>(&token)) {
+      // Hash the count first, so an empty label list differs from an absent one
+      hash_integer(hash_, enumerate->labels.size());
       for (const auto& label : enumerate->labels) {
-        hash_ ^= std::hash<std::string>{}(label);
+        hash_string(hash_, label);
       }
 
     } else if (auto variant_begin = std::get_if<token::VariantBegin>(&token)) {
+      hash_integer(hash_, variant_begin->labels.size());
       for (const auto& label : variant_begin->labels) {
-        hash_ ^= std::hash<std::string>{}(label);
+        hash_string(hash_, label);
       }
 
     } else if (auto variant_next = std::get_if<token::VariantNext>(&token)) {
-      hash_ ^= std::hash<int>{}(variant_next->index);
+      hash_integer(hash_, (std::uint64_t)(std::int64_t)variant_next->index);
 
     } else if (auto object_next = std::get_if<token::ObjectNext>(&token)) {
-      hash_ ^= std::hash<std::string>{}(object_next->key);
-
-    } else if (auto hint = std::get_if<token::Hint>(&token)) {
-      hash_ ^= hint->hint.index();
-      if (auto choices = std::get_if<HintChoices>(&hint->hint)) {
-        for (const auto& choice : choices->choices) {
-          hash_ ^= std::hash<std::string>{}(choice);
-        }
-      } else if (auto range = std::get_if<HintRange>(&hint->hint)) {
-        // Must match exactly
-        hash_ ^= std::hash<double>{}(range->lower);
-        hash_ ^= std::hash<double>{}(range->upper);
-      } else if (auto positive = std::get_if<HintPositive>(&hint->hint)) {
-        hash_ ^= std::hash<bool>{}(positive->allow_zero);
-      }
-
-    } else if (auto description = std::get_if<token::Description>(&token)) {
-      hash_ ^= std::hash<std::string>{}(description->description);
+      hash_string(hash_, object_next->key);
     }
   }
 }
@@ -310,6 +330,17 @@ bool operator==(const Schema& lhs, const Schema& rhs) {
   return true;
 }
 
-DPACK_CLASS_DEF(Schema, tokens)
+void Schema::read(::dpack::Reader& packer) {
+  packer.object_begin(::dpack::type_name<Schema>());
+  packer.value("tokens", tokens);
+  packer.object_end();
+  set_hash();
+}
+
+void Schema::write(::dpack::Writer& packer) const {
+  packer.object_begin(::dpack::type_name<Schema>());
+  packer.value("tokens", tokens);
+  packer.object_end();
+}
 
 } // namespace dpack

@@ -3,7 +3,7 @@
 
 namespace dpack {
 
-ObjectReader::ObjectReader(ConstObject object) : node(object.ptr()), container_begin(false) {}
+ObjectReader::ObjectReader(ConstObject object) : node(object.ptr()), at_container_begin(false) {}
 
 void ObjectReader::number(NumberType type, void* value_out) {
   object::number_t value;
@@ -95,8 +95,28 @@ void ObjectReader::optional_end() {
   // Do nothing
 }
 
+bool ObjectReader::container_begin(bool is_list) {
+  if (is_list ? !node->is_list() : !node->is_map()) {
+    invalidate();
+    return false;
+  }
+  at_container_begin = true;
+  return true;
+}
+
+void ObjectReader::container_end() {
+  if (!at_container_begin) {
+    node = node.parent();
+  }
+  at_container_begin = false;
+}
+
 int ObjectReader::variant_begin(const std::span<const std::string_view>& labels) {
-  object_begin("");
+  // A variant is read from a map of the chosen label and its value, which isn't an object of
+  // any type of its own, so it goes through container_begin rather than object_begin
+  if (!container_begin(false)) {
+    return 0;
+  }
   object_next("type");
   if (auto x = node->string_if()) {
     for (int i = 0; i < labels.size(); i++) {
@@ -112,19 +132,21 @@ int ObjectReader::variant_begin(const std::span<const std::string_view>& labels)
 }
 
 void ObjectReader::variant_end() {
-  object_end();
+  container_end();
 }
 
 void ObjectReader::object_begin(std::string_view) {
-  node = node.child();
+  container_begin(false);
 }
 
 void ObjectReader::object_end() {
-  node = node.parent();
+  container_end();
 }
 
 void ObjectReader::object_next(const char* key) {
-  auto parent = node.parent();
+  // Before the first key, node is still the map itself. Afterwards it is the previous value, so
+  // the map has to be reached back through its parent
+  auto parent = at_container_begin ? node : node.parent();
   if (!parent) {
     invalidate();
     return;
@@ -138,25 +160,22 @@ void ObjectReader::object_next(const char* key) {
     invalidate();
     return;
   }
+  at_container_begin = false;
   node = next;
 }
 
 void ObjectReader::tuple_begin() {
-  if (!node->is_list()) {
-    invalidate();
-    return;
-  }
-  container_begin = true;
+  container_begin(true);
 }
 
 void ObjectReader::tuple_next() {
-  if (container_begin) {
+  if (at_container_begin) {
     auto child = node.child();
     if (!child) {
       invalidate();
       return;
     }
-    container_begin = false;
+    at_container_begin = false;
     node = child;
     return;
   }
@@ -170,29 +189,24 @@ void ObjectReader::tuple_next() {
 }
 
 void ObjectReader::tuple_end() {
-  if (!container_begin) {
-    node = node.parent();
-  }
-  container_begin = false;
+  container_end();
 }
 
 size_t ObjectReader::list_begin() {
-  if (!node->is_list()) {
-    invalidate();
+  if (!container_begin(true)) {
     return 0;
   }
-  container_begin = true;
   return node->size();
 }
 
 void ObjectReader::list_next() {
-  if (container_begin) {
+  if (at_container_begin) {
     auto child = node.child();
     if (!child) {
       throw std::runtime_error("At the end of the list, no more items");
     }
     node = child;
-    container_begin = false;
+    at_container_begin = false;
     return;
   }
 
@@ -204,10 +218,7 @@ void ObjectReader::list_next() {
 }
 
 void ObjectReader::list_end() {
-  if (!container_begin) {
-    node = node.parent();
-  }
-  container_begin = false;
+  container_end();
 }
 
 } // namespace dpack

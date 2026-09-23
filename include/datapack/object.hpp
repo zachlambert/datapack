@@ -798,8 +798,13 @@ public:
   void list_end() override;
 
 private:
+  void container_begin(bool is_list);
+  void container_end();
+
   Object::Ptr node;
-  bool container_begin;
+  // True between a container_begin and the first object_next/tuple_next/list_next inside it,
+  // ie: node is still the container itself rather than one of its children
+  bool at_container_begin;
 };
 
 class ObjectReader : public Reader {
@@ -831,8 +836,17 @@ public:
   void list_end() override;
 
 private:
+  // Objects, tuples and lists are all read the same way, the only difference being whether the
+  // container node is expected to be a map or a list. Unlike the writer's, container_begin can
+  // fail, since the object being read may not hold the container it is being read into, and
+  // returns false once it has invalidated the reader
+  bool container_begin(bool is_list);
+  void container_end();
+
   ConstObject::Ptr node;
-  bool container_begin;
+  // True between a container_begin and the first object_next/tuple_next/list_next inside it,
+  // ie: node is still the container itself rather than one of its children
+  bool at_container_begin;
   // std::stack<ConstObject::Ptr> nodes;
   // bool list_start;
   // const char* next_variant_label;

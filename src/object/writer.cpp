@@ -41,7 +41,7 @@ void ObjectWriter::string(const char* value) {
   *node = value;
 }
 
-void ObjectWriter::enumerate(int value, const std::span<const char*>& labels) {
+void ObjectWriter::enumerate(int value, const std::span<const std::string_view>& labels) {
   *node = std::string(labels[value]);
 }
 
@@ -61,11 +61,12 @@ void ObjectWriter::optional_end() {
   // Do nothing
 }
 
-void ObjectWriter::variant_begin(int value, const std::span<const char*>& labels) {
+void ObjectWriter::variant_begin(int value, const std::span<const std::string_view>& labels) {
+  const std::string label(labels[value]);
   object_begin();
   object_next("type");
-  string(labels[value]);
-  std::string value_key = "value_" + std::string(labels[value]);
+  *node = label;
+  std::string value_key = "value_" + label;
   object_next(value_key.c_str());
 }
 

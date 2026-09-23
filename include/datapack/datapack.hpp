@@ -1,10 +1,11 @@
 #pragma once
 
 #include "datapack/hint.hpp"
-#include "datapack/labelled_enum.hpp"
+#include "datapack/names/enum_names.hpp"
 #include <cstdint>
 #include <span>
 #include <string>
+#include <string_view>
 
 namespace dpack {
 
@@ -68,7 +69,7 @@ public:
   virtual void number(NumberType type, const void* value) = 0;
   virtual void boolean(bool value) = 0;
   virtual void string(const char* string) = 0;
-  virtual void enumerate(int value, const std::span<const char*>& labels) = 0;
+  virtual void enumerate(int value, const std::span<const std::string_view>& labels) = 0;
   virtual void binary(const std::span<const std::uint8_t>& data) = 0;
 
   // Single-element containers
@@ -76,7 +77,7 @@ public:
   virtual void optional_begin(bool has_value) = 0;
   virtual void optional_end() = 0;
 
-  virtual void variant_begin(int value, const std::span<const char*>& labels) = 0;
+  virtual void variant_begin(int value, const std::span<const std::string_view>& labels) = 0;
   virtual void variant_end() = 0;
 
   // Fixed-size containers
@@ -122,7 +123,7 @@ public:
   virtual void number(NumberType type, void* value) = 0;
   virtual bool boolean() = 0;
   virtual const char* string() = 0;
-  virtual int enumerate(const std::span<const char*>& labels) = 0;
+  virtual int enumerate(const std::span<const std::string_view>& labels) = 0;
   virtual std::span<const std::uint8_t> binary() = 0;
 
   // Single-element containers
@@ -130,7 +131,7 @@ public:
   virtual bool optional_begin() = 0;
   virtual void optional_end() = 0;
 
-  virtual int variant_begin(const std::span<const char*>& labels) = 0;
+  virtual int variant_begin(const std::span<const std::string_view>& labels) = 0;
   virtual void variant_tokenize(int index) {}; // Only used by tokenizer
   virtual void variant_end() = 0;
 
@@ -195,14 +196,19 @@ inline void read(Reader& reader, bool& value) {
   value = reader.boolean();
 }
 
-template <labelled_enum T>
-void write(Writer& writer, const T& value) {
-  writer.enumerate((int)value, enum_labels<T>);
+template <detail::enum_c E>
+void write(Writer& writer, const E& value) {
+  writer.enumerate((int)enum_index(value), enum_labels<E>);
 }
 
-template <labelled_enum T>
-void read(Reader& reader, T& value) {
-  value = (T)reader.enumerate(enum_labels<T>);
+template <detail::enum_c E>
+void read(Reader& reader, E& value) {
+  const int index = reader.enumerate(enum_labels<E>);
+  if (index < 0 || (size_t)index >= enum_size<E>) {
+    reader.invalidate();
+    return;
+  }
+  value = enum_values<E>[index];
 }
 
 // Nasty macro magic!

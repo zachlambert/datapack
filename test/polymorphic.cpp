@@ -48,18 +48,14 @@ public:
   DPACK_CLASS_INLINE();
 };
 
-template <>
-void dpack::register_polymorphic_defaults<Fruit>() {
-  register_polymorphic<Fruit, Apple>("apple");
-  register_polymorphic<Fruit, Banana>("banana");
-}
+DPACK_POLY_DEFAULTS(Fruit, Apple, Banana);
 
 TEST(Poly, WriteRead) {
   using namespace dpack;
 
-  // Support "static" implementations (defined in register_polymorphic_defaults)
+  // Support "static" implementations (defined in register_polymorphic_defaults/DPACK_POLY_DEFAULTS)
   // as well as those defined at runtime
-  register_polymorphic<Fruit, Pear>("pear");
+  register_polymorphic<Fruit, Pear>();
 
   std::unique_ptr<Fruit> apple = std::make_unique<Apple>("green");
   std::unique_ptr<Fruit> banana = std::make_unique<Banana>(15);
@@ -118,4 +114,54 @@ TEST(Poly, WriteRead) {
 
   EXPECT_EQ(expected_schema, schema1);
   EXPECT_EQ(expected_schema, schema2);
+}
+
+// Labels come from the type label, so two implementations in different scopes can collide
+class Animal {
+public:
+  virtual ~Animal() {}
+};
+
+namespace shorthaired {
+class Cat : public Animal {
+public:
+  DPACK_CLASS_INLINE()
+};
+} // namespace shorthaired
+
+namespace longhaired {
+class Cat : public Animal {
+public:
+  DPACK_CLASS_INLINE()
+};
+} // namespace longhaired
+
+class LongHairedDog : public Animal {
+public:
+  DPACK_CLASS_INLINE()
+};
+
+namespace dpack {
+DPACK_TYPE_NAMES(LongHairedDog, "LongHairedDog", "doggo");
+} // namespace dpack
+
+TEST(Poly, TypeLabels) {
+  using namespace dpack;
+
+  register_polymorphic<Animal, shorthaired::Cat>();
+
+  // The label is the type label, so DPACK_TYPE_NAMES overrides it
+  register_polymorphic<Animal, LongHairedDog>();
+
+  std::unique_ptr<Animal> dog = std::make_unique<LongHairedDog>();
+  EXPECT_EQ(to_json(dog), R"""({
+    "type": "doggo",
+    "value_doggo": {}
+})""");
+
+  // Registering the same implementation twice is a no-op
+  EXPECT_NO_THROW((register_polymorphic<Animal, shorthaired::Cat>()));
+
+  // A different implementation with the same label is an error
+  EXPECT_THROW((register_polymorphic<Animal, longhaired::Cat>()), PolyError);
 }

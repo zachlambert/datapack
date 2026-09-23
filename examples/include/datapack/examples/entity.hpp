@@ -6,8 +6,6 @@
 #include <vector>
 
 #include <datapack/datapack.hpp>
-#include <datapack/labelled_enum.hpp>
-#include <datapack/labelled_variant.hpp>
 #include <datapack/std/string.hpp>
 
 struct Circle {
@@ -69,8 +67,5 @@ namespace dpack {
 DPACK_INLINE(Circle, radius)
 DPACK_INLINE(Rect, width, height)
 DPACK_INLINE(Pose, x, y, angle)
-
-DPACK_LABELLED_ENUM(Physics, 3);
-DPACK_LABELLED_VARIANT(Shape, 2);
 
 } // namespace dpack

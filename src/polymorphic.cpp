@@ -1,6 +1,6 @@
 #include "datapack/polymorphic.hpp"
 
-namespace dpack {
+namespace dpack::detail {
 
 std::unordered_map<std::type_index, std::unique_ptr<PolyInterfacesBase>> poly_interfaces_;
 

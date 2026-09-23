@@ -44,7 +44,7 @@ void BinaryWriter::string(const char* value) {
   pos_ += size;
 }
 
-void BinaryWriter::enumerate(int value, const std::span<const char*>& labels) {
+void BinaryWriter::enumerate(int value, const std::span<const std::string_view>& labels) {
   value_number(value);
 }
 
@@ -52,7 +52,7 @@ void BinaryWriter::optional_begin(bool has_value) {
   value_bool(has_value);
 }
 
-void BinaryWriter::variant_begin(int value, const std::span<const char*>& labels) {
+void BinaryWriter::variant_begin(int value, const std::span<const std::string_view>& labels) {
   value_number(value);
 }
 

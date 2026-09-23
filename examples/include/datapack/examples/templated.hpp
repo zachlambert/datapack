@@ -1,8 +1,6 @@
 #pragma once
 
 #include <datapack/datapack.hpp>
-#include <datapack/labelled_enum.hpp>
-#include <datapack/labelled_variant.hpp>
 #include <datapack/std/string.hpp>
 
 template <typename T>

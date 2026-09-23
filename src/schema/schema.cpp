@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include <stack>
+#include <string_view>
 
 namespace dpack {
 
@@ -186,12 +187,15 @@ void Schema::apply(Reader& reader, Writer& writer) const {
       continue;
     }
     if (auto variant_begin = iter.variant_begin()) {
-      std::vector<const char*> labels_c_str;
+      std::vector<std::string_view> labels;
       for (const auto& label : variant_begin->labels) {
-        labels_c_str.push_back(label.c_str());
+        labels.push_back(label);
       }
-      int choice = reader.variant_begin(labels_c_str);
-      writer.variant_begin(choice, labels_c_str);
+      int choice = reader.variant_begin(labels);
+      if (choice < 0 || (size_t)choice >= labels.size()) {
+        throw SchemaError("Variant index is out of range");
+      }
+      writer.variant_begin(choice, labels);
 
       // Don't push VariantBegin
 
@@ -231,11 +235,15 @@ void Schema::apply(Reader& reader, Writer& writer) const {
       continue;
     }
     if (auto enumerate = iter.enumerate()) {
-      std::vector<const char*> labels_c_str;
+      std::vector<std::string_view> labels;
       for (const auto& label : enumerate->labels) {
-        labels_c_str.push_back(label.c_str());
+        labels.push_back(label);
       }
-      writer.enumerate(reader.enumerate(labels_c_str), labels_c_str);
+      const int value = reader.enumerate(labels);
+      if (value < 0 || (size_t)value >= labels.size()) {
+        throw SchemaError("Enum index is out of range");
+      }
+      writer.enumerate(value, labels);
       continue;
     }
     if (iter.binary()) {

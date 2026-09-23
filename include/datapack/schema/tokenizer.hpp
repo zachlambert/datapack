@@ -12,13 +12,13 @@ public:
   void number(NumberType type, void* value) override;
   bool boolean() override;
   const char* string() override;
-  int enumerate(const std::span<const char*>& labels) override;
+  int enumerate(const std::span<const std::string_view>& labels) override;
   std::span<const std::uint8_t> binary() override;
 
   bool optional_begin() override;
   void optional_end() override;
 
-  int variant_begin(const std::span<const char*>& labels) override;
+  int variant_begin(const std::span<const std::string_view>& labels) override;
   void variant_tokenize(int index) override;
   void variant_end() override;
 

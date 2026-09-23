@@ -38,7 +38,7 @@ void BinarySizeWriter::string(const char* value) {
   size_ += std::strlen(value) + 1;
 }
 
-void BinarySizeWriter::enumerate(int value, const std::span<const char*>& labels) {
+void BinarySizeWriter::enumerate(int value, const std::span<const std::string_view>& labels) {
   size_ += sizeof(value);
 }
 

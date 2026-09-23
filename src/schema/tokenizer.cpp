@@ -21,7 +21,7 @@ const char* Tokenizer::string() {
   return nullptr;
 }
 
-int Tokenizer::enumerate(const std::span<const char*>& labels) {
+int Tokenizer::enumerate(const std::span<const std::string_view>& labels) {
   tokens.push_back(token::Enumerate(labels));
   return 0;
 }

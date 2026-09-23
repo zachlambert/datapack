@@ -45,7 +45,7 @@ const char* RandomReader::string() {
   return string_temp.c_str();
 }
 
-int RandomReader::enumerate(const std::span<const char*>& labels) {
+int RandomReader::enumerate(const std::span<const std::string_view>& labels) {
   return rand() % labels.size();
 }
 

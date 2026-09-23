@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include <stack>
+#include <string_view>
 
 namespace dpack {
 
@@ -231,11 +232,11 @@ void Schema::apply(Reader& reader, Writer& writer) const {
       continue;
     }
     if (auto enumerate = iter.enumerate()) {
-      std::vector<const char*> labels_c_str;
+      std::vector<std::string_view> labels;
       for (const auto& label : enumerate->labels) {
-        labels_c_str.push_back(label.c_str());
+        labels.push_back(label);
       }
-      writer.enumerate(reader.enumerate(labels_c_str), labels_c_str);
+      writer.enumerate(reader.enumerate(labels), labels);
       continue;
     }
     if (iter.binary()) {

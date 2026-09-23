@@ -2,18 +2,16 @@
 
 #include "datapack/datapack.hpp"
 #include "datapack/hint.hpp"
-#include "datapack/labelled_enum.hpp"
 #include "datapack/labelled_variant.hpp"
 #include "datapack/std/optional.hpp"
 #include "datapack/std/string.hpp"
 #include "datapack/std/variant.hpp"
 #include "datapack/std/vector.hpp"
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace dpack {
-
-DPACK_LABELLED_ENUM(NumberType, 7);
 
 // Cannot put these in the hint header, since this is included by datapack.hpp
 DPACK_INLINE(HintChoices, choices);
@@ -61,8 +59,8 @@ struct Enumerate {
   std::vector<std::string> labels;
   explicit Enumerate() {}
   explicit Enumerate(const std::vector<std::string>& labels) : labels(labels) {}
-  explicit Enumerate(const std::span<const char*>& labels) {
-    for (const char* str : labels) {
+  explicit Enumerate(const std::span<const std::string_view>& labels) {
+    for (std::string_view str : labels) {
       this->labels.push_back(std::string(str));
     }
   }

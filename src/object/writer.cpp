@@ -41,7 +41,7 @@ void ObjectWriter::string(const char* value) {
   *node = value;
 }
 
-void ObjectWriter::enumerate(int value, const std::span<const char*>& labels) {
+void ObjectWriter::enumerate(int value, const std::span<const std::string_view>& labels) {
   *node = std::string(labels[value]);
 }
 

@@ -2,8 +2,6 @@
 
 namespace dpack {
 
-DPACK_LABELLED_ENUM_DEF(NumberType) = {"i32", "i64", "u32", "u64", "u8", "f32", "f64"};
-
 DPACK_LABELLED_VARIANT_DEF(Hint) = {"choices", "range", "color"};
 
 DPACK_LABELLED_VARIANT_DEF(Token) = {

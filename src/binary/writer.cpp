@@ -44,7 +44,7 @@ void BinaryWriter::string(const char* value) {
   pos_ += size;
 }
 
-void BinaryWriter::enumerate(int value, const std::span<const char*>& labels) {
+void BinaryWriter::enumerate(int value, const std::span<const std::string_view>& labels) {
   value_number(value);
 }
 

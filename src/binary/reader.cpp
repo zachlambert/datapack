@@ -46,7 +46,7 @@ const char* BinaryReader::string() {
   return result;
 }
 
-int BinaryReader::enumerate(const std::span<const char*>& labels) {
+int BinaryReader::enumerate(const std::span<const std::string_view>& labels) {
   int value = -1;
   value_number(value);
   return value;

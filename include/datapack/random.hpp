@@ -14,7 +14,7 @@ public:
   void number(NumberType type, void* value) override;
   bool boolean() override;
   const char* string() override;
-  int enumerate(const std::span<const char*>& labels) override;
+  int enumerate(const std::span<const std::string_view>& labels) override;
   std::span<const std::uint8_t> binary() override;
 
   bool optional_begin() override;

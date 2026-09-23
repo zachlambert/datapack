@@ -54,7 +54,7 @@ const char* ObjectReader::string() {
   return nullptr;
 }
 
-int ObjectReader::enumerate(const std::span<const char*>& labels) {
+int ObjectReader::enumerate(const std::span<const std::string_view>& labels) {
   auto x = node->string_if();
   if (!x) {
     invalidate();

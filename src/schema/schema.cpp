@@ -159,9 +159,9 @@ void Schema::apply(Reader& reader, Writer& writer) const {
       break;
     }
 
-    if (iter.object_begin()) {
-      reader.object_begin();
-      writer.object_begin();
+    if (auto object_begin = iter.object_begin()) {
+      reader.object_begin(object_begin->debug_name);
+      writer.object_begin(object_begin->debug_name);
       stack.push(iter);
       continue;
     }

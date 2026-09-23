@@ -53,8 +53,8 @@ void Tokenizer::variant_end() {
   tokens.push_back(token::VariantEnd());
 }
 
-void Tokenizer::object_begin() {
-  tokens.push_back(token::ObjectBegin());
+void Tokenizer::object_begin(std::string_view debug_name) {
+  tokens.push_back(token::ObjectBegin(debug_name));
 }
 
 void Tokenizer::object_next(const char* key) {

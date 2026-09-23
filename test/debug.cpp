@@ -24,11 +24,11 @@ static void expect_equal(const std::string& expected, const std::string& output)
   }
 }
 
-static const std::string expected_entity = R"((object) {
+static const std::string expected_entity = R"((object: Entity) {
     index: 5,
     name: player,
     enabled: true,
-    pose: (object) {
+    pose: (object: Pose) {
         x: 1,
         y: 2,
         angle: 3,
@@ -36,30 +36,30 @@ static const std::string expected_entity = R"((object) {
     physics: (enum, 1 = kinematic),
     hitbox: (optional, has_value) {
         (variant, 0 = circle) {
-            (object) {
+            (object: Circle) {
                 radius: 1,
             },
         },
     },
-    sprite: (object) {
+    sprite: (object: Sprite) {
         width: 2,
         height: 2,
         data: (binary, length = 96),
     },
     items: (list) {
-        (object) {
+        (object: Item) {
             count: 5,
             name: hp_potion,
         },
-        (object) {
+        (object: Item) {
             count: 1,
             name: sword,
         },
-        (object) {
+        (object: Item) {
             count: 1,
             name: map,
         },
-        (object) {
+        (object: Item) {
             count: 120,
             name: gold,
         },
@@ -91,7 +91,7 @@ TEST(Debug, Ostream) {
 }
 
 TEST(Debug, FloatFormatSpec) {
-  const std::string expected = R"((object) {
+  const std::string expected = R"((object: Pose) {
     x: 1.00,
     y: 2.00,
     angle: 3.00,

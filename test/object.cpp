@@ -2,6 +2,7 @@
 #include <datapack/datapack.hpp>
 #include <datapack/examples/entity.hpp>
 #include <datapack/object.hpp>
+#include <datapack/std/vector.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -718,6 +719,41 @@ TEST(Object, Reader) {
   Entity out = dpack::from_object<Entity>(object);
 
   EXPECT_EQ(in, out);
+}
+
+// An object with no fields leaves the reader on the container itself rather than on a child, so
+// the next value after it must still be found. Regression test: object_begin used to descend to
+// a child that doesn't exist, which left everything after an empty object reading from the wrong
+// node, and threw for a list of empty objects.
+struct EmptyObject {
+  DPACK_CLASS_INLINE()
+};
+
+struct AroundEmptyObject {
+  int before;
+  EmptyObject empty;
+  int after;
+  DPACK_CLASS_INLINE(before, empty, after)
+};
+
+TEST(Object, ReaderWithEmptyObject) {
+  using namespace dpack;
+
+  {
+    Object object;
+    object.to_map();
+    from_object<EmptyObject>(object);
+  }
+  {
+    AroundEmptyObject in{1, {}, 2};
+    AroundEmptyObject out = from_object<AroundEmptyObject>(to_object(in));
+    EXPECT_EQ(out.before, 1);
+    EXPECT_EQ(out.after, 2);
+  }
+  {
+    std::vector<EmptyObject> in(3);
+    EXPECT_EQ(from_object<std::vector<EmptyObject>>(to_object(in)).size(), 3);
+  }
 }
 
 TEST(Object, Writer) {

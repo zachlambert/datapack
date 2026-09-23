@@ -3,7 +3,7 @@
 
 namespace dpack {
 
-ObjectWriter::ObjectWriter(Object object) : node(object.ptr()), container_begin(false) {}
+ObjectWriter::ObjectWriter(Object object) : node(object.ptr()), at_container_begin(false) {}
 
 void ObjectWriter::number(NumberType type, const void* value_in) {
   object::number_t value;
@@ -61,9 +61,27 @@ void ObjectWriter::optional_end() {
   // Do nothing
 }
 
+void ObjectWriter::container_begin(bool is_list) {
+  if (is_list) {
+    node->to_list();
+  } else {
+    node->to_map();
+  }
+  at_container_begin = true;
+}
+
+void ObjectWriter::container_end() {
+  if (!at_container_begin) {
+    node = node.parent();
+  }
+  at_container_begin = false;
+}
+
 void ObjectWriter::variant_begin(int value, const std::span<const std::string_view>& labels) {
   const std::string label(labels[value]);
-  object_begin();
+  // A variant is written as a map of the chosen label and its value, which isn't an object of
+  // any type of its own, so it goes through container_begin rather than object_begin
+  container_begin(false);
   object_next("type");
   *node = label;
   std::string value_key = "value_" + label;
@@ -71,72 +89,60 @@ void ObjectWriter::variant_begin(int value, const std::span<const std::string_vi
 }
 
 void ObjectWriter::variant_end() {
-  object_end();
+  container_end();
 }
 
-void ObjectWriter::object_begin() {
-  node->to_map();
-  container_begin = true;
+void ObjectWriter::object_begin(std::string_view) {
+  container_begin(false);
 }
 
 void ObjectWriter::object_end() {
-  if (!container_begin) {
-    node = node.parent();
-  }
-  container_begin = false;
+  container_end();
 }
 
 void ObjectWriter::object_next(const char* key) {
-  if (container_begin) {
+  if (at_container_begin) {
     node = node->emplace(key).ptr();
   } else {
     node = node.parent()->emplace(key).ptr();
   }
-  container_begin = false;
+  at_container_begin = false;
   assert(node);
 }
 
 void ObjectWriter::tuple_begin() {
-  node->to_list();
-  container_begin = true;
+  container_begin(true);
 }
 
 void ObjectWriter::tuple_end() {
-  if (!container_begin) {
-    node = node.parent();
-  }
-  container_begin = false;
+  container_end();
 }
 
 void ObjectWriter::tuple_next() {
-  if (container_begin) {
+  if (at_container_begin) {
     node = node->emplace_back().ptr();
   } else {
     node = node.parent()->emplace_back().ptr();
   }
-  container_begin = false;
+  at_container_begin = false;
   assert(node);
 }
 
 void ObjectWriter::list_begin(size_t) {
-  node->to_list();
-  container_begin = true;
+  container_begin(true);
 }
 
 void ObjectWriter::list_end() {
-  if (!container_begin) {
-    node = node.parent();
-  }
-  container_begin = false;
+  container_end();
 }
 
 void ObjectWriter::list_next() {
-  if (container_begin) {
+  if (at_container_begin) {
     node = node->emplace_back().ptr();
   } else {
     node = node.parent()->emplace_back().ptr();
   }
-  container_begin = false;
+  at_container_begin = false;
   assert(node);
 }
 

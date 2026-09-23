@@ -135,6 +135,39 @@ TEST(Schema, SchemaMake) {
   EXPECT_EQ(schema, expected);
 }
 
+// The tokenizer stores the type's debug name on ObjectBegin, but it is for debug output only:
+// it must not take part in schema equality or in the schema hash
+TEST(Schema, ObjectDebugName) {
+  using namespace dpack;
+
+  Schema schema = Schema::make<Pose>();
+
+  auto object_begin = schema.begin().object_begin();
+  ASSERT_TRUE(object_begin);
+  EXPECT_EQ(object_begin->debug_name, "Pose");
+
+  // clang-format off
+  auto make_pose_tokens = [](const char* debug_name) {
+    return std::vector<Token>{
+      token::ObjectBegin(debug_name),
+        token::ObjectNext("x"),
+          token::Number::F64(),
+        token::ObjectNext("y"),
+          token::Number::F64(),
+        token::ObjectNext("angle"),
+          token::Number::F64(),
+      token::ObjectEnd()
+    };
+  };
+  // clang-format on
+
+  for (const char* debug_name : {"", "Pose", "SomethingElse"}) {
+    auto other = Schema::from_tokens(make_pose_tokens(debug_name));
+    EXPECT_EQ(schema, other);
+    EXPECT_EQ(schema.hash(), other.hash());
+  }
+}
+
 TEST(Schema, SchemaApply) {
   Entity example = Entity::example();
 

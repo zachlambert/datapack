@@ -16,6 +16,13 @@ static_assert(false, "TODO: Not implemented");
 static_assert(false, "Compiler doesn't support type names");
 #endif
 
+/* Define "probe" types (see below on how they are used)
+ * These must be defined in the root namespace, since the signature printing varies
+ * for scoped types across across compilers (ie: some include the namespace, some don't)
+ */
+struct DpackProbeType {};
+enum class DpackProbeValue { Value };
+
 namespace dpack::detail {
 
 /* ====================================================================
@@ -48,13 +55,12 @@ constexpr std::string_view type_name_sig() {
   return DPACK_PRETTY_FUNC;
 }
 
-struct ProbeType {}; // Arbitrary "probe" type name
-inline constexpr std::string_view probe_type_name = "dpack::detail::ProbeType";
+inline constexpr std::string_view probe_type_name = "DpackProbeType";
 
-inline constexpr std::string_view probe_type_name_sig = type_name_sig<ProbeType>();
-// Returns std::string_view type_name_raw() [with T = dpack::detail::Probe]"
+inline constexpr std::string_view probe_type_name_sig = type_name_sig<DpackProbeType>();
+// Returns std::string_view type_name_raw() [with T = DpackProbeType]"
 // type_name_previx ->                                ^
-// length - type_name_suffix ->                                           ^
+// length - type_name_suffix ->                                      ^
 
 inline constexpr size_t type_name_prefix = probe_type_name_sig.find(probe_type_name);
 static_assert(type_name_prefix != std::string_view::npos);
@@ -95,10 +101,9 @@ constexpr std::string_view value_name_sig() {
   return DPACK_PRETTY_FUNC;
 }
 
-enum class ProbeValue { Value };
-inline constexpr std::string_view probe_value_name = "dpack::detail::ProbeValue::Value";
+inline constexpr std::string_view probe_value_name = "DpackProbeValue::Value";
 
-inline constexpr std::string_view probe_value_name_sig = value_name_sig<ProbeValue::Value>();
+inline constexpr std::string_view probe_value_name_sig = value_name_sig<DpackProbeValue::Value>();
 
 inline constexpr size_t value_name_prefix = probe_value_name_sig.find(probe_value_name);
 static_assert(value_name_prefix != std::string_view::npos);

@@ -4,14 +4,23 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   tests:
+    name: tests
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
-        uses: actions/checkout@main
+        uses: actions/checkout@v4
+      - name: install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libfmt-dev
       - name: build library and tests
         run: |
           mkdir build
@@ -19,6 +28,4 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release ..
           cmake --build .
       - name: run tests
-        run: |
-          cd build
-          ctest --output-on-failure
+        run: ctest --test-dir build/test --output-on-failure

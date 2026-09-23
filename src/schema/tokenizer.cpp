@@ -40,7 +40,7 @@ void Tokenizer::optional_end() {
   // Nothing required
 }
 
-int Tokenizer::variant_begin(const std::span<const char*>& labels) {
+int Tokenizer::variant_begin(const std::span<const std::string_view>& labels) {
   tokens.push_back(token::VariantBegin(labels));
   return 0;
 }

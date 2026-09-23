@@ -77,7 +77,7 @@ public:
   virtual void optional_begin(bool has_value) = 0;
   virtual void optional_end() = 0;
 
-  virtual void variant_begin(int value, const std::span<const char*>& labels) = 0;
+  virtual void variant_begin(int value, const std::span<const std::string_view>& labels) = 0;
   virtual void variant_end() = 0;
 
   // Fixed-size containers
@@ -131,7 +131,7 @@ public:
   virtual bool optional_begin() = 0;
   virtual void optional_end() = 0;
 
-  virtual int variant_begin(const std::span<const char*>& labels) = 0;
+  virtual int variant_begin(const std::span<const std::string_view>& labels) = 0;
   virtual void variant_tokenize(int index) {}; // Only used by tokenizer
   virtual void variant_end() = 0;
 

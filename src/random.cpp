@@ -53,7 +53,7 @@ bool RandomReader::optional_begin() {
   return rand() % 2 == 1;
 }
 
-int RandomReader::variant_begin(const std::span<const char*>& labels) {
+int RandomReader::variant_begin(const std::span<const std::string_view>& labels) {
   return rand() % labels.size();
 }
 

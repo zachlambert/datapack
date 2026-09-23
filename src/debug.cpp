@@ -78,7 +78,7 @@ void DebugWriter::optional_end() {
   out = fmt::format_to(out, "}},\n");
 }
 
-void DebugWriter::variant_begin(int value, const std::span<const char*>& labels) {
+void DebugWriter::variant_begin(int value, const std::span<const std::string_view>& labels) {
   out = fmt::format_to(out, "(variant, {} = {}) {{\n", value, labels[value]);
   depth++;
   indent();

@@ -187,12 +187,12 @@ void Schema::apply(Reader& reader, Writer& writer) const {
       continue;
     }
     if (auto variant_begin = iter.variant_begin()) {
-      std::vector<const char*> labels_c_str;
+      std::vector<std::string_view> labels;
       for (const auto& label : variant_begin->labels) {
-        labels_c_str.push_back(label.c_str());
+        labels.push_back(label);
       }
-      int choice = reader.variant_begin(labels_c_str);
-      writer.variant_begin(choice, labels_c_str);
+      int choice = reader.variant_begin(labels);
+      writer.variant_begin(choice, labels);
 
       // Don't push VariantBegin
 

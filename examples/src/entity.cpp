@@ -9,12 +9,6 @@
 #include <datapack/std/variant.hpp>
 #include <datapack/std/vector.hpp>
 
-namespace dpack {
-
-DPACK_LABELLED_VARIANT_DEF(Shape) = {"circle", "rect"};
-
-} // namespace dpack
-
 void Sprite::read(dpack::Reader& reader) {
   reader.object_begin();
   reader.value("width", width);

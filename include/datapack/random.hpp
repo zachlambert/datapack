@@ -20,7 +20,7 @@ public:
   bool optional_begin() override;
   void optional_end() override {}
 
-  int variant_begin(const std::span<const char*>& labels) override;
+  int variant_begin(const std::span<const std::string_view>& labels) override;
   void variant_end() override {}
 
   void object_begin() override {}

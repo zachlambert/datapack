@@ -2,7 +2,6 @@
 
 #include "datapack/datapack.hpp"
 #include "datapack/hint.hpp"
-#include "datapack/labelled_variant.hpp"
 #include "datapack/std/optional.hpp"
 #include "datapack/std/string.hpp"
 #include "datapack/std/variant.hpp"
@@ -18,7 +17,6 @@ DPACK_INLINE(HintChoices, choices);
 DPACK_INLINE(HintRange, lower, upper);
 DPACK_INLINE(HintPositive, allow_zero);
 DPACK_INLINE(HintColor);
-DPACK_LABELLED_VARIANT(Hint, 4);
 
 namespace token {
 
@@ -73,8 +71,8 @@ struct VariantBegin {
   std::vector<std::string> labels;
   explicit VariantBegin() {}
   explicit VariantBegin(const std::vector<std::string>& labels) : labels(labels) {}
-  explicit VariantBegin(const std::span<const char*>& labels) {
-    for (const char* str : labels) {
+  explicit VariantBegin(const std::span<const std::string_view>& labels) {
+    for (std::string_view str : labels) {
       this->labels.push_back(std::string(str));
     }
   }
@@ -148,7 +146,6 @@ using Token = std::variant<
     token::List,
     token::Hint,
     token::Description>;
-DPACK_LABELLED_VARIANT(Token, 18);
 
 bool operator==(const Token& lhs, const Token& rhs);
 

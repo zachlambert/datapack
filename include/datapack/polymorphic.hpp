@@ -3,6 +3,7 @@
 #include "datapack/datapack.hpp"
 #include <memory>
 #include <stdexcept>
+#include <string_view>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -93,19 +94,19 @@ public:
     }
     interfaces_.push_back(std::make_unique<PolyTypeImpl<Base, Child>>(label, interfaces_.size()));
     labels_.push_back(label);
-    rebuild_labels_cstr();
+    rebuild_labels_view();
   }
 
   void write(Writer& writer, const std::unique_ptr<Base>& value) {
     auto interface = get(value.get());
-    writer.variant_begin(interface->index(), labels_cstr_);
+    writer.variant_begin(interface->index(), labels_view_);
     interface->write(writer, value);
     writer.variant_end();
   }
 
   void write(Writer& writer, const std::shared_ptr<Base>& value) {
     auto interface = get(value.get());
-    writer.variant_begin(interface->index(), labels_cstr_);
+    writer.variant_begin(interface->index(), labels_view_);
     interface->write(writer, value);
     writer.variant_end();
   }
@@ -115,7 +116,7 @@ public:
       tokenize(reader);
       return;
     }
-    const int index = reader.variant_begin(labels_cstr_);
+    const int index = reader.variant_begin(labels_view_);
     auto interface = get(index);
     interface->read(reader, value);
     reader.variant_end();
@@ -126,7 +127,7 @@ public:
       tokenize(reader);
       return;
     }
-    const int index = reader.variant_begin(labels_cstr_);
+    const int index = reader.variant_begin(labels_view_);
     auto interface = get(index);
     interface->read(reader, value);
     reader.variant_end();
@@ -150,15 +151,16 @@ private:
     return interfaces_[index].get();
   }
 
-  void rebuild_labels_cstr() {
-    labels_cstr_.clear();
+  // The views point into labels_, which may reallocate, so they are all rebuilt on each add
+  void rebuild_labels_view() {
+    labels_view_.clear();
     for (const auto& label : labels_) {
-      labels_cstr_.push_back(label.c_str());
+      labels_view_.push_back(label);
     }
   }
 
   void tokenize(Reader& reader) {
-    reader.variant_begin(labels_cstr_);
+    reader.variant_begin(labels_view_);
     for (int i = 0; i < interfaces_.size(); i++) {
       reader.variant_tokenize(i);
       interfaces_[i]->read_dummy(reader);
@@ -170,7 +172,7 @@ private:
 
   // Used for variant_begin()
   std::vector<std::string> labels_;
-  std::vector<const char*> labels_cstr_;
+  std::vector<std::string_view> labels_view_;
 };
 
 extern std::unordered_map<std::type_index, std::unique_ptr<PolyInterfacesBase>> poly_interfaces_;

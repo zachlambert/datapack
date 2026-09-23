@@ -2,28 +2,6 @@
 
 namespace dpack {
 
-DPACK_LABELLED_VARIANT_DEF(Hint) = {"choices", "range", "color"};
-
-DPACK_LABELLED_VARIANT_DEF(Token) = {
-    "number",
-    "boolean",
-    "string",
-    "enumerate",
-    "binary",
-    "optional",
-    "variant_begin",
-    "variant_next",
-    "variant_end",
-    "object_begin",
-    "object_next",
-    "object_end",
-    "tuple_begin",
-    "tuple_next",
-    "tuple_end",
-    "list",
-    "hint",
-    "description"};
-
 namespace {
 bool operator==(const Hint& lhs, const Hint& rhs) {
   if (lhs.index() != rhs.index()) {

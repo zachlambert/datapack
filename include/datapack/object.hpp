@@ -782,7 +782,7 @@ public:
   void optional_begin(bool has_value) override;
   void optional_end() override;
 
-  void variant_begin(int value, const std::span<const char*>& labels) override;
+  void variant_begin(int value, const std::span<const std::string_view>& labels) override;
   void variant_end() override;
 
   void object_begin() override;
@@ -815,7 +815,7 @@ public:
   bool optional_begin() override;
   void optional_end() override;
 
-  int variant_begin(const std::span<const char*>& labels) override;
+  int variant_begin(const std::span<const std::string_view>& labels) override;
   void variant_end() override;
 
   void object_begin() override;

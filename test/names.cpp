@@ -1,5 +1,6 @@
 #include "datapack/names/enum_names.hpp"
 #include "datapack/names/type_names.hpp"
+#include "datapack/names/variant_names.hpp"
 #include "datapack/std/variant.hpp"
 #include <gtest/gtest.h>
 
@@ -137,4 +138,42 @@ TEST(Names, VariantValueNames) {
 }
 
 TEST(Names, VariantQueries) {
+  using ns::Variant;
+
+  EXPECT_EQ(variant_size<Variant>, 3);
+
+  {
+    auto labels = variant_labels<Variant>;
+    ASSERT_EQ(labels.size(), 3);
+    EXPECT_EQ(labels[0], "foo");
+    EXPECT_EQ(labels[1], "bari");
+    EXPECT_EQ(labels[2], "bard");
+  }
+
+  EXPECT_EQ(variant_index(Variant(ns::Foo())), 0);
+  EXPECT_EQ(variant_index(Variant(ns::Bar<int>())), 1);
+  EXPECT_EQ(variant_index(Variant(ns::Bar<double>())), 2);
+
+  EXPECT_EQ(variant_to_label(Variant(ns::Foo())), "foo");
+  EXPECT_EQ(variant_to_label(Variant(ns::Bar<int>())), "bari");
+  EXPECT_EQ(variant_to_label(Variant(ns::Bar<double>())), "bard");
+
+  {
+    auto value = variant_from_label<Variant>("foo");
+    ASSERT_TRUE(value);
+    EXPECT_EQ(value->index(), 0);
+  }
+  {
+    auto value = variant_from_label<Variant>("bard");
+    ASSERT_TRUE(value);
+    EXPECT_EQ(value->index(), 2);
+  }
+  {
+    auto value = variant_from_label<Variant>("Foo");
+    EXPECT_FALSE(value);
+  }
+  {
+    auto value = variant_from_label<Variant>("baz");
+    EXPECT_FALSE(value);
+  }
 }

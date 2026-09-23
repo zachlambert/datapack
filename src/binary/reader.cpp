@@ -56,7 +56,7 @@ bool BinaryReader::optional_begin() {
   return value_bool();
 }
 
-int BinaryReader::variant_begin(const std::span<const char*>& labels) {
+int BinaryReader::variant_begin(const std::span<const std::string_view>& labels) {
   int value = -1;
   value_number(value);
   return value;

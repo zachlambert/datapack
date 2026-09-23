@@ -95,7 +95,7 @@ void ObjectReader::optional_end() {
   // Do nothing
 }
 
-int ObjectReader::variant_begin(const std::span<const char*>& labels) {
+int ObjectReader::variant_begin(const std::span<const std::string_view>& labels) {
   object_begin();
   object_next("type");
   if (auto x = node->string_if()) {

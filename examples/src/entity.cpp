@@ -10,7 +10,7 @@
 #include <datapack/std/vector.hpp>
 
 void Sprite::read(dpack::Reader& reader) {
-  reader.object_begin();
+  reader.object_begin(dpack::type_name<Sprite>());
   reader.value("width", width);
   reader.value("height", height);
   reader.object_next("data");
@@ -21,7 +21,7 @@ void Sprite::read(dpack::Reader& reader) {
 }
 
 void Sprite::write(dpack::Writer& writer) const {
-  writer.object_begin();
+  writer.object_begin(dpack::type_name<Sprite>());
   writer.value("width", width);
   writer.value("height", height);
   writer.object_next("data");

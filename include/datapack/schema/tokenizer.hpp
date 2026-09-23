@@ -22,7 +22,7 @@ public:
   void variant_tokenize(int index) override;
   void variant_end() override;
 
-  void object_begin() override;
+  void object_begin(std::string_view debug_name) override;
   void object_next(const char* key) override;
   void object_end() override;
 

@@ -96,7 +96,7 @@ void ObjectReader::optional_end() {
 }
 
 int ObjectReader::variant_begin(const std::span<const std::string_view>& labels) {
-  object_begin();
+  object_begin("");
   object_next("type");
   if (auto x = node->string_if()) {
     for (int i = 0; i < labels.size(); i++) {
@@ -115,7 +115,7 @@ void ObjectReader::variant_end() {
   object_end();
 }
 
-void ObjectReader::object_begin() {
+void ObjectReader::object_begin(std::string_view) {
   node = node.child();
 }
 

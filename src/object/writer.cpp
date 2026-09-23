@@ -63,7 +63,7 @@ void ObjectWriter::optional_end() {
 
 void ObjectWriter::variant_begin(int value, const std::span<const std::string_view>& labels) {
   const std::string label(labels[value]);
-  object_begin();
+  object_begin("");
   object_next("type");
   *node = label;
   std::string value_key = "value_" + label;
@@ -74,7 +74,7 @@ void ObjectWriter::variant_end() {
   object_end();
 }
 
-void ObjectWriter::object_begin() {
+void ObjectWriter::object_begin(std::string_view) {
   node->to_map();
   container_begin = true;
 }

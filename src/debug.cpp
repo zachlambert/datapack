@@ -1,4 +1,5 @@
 #include "datapack/debug.hpp"
+#include <cassert>
 
 #ifdef PRINT_BINARY
 #include "datapack/encode/base64.hpp"
@@ -90,8 +91,13 @@ void DebugWriter::variant_end() {
   out = fmt::format_to(out, "}},\n");
 }
 
-void DebugWriter::object_begin() {
-  out = fmt::format_to(out, "(object) {{\n");
+void DebugWriter::object_begin(std::string_view debug_name) {
+  assert(!debug_name.empty() && "object_begin was given an empty debug name");
+  if (debug_name.empty()) {
+    out = fmt::format_to(out, "(object) {{\n");
+  } else {
+    out = fmt::format_to(out, "(object: {}) {{\n", debug_name);
+  }
   depth++;
 }
 

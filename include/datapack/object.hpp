@@ -785,7 +785,7 @@ public:
   void variant_begin(int value, const std::span<const std::string_view>& labels) override;
   void variant_end() override;
 
-  void object_begin() override;
+  void object_begin(std::string_view debug_name) override;
   void object_next(const char* key) override;
   void object_end() override;
 
@@ -818,7 +818,7 @@ public:
   int variant_begin(const std::span<const std::string_view>& labels) override;
   void variant_end() override;
 
-  void object_begin() override;
+  void object_begin(std::string_view debug_name) override;
   void object_end() override;
   void object_next(const char* key) override;
 

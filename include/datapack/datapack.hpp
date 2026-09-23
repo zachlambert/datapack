@@ -2,6 +2,7 @@
 
 #include "datapack/hint.hpp"
 #include "datapack/names/enum_names.hpp"
+#include "datapack/names/type_names.hpp"
 #include <cstdint>
 #include <span>
 #include <string>
@@ -82,7 +83,7 @@ public:
 
   // Fixed-size containers
 
-  virtual void object_begin() = 0;
+  virtual void object_begin(std::string_view debug_name) = 0;
   virtual void object_next(const char* key) = 0;
   virtual void object_end() = 0;
 
@@ -137,7 +138,7 @@ public:
 
   // Fixed-size containers
 
-  virtual void object_begin() = 0;
+  virtual void object_begin(std::string_view debug_name) = 0;
   virtual void object_next(const char* key) = 0;
   virtual void object_end() = 0;
 
@@ -251,15 +252,7 @@ void read(Reader& reader, E& value) {
 #define _DPACK_VALUE(X) packer.value(#X, value.X);
 #define _DPACK_CLASS_VALUE(X) packer.value(#X, X);
 
-// https://stackoverflow.com/a/62984543
-// Needs to support both:
-//   _DPACK_DEPAREN((x, y)) -> x, y   Does have parentheses
-//   _DPACK_DEPAREN(x)      -> x      Doesn't have parentheses
-#define _DPACK_DEPAREN(X) _DPACK_REMOVE_DP_PAREN(_DP_PAREN X)
-#define _DP_PAREN(...) _DP_PAREN __VA_ARGS__
-#define _DPACK_REMOVE_DP_PAREN(...) _DPACK_REMOVE_DP_PAREN2(__VA_ARGS__)
-#define _DPACK_REMOVE_DP_PAREN2(...) _IGNORE##__VA_ARGS__
-#define _IGNORE_DP_PAREN
+// NOTE: _DPACK_DEPAREN is defined in names/name_utils.hpp
 
 // ===================================================================================
 // Free function macros
@@ -270,12 +263,12 @@ void read(Reader& reader, E& value) {
 
 #define DPACK_DEF(Type, ...)                                                                       \
   void read(Reader& packer, Type& value) {                                                         \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<Type>());                                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }                                                                                                \
   void write(Writer& packer, const Type& value) {                                                  \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<Type>());                                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }
@@ -290,12 +283,12 @@ void read(Reader& reader, E& value) {
 
 #define DPACK_INLINE(Type, ...)                                                                    \
   inline void read(Reader& packer, Type& value) {                                                  \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<Type>());                                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }                                                                                                \
   inline void write(Writer& packer, const Type& value) {                                           \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<Type>());                                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }
@@ -317,12 +310,12 @@ void read(Reader& reader, E& value) {
 
 #define DPACK_CLASS_DEF(Class, ...)                                                                \
   void Class::read(::dpack::Reader& packer) {                                                      \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<Class>());                                              \
     _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }                                                                                                \
   void Class::write(::dpack::Writer& packer) const {                                               \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<Class>());                                              \
     _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }
@@ -337,12 +330,12 @@ void read(Reader& reader, E& value) {
 
 #define DPACK_CLASS_INLINE(...)                                                                    \
   void read(::dpack::Reader& packer) {                                                             \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<std::remove_cvref_t<decltype(*this)>>());               \
     _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }                                                                                                \
   void write(::dpack::Writer& packer) const {                                                      \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<std::remove_cvref_t<decltype(*this)>>());               \
     _DPACK_FOR_EACH(_DPACK_CLASS_VALUE, __VA_ARGS__)                                               \
     packer.object_end();                                                                           \
   }
@@ -361,13 +354,13 @@ void read(Reader& reader, E& value) {
 #define DPACK_TEMPLATED_INLINE(Type, Typenames, ...)                                               \
   template <_DPACK_DEPAREN(Typenames)>                                                             \
   void read(Reader& packer, _DPACK_DEPAREN(Type) & value) {                                        \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<_DPACK_DEPAREN(Type)>());                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }                                                                                                \
   template <_DPACK_DEPAREN(Typenames)>                                                             \
   void write(Writer& packer, const _DPACK_DEPAREN(Type) & value) {                                 \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<_DPACK_DEPAREN(Type)>());                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }
@@ -391,13 +384,13 @@ void read(Reader& reader, E& value) {
 #define DPACK_TEMPLATED_DEF(Type, Typenames, ...)                                                  \
   template <_DPACK_DEPAREN(Typenames)>                                                             \
   void read(Reader& packer, _DPACK_DEPAREN(Type) & value) {                                        \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<_DPACK_DEPAREN(Type)>());                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }                                                                                                \
   template <_DPACK_DEPAREN(Typenames)>                                                             \
   void write(Writer& packer, const _DPACK_DEPAREN(Type) & value) {                                 \
-    packer.object_begin();                                                                         \
+    packer.object_begin(::dpack::type_name<_DPACK_DEPAREN(Type)>());                               \
     _DPACK_FOR_EACH(_DPACK_VALUE, __VA_ARGS__)                                                     \
     packer.object_end();                                                                           \
   }

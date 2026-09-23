@@ -84,7 +84,11 @@ struct VariantNext {
   explicit VariantNext(int index) : index(index) {}
 };
 
-struct ObjectBegin {};
+struct ObjectBegin {
+  std::string debug_name;
+  explicit ObjectBegin() {}
+  explicit ObjectBegin(std::string_view debug_name) : debug_name(debug_name) {}
+};
 struct ObjectEnd {};
 struct ObjectNext {
   std::string key;
@@ -117,7 +121,7 @@ DPACK_INLINE(token::Optional)
 DPACK_INLINE(token::VariantBegin, labels)
 DPACK_INLINE(token::VariantNext, index)
 DPACK_INLINE(token::VariantEnd)
-DPACK_INLINE(token::ObjectBegin)
+DPACK_INLINE(token::ObjectBegin, debug_name)
 DPACK_INLINE(token::ObjectNext, key)
 DPACK_INLINE(token::ObjectEnd)
 DPACK_INLINE(token::TupleBegin)
